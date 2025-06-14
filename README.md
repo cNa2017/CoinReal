@@ -2,16 +2,10 @@
 
 > 首个让用户通过评论与点赞即可赚取加密货币奖励的去中心化内容社区
 
-![CoinReal Logo](https://img.shields.io/badge/CoinReal-v1.0.0-blue.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Ethereum](https://img.shields.io/badge/Ethereum-Compatible-627EEA)](https://ethereum.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-v15-black)](https://nextjs.org/)
-[![Foundry](https://img.shields.io/badge/Foundry-Framework-red)](https://book.getfoundry.sh/)
-
 ## 🎯 项目概述
 
 ### 产品定位
-CoinReal 是一个创新的去中心化内容社区平台，通过区块链技术实现"评论即收益、点赞即赚币"的商业模式。用户可以在各大加密项目的讨论栏目中发表评论、点赞支持优质内容，并获得相应的代币奖励。
+CoinReal 是一个创新的去中心化内容社区平台，通过区块链技术实现"评论即收益、点赞即赚币"的商业模式。用户可以在各大加密项目的讨论栏目中发表评论、点赞支持优质内容，并获得相应的代币奖励。赞助方可以赞助他喜欢的项目，赞助的金额会根据动态奖池分配给评论和点赞的用户
 
 ### 核心价值主张
 
