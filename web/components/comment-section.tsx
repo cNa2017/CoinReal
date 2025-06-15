@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { ThumbsUp, ThumbsDown, MessageSquare, Send, Coins } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { Coins, MessageSquare, Send, ThumbsDown, ThumbsUp } from "lucide-react"
+import { useState } from "react"
 
 interface CommentSectionProps {
   projectId: string
@@ -18,7 +18,7 @@ const mockComments = [
   {
     id: 1,
     author: "CryptoAnalyst",
-    avatar: "/placeholder.svg?height=40&width=40",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-analyst",
     content:
       "The recent price action shows strong bullish momentum. Technical indicators are aligning perfectly with the fundamental analysis. This could be the beginning of a major breakout.",
     likes: 23,
@@ -30,7 +30,7 @@ const mockComments = [
   {
     id: 2,
     author: "BlockchainExpert",
-    avatar: "/placeholder.svg?height=40&width=40",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=blockchain-expert",
     content:
       "Great project with solid fundamentals. The team has been consistently delivering on their roadmap. Long-term outlook remains very positive despite short-term volatility.",
     likes: 15,
@@ -42,7 +42,7 @@ const mockComments = [
   {
     id: 3,
     author: "DeFiTrader",
-    avatar: "/placeholder.svg?height=40&width=40",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=defi-trader",
     content:
       "Market sentiment is shifting. We're seeing increased institutional interest and adoption. The next few weeks will be crucial for price discovery.",
     likes: 31,
@@ -54,7 +54,7 @@ const mockComments = [
   {
     id: 4,
     author: "CryptoNewbie",
-    avatar: "/placeholder.svg?height=40&width=40",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-newbie",
     content:
       "Still learning about this project but the community seems very supportive. Can someone explain the tokenomics in simple terms?",
     likes: 7,
@@ -65,7 +65,7 @@ const mockComments = [
   },
 ]
 
-export function CommentSection({ projectId }: CommentSectionProps) {
+export function CommentSection({}: CommentSectionProps) {
   const [newComment, setNewComment] = useState("")
   const [comments, setComments] = useState(mockComments)
 
@@ -76,9 +76,10 @@ export function CommentSection({ projectId }: CommentSectionProps) {
     const comment = {
       id: comments.length + 1,
       author: "You",
-      avatar: "/placeholder.svg?height=40&width=40",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-analyst",
       content: newComment,
       likes: 0,
+      dislikes: 0,
       timestamp: "Just now",
       verified: true,
       tokens: 5,
@@ -145,7 +146,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <Avatar className="w-10 h-10 border border-slate-600">
-                  <AvatarImage src={comment.avatar || "/placeholder.svg"} />
+                  <AvatarImage src={comment.avatar} />
                   <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-sm">
                     {comment.author.slice(0, 2)}
                   </AvatarFallback>
