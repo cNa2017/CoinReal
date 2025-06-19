@@ -1,0 +1,419 @@
+"use client"
+
+import { ProjectLayout } from "@/components/project-layout"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { AlertCircle, CheckCircle, Coins, FileText, Globe, Wallet } from "lucide-react"
+import { useState } from "react"
+
+interface FormData {
+  name: string
+  symbol: string
+  description: string
+  category: string
+  website: string
+  whitepaper: string
+  contractAddress: string
+  initialPool: string
+  drawPeriod: string
+  logoUrl: string
+}
+
+export default function CreateProjectPage() {
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
+    symbol: "",
+    description: "",
+    category: "",
+    website: "",
+    whitepaper: "",
+    contractAddress: "",
+    initialPool: "",
+    drawPeriod: "7",
+    logoUrl: ""
+  })
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [isSuccess, setIsSuccess] = useState(false)
+
+  const projectCategories = [
+    "DeFi", "NFT", "GameFi", "L1", "L2", "Infrastructure", 
+    "Web3", "Metaverse", "AI", "Storage", "Oracle", "Privacy"
+  ]
+
+  const drawPeriods = [
+    { value: "7", label: "7天" },
+    { value: "14", label: "14天" },
+    { value: "21", label: "21天" },
+    { value: "30", label: "30天" }
+  ]
+
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+    
+    if (!formData.name.trim()) errors.name = "项目名称不能为空"
+    if (!formData.symbol.trim()) errors.symbol = "代币符号不能为空"
+    if (!formData.description.trim()) errors.description = "项目描述不能为空"
+    if (!formData.category) errors.category = "请选择项目分类"
+    if (!formData.website.trim()) errors.website = "官网地址不能为空"
+    if (!formData.contractAddress.trim()) errors.contractAddress = "合约地址不能为空"
+    if (!formData.initialPool || parseFloat(formData.initialPool) <= 0) {
+      errors.initialPool = "初始奖池金额必须大于0"
+    }
+    
+    // 简单的网址验证
+    const urlPattern = /^https?:\/\/.+/
+    if (formData.website && !urlPattern.test(formData.website)) {
+      errors.website = "请输入有效的网址（以http://或https://开头）"
+    }
+    if (formData.whitepaper && !urlPattern.test(formData.whitepaper)) {
+      errors.whitepaper = "请输入有效的白皮书链接"
+    }
+    
+    // 简单的合约地址验证（以太坊地址格式）
+    const addressPattern = /^0x[a-fA-F0-9]{40}$/
+    if (formData.contractAddress && !addressPattern.test(formData.contractAddress)) {
+      errors.contractAddress = "请输入有效的合约地址（42位十六进制）"
+    }
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!validateForm()) return
+
+    setIsSubmitting(true)
+    
+    try {
+      // 模拟API提交
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      console.log("提交的项目数据:", formData)
+      setIsSuccess(true)
+      
+      // 3秒后重置表单
+      setTimeout(() => {
+        setIsSuccess(false)
+        setFormData({
+          name: "",
+          symbol: "",
+          description: "",
+          category: "",
+          website: "",
+          whitepaper: "",
+          contractAddress: "",
+          initialPool: "",
+          drawPeriod: "7",
+          logoUrl: ""
+        })
+      }, 3000)
+      
+    } catch (error) {
+      console.error("提交失败:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isSuccess) {
+    return (
+      <ProjectLayout>
+        <div className="flex items-center justify-center py-20">
+          <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">提交成功！</h2>
+              <p className="text-gray-400 mb-4">您的项目申请已提交，我们将在24小时内审核并回复。</p>
+              <div className="text-sm text-gray-500">
+                页面将自动刷新...
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ProjectLayout>
+    )
+  }
+
+  return (
+    <ProjectLayout>
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">
+            创建新项目
+          </h1>
+          <p className="text-gray-400 text-lg">提交您的加密货币项目，创建专属讨论社区</p>
+        </div>
+
+        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Coins className="w-5 h-5" />
+              项目基本信息
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* 基本信息 */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-gray-300">项目名称 *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                    placeholder="例: Bitcoin"
+                  />
+                  {validationErrors.name && (
+                    <p className="text-red-400 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="symbol" className="text-gray-300">代币符号 *</Label>
+                  <Input
+                    id="symbol"
+                    value={formData.symbol}
+                    onChange={(e) => handleInputChange("symbol", e.target.value.toUpperCase())}
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                    placeholder="例: BTC"
+                    maxLength={10}
+                  />
+                  {validationErrors.symbol && (
+                    <p className="text-red-400 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.symbol}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-gray-300">项目描述 *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  className="bg-slate-700/50 border-slate-600 text-white min-h-[100px] resize-none"
+                  placeholder="详细描述您的项目特点、用途和价值主张..."
+                  maxLength={500}
+                />
+                <div className="flex justify-between items-center">
+                  {validationErrors.description && (
+                    <p className="text-red-400 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.description}
+                    </p>
+                  )}
+                  <p className="text-gray-500 text-sm ml-auto">
+                    {formData.description.length}/500
+                  </p>
+                </div>
+              </div>
+
+              {/* 分类和链接 */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-gray-300">项目分类 *</Label>
+                  <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                    <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                      <SelectValue placeholder="选择项目分类" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      {projectCategories.map((category) => (
+                        <SelectItem key={category} value={category} className="text-white">
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {validationErrors.category && (
+                    <p className="text-red-400 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.category}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="drawPeriod" className="text-gray-300">开奖周期</Label>
+                  <Select value={formData.drawPeriod} onValueChange={(value) => handleInputChange("drawPeriod", value)}>
+                    <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      {drawPeriods.map((period) => (
+                        <SelectItem key={period.value} value={period.value} className="text-white">
+                          {period.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="text-gray-300 flex items-center gap-1">
+                    <Globe className="w-4 h-4" />
+                    官网地址 *
+                  </Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => handleInputChange("website", e.target.value)}
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                    placeholder="https://example.com"
+                  />
+                  {validationErrors.website && (
+                    <p className="text-red-400 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.website}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="whitepaper" className="text-gray-300 flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    白皮书链接
+                  </Label>
+                  <Input
+                    id="whitepaper"
+                    type="url"
+                    value={formData.whitepaper}
+                    onChange={(e) => handleInputChange("whitepaper", e.target.value)}
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                    placeholder="https://example.com/whitepaper.pdf"
+                  />
+                  {validationErrors.whitepaper && (
+                    <p className="text-red-400 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {validationErrors.whitepaper}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 技术信息 */}
+              <div className="space-y-2">
+                <Label htmlFor="contractAddress" className="text-gray-300 flex items-center gap-1">
+                  <Wallet className="w-4 h-4" />
+                  合约地址 *
+                </Label>
+                <Input
+                  id="contractAddress"
+                  value={formData.contractAddress}
+                  onChange={(e) => handleInputChange("contractAddress", e.target.value)}
+                  className="bg-slate-700/50 border-slate-600 text-white font-mono"
+                  placeholder="0x..."
+                />
+                {validationErrors.contractAddress && (
+                  <p className="text-red-400 text-sm flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {validationErrors.contractAddress}
+                  </p>
+                )}
+              </div>
+
+              {/* 奖池设置 */}
+              <div className="space-y-2">
+                <Label htmlFor="initialPool" className="text-gray-300">初始奖池金额 (USDC) *</Label>
+                <Input
+                  id="initialPool"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={formData.initialPool}
+                  onChange={(e) => handleInputChange("initialPool", e.target.value)}
+                  className="bg-slate-700/50 border-slate-600 text-white"
+                  placeholder="1000"
+                />
+                {validationErrors.initialPool && (
+                  <p className="text-red-400 text-sm flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {validationErrors.initialPool}
+                  </p>
+                )}
+                <p className="text-gray-500 text-sm">
+                  建议初始奖池金额: $500 - $10,000，金额越高越容易吸引用户参与
+                </p>
+              </div>
+
+              {/* 奖池分配说明 */}
+              <div className="bg-slate-700/30 rounded-lg p-4 space-y-3">
+                <h3 className="text-white font-medium">奖池分配机制</h3>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                      60%
+                    </Badge>
+                    <span className="text-gray-300">评论者奖励</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                      25%
+                    </Badge>
+                    <span className="text-gray-300">点赞者奖励</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                      15%
+                    </Badge>
+                    <span className="text-gray-300">精英奖励</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 提交按钮 */}
+              <div className="flex justify-end gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-slate-600 text-gray-300 hover:bg-slate-700"
+                  onClick={() => window.history.back()}
+                >
+                  取消
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      提交中...
+                    </>
+                  ) : (
+                    "提交项目申请"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </ProjectLayout>
+  )
+} 
