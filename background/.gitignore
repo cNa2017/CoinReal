@@ -1,9 +1,7 @@
 # Compiler files
 cache/
-cache/*
 out/
-/lib/
-lib/*
+lib/
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
@@ -11,8 +9,6 @@ lib/*
 
 # Docs
 docs/
-key/
+
 # Dotenv file
 .env
-.github/
-broadcast/
