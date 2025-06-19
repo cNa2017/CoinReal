@@ -1,0 +1,16 @@
+{
+  "platform": "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+  "crtToken": "0xcafac3dd18ac6c6e92c921884f9e4176737c052c",
+  "priceOracle": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+  "projectFactory": "0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+  "tokens": {
+    "usdc": "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+    "weth": "0x0165878a594ca255338adfa4d48449f69242eb8f",
+    "dai": "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853"
+  },
+  "projects": {
+    "bitcoin": "0xdec0b45cd042aabe94be7a484b300b0d09bbc72a",
+    "ethereum": "0x8d2d84edff317afa23323f13cf9edb8fd9cb4b62",
+    "solana": "0x7e643d5c8b6c8f9d784ae4249c45aa757166bdec"
+  }
+}
