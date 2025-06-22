@@ -1,11 +1,12 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
+import { WalletConnect } from "@/components/wallet-connect"
+import { cn } from "@/lib/utils"
+import { Coins, Home, Rocket, Settings, TrendingUp, User } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { Home, Rocket, User, TrendingUp, Settings, Coins } from "lucide-react"
-import { WalletConnection } from "@/components/wallet-connection"
+
 
 const navigationItems = [
   { name: "Home", href: "/", icon: Home },
@@ -92,7 +93,7 @@ export function Navigation() {
           <div className="text-xs text-gray-400">USDC Equivalent</div>
         </div>
 
-        <WalletConnection />
+        <WalletConnect />
       </div>
     </div>
   )
