@@ -47,6 +47,10 @@ contract Project is IProject, Initializable, ReentrancyGuard {
     address[] public participants;
     mapping(address => bool) public isParticipant;
     
+    // CRT分组统计
+    mapping(address => uint256) public userCommentCRT;
+    mapping(address => uint256) public userLikeCRT;
+    
     // Sponsorship tracking
     Sponsorship[] public sponsorships;
     mapping(address => uint256) public tokenPoolAmounts;
@@ -137,6 +141,9 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         userStats[msg.sender].totalComments++;
         userStats[msg.sender].totalCRT += COMMENT_REWARD;
         
+        // 更新CRT分组统计
+        userCommentCRT[msg.sender] += COMMENT_REWARD;
+        
         totalComments++;
         lastActivityTime = block.timestamp;
         
@@ -170,6 +177,10 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         userStats[msg.sender].totalLikes++;
         userStats[msg.sender].totalCRT += LIKE_REWARD;
         userStats[comment.author].totalCRT += LIKE_REWARD;
+        
+        // 更新CRT分组统计
+        userLikeCRT[msg.sender] += LIKE_REWARD;
+        userLikeCRT[comment.author] += LIKE_REWARD;
         
         totalLikes++;
         lastActivityTime = block.timestamp;
@@ -449,6 +460,59 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         assembly {
             mstore(likedCommentIds, likedCount)
         }
+    }
+    
+    // 新增接口实现
+    function getUserCRTBreakdown(address user) external view returns (
+        uint256 commentTokens,
+        uint256 likeTokens
+    ) {
+        commentTokens = userCommentCRT[user];
+        likeTokens = userLikeCRT[user];
+    }
+    
+    function getUserDetailedActivity(address user, uint256 offset, uint256 limit) external view returns (
+        Comment[] memory comments,
+        Comment[] memory likedComments
+    ) {
+        // 获取用户评论
+        uint256[] memory userCommentList = userComments[user];
+        uint256 total = userCommentList.length;
+        
+        if (offset >= total) {
+            comments = new Comment[](0);
+        } else {
+            uint256 end = offset + limit;
+            if (end > total) {
+                end = total;
+            }
+            
+            comments = new Comment[](end - offset);
+            for (uint256 i = 0; i < end - offset; i++) {
+                comments[i] = this.getComment(userCommentList[offset + i]);
+            }
+        }
+        
+        // 获取用户点赞的评论
+        uint256 likedCount = 0;
+        Comment[] memory tempLikedComments = new Comment[](limit);
+        
+        for (uint256 i = 0; i < commentIdCounter && likedCount < limit; i++) {
+            if (hasLiked[user][i]) {
+                tempLikedComments[likedCount] = this.getComment(i);
+                likedCount++;
+            }
+        }
+        
+        // 调整数组大小
+        likedComments = new Comment[](likedCount);
+        for (uint256 i = 0; i < likedCount; i++) {
+            likedComments[i] = tempLikedComments[i];
+        }
+    }
+    
+    function getPoolValueUSD() external view returns (uint256 poolValueUSD) {
+        (,,, poolValueUSD) = this.getProjectStats();
     }
     
     // Internal functions

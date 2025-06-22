@@ -262,4 +262,15 @@ contract CoinRealPlatform is ICoinRealPlatform {
         require(isProject[msg.sender], "Only projects can call");
         totalComments++;
     }
+
+    function getUserPlatformActivity(
+        address user,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (
+        UserActivity[] memory activities
+    ) {
+        // Simplified implementation - in production, track activities globally
+        revert("Not implemented");
+    }
 } 

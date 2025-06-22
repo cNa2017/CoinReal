@@ -372,4 +372,40 @@ interface IProject {
         uint256[] memory commentIds,
         uint256[] memory likedCommentIds
     );
+
+    /**
+     * @notice 获取用户CRT来源分组统计
+     * @dev 返回用户从评论和点赞分别获得的CRT数量
+     * 
+     * @param user 用户地址
+     * @return commentTokens 从评论获得的CRT数量
+     * @return likeTokens 从点赞获得的CRT数量
+     */
+    function getUserCRTBreakdown(address user) external view returns (
+        uint256 commentTokens,
+        uint256 likeTokens
+    );
+
+    /**
+     * @notice 获取用户在该项目的详细活动历史
+     * @dev 返回用户的所有评论和点赞记录，支持分页
+     * 
+     * @param user 用户地址
+     * @param offset 起始位置
+     * @param limit 返回数量限制
+     * @return comments 用户发表的评论数组
+     * @return likedComments 用户点赞的评论数组
+     */
+    function getUserDetailedActivity(address user, uint256 offset, uint256 limit) external view returns (
+        Comment[] memory comments,
+        Comment[] memory likedComments
+    );
+
+    /**
+     * @notice 获取项目奖池USD价值（兼容前端字段名）
+     * @dev 别名方法，返回与getProjectStats()相同的currentPoolUSD值
+     * 
+     * @return poolValueUSD 奖池USD价值（8位小数精度）
+     */
+    function getPoolValueUSD() external view returns (uint256 poolValueUSD);
 } 

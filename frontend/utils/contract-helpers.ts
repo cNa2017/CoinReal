@@ -33,9 +33,10 @@ export function formatTimestamp(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleDateString()
 }
 
-// 金额格式转换：美分转美元显示
+// 金额格式转换：8位小数USD转美元显示
 export function formatPoolValue(poolValueUSD: number): string {
-  const dollars = poolValueUSD / 100
+  // 合约返回8位小数精度的USD值，需要除以10^8转换为标准美元
+  const dollars = poolValueUSD / 100000000
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -75,15 +76,18 @@ export function checkIsEliteUser(userStats: {totalComments: number, totalLikes: 
   return userStats.totalCRT > 1000 || userStats.totalComments > 50
 }
 
-// CRT Token 格式化显示
+// CRT Token 格式化显示（处理18位小数精度）
 export function formatCRTAmount(amount: number): string {
-  if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M CRT`
+  // CRT Token使用18位小数精度，需要除以10^18
+  const crtAmount = amount / Math.pow(10, 18)
+  
+  if (crtAmount >= 1000000) {
+    return `${(crtAmount / 1000000).toFixed(1)}M CRT`
   }
-  if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}K CRT`
+  if (crtAmount >= 1000) {
+    return `${(crtAmount / 1000).toFixed(1)}K CRT`
   }
-  return `${amount} CRT`
+  return `${crtAmount.toFixed(0)} CRT`
 }
 
 // 项目状态计算（基于合约数据）
@@ -110,9 +114,11 @@ export function isValidContractAddress(address: string): boolean {
 export function prepareProjectForDisplay(contractProject: any) {
   return {
     ...contractProject,
+    // 修正字段名映射
+    poolValueUSD: contractProject.currentPoolUSD || contractProject.poolValueUSD || 0,
     colorIndex: getProjectColorIndex(contractProject.projectAddress),
     timeLeft: formatTimeLeft(contractProject.nextDrawTime),
-    pool: formatPoolValue(contractProject.poolValueUSD),
+    pool: formatPoolValue(contractProject.currentPoolUSD || contractProject.poolValueUSD || 0),
     status: calculateProjectStatus(contractProject.isActive, contractProject.nextDrawTime),
     // 如果合约没有返回这些字段，使用默认值
     website: contractProject.website || "",
@@ -145,5 +151,73 @@ export function prepareUserForDisplay(contractUser: any) {
       totalLikes: contractUser.totalLikes, 
       totalCRT: contractUser.totalCRT
     }),
+  }
+}
+
+// 转换合约项目数据到前端格式
+export function convertContractProjectToFrontend(contractData: any): any {
+  return {
+    projectAddress: contractData.projectAddress,
+    name: contractData.name,
+    symbol: contractData.symbol,
+    description: contractData.description,
+    category: contractData.category,
+    // 合约返回8位小数USD，前端期望整数美分，需要除以10^6
+    poolValueUSD: Math.floor((contractData.currentPoolUSD || contractData.poolValueUSD || 0) / 1000000),
+    nextDrawTime: contractData.nextDrawTime,
+    totalParticipants: contractData.totalParticipants,
+    totalComments: contractData.totalComments,
+    totalLikes: contractData.totalLikes,
+    lastActivityTime: contractData.lastActivityTime,
+    isActive: contractData.isActive,
+    creator: contractData.creator,
+    
+    // 前端特有字段
+    website: "",
+    whitepaper: "",
+    colorIndex: getProjectColorIndex(contractData.projectAddress),
+    status: calculateProjectStatus(contractData.isActive, contractData.nextDrawTime),
+  }
+}
+
+// 转换合约用户数据到前端格式
+export function convertContractUserToFrontend(contractData: any): any {
+  return {
+    address: contractData.address,
+    username: shortenAddress(contractData.address),
+    avatar: generateDefaultAvatar(contractData.address),
+    // 处理奖励金额格式
+    totalRewards: formatPoolValue(contractData.claimedRewards || 0),
+    commentTokens: contractData.commentTokens ? Math.floor(contractData.commentTokens / Math.pow(10, 18)) : 0,
+    likeTokens: contractData.likeTokens ? Math.floor(contractData.likeTokens / Math.pow(10, 18)) : 0,
+    totalCRT: contractData.totalCRT ? Math.floor(contractData.totalCRT / Math.pow(10, 18)) : 0,
+    totalComments: contractData.totalComments || 0,
+    totalLikes: contractData.totalLikes || 0,
+    joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    status: checkIsEliteUser(contractData) ? "Elite" : "Active",
+    badge: contractData.badge || "",
+  }
+}
+
+// 批量转换项目数据
+export function batchConvertProjectsForFrontend(contractProjects: any[]): any[] {
+  return contractProjects.map(convertContractProjectToFrontend)
+}
+
+// 转换合约评论数据到前端格式
+export function convertContractCommentToFrontend(contractComment: any): any {
+  return {
+    id: contractComment.id,
+    author: contractComment.author,
+    content: contractComment.content,
+    likes: contractComment.likes,
+    timestamp: contractComment.timestamp,
+    crtReward: Math.floor(contractComment.crtReward / Math.pow(10, 18)),
+    isElite: contractComment.isElite,
+    
+    // 前端特有字段
+    avatar: generateDefaultAvatar(contractComment.author),
+    verified: false,
+    dislikes: 0,
   }
 } 

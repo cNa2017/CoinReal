@@ -63,4 +63,37 @@ contract ProjectFactory is IProjectFactory {
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
+
+    function predictProjectAddress(bytes32 salt) external view returns (address predicted) {
+        return Clones.predictDeterministicAddress(implementation, salt);
+    }
+
+    function isValidProject(address projectAddress) external view returns (bool isValid) {
+        // Check if the address is a valid clone of our implementation
+        return Clones.predictDeterministicAddress(implementation, keccak256(abi.encodePacked(projectAddress))) == projectAddress;
+    }
+
+    function getFactoryStats() external pure returns (
+        uint256 totalProjects,
+        string memory factoryVersion,
+        uint256 creationFee
+    ) {
+        // Simplified implementation
+        return (0, "1.0.0", 0);
+    }
+
+    function updateImplementation(address newImplementation) external view onlyOwner {
+        // Not implemented for security - implementation is immutable
+        revert("Implementation is immutable");
+    }
+
+    function setCreationFee(uint256 fee, address feeToken) external view onlyOwner {
+        // Not implemented in this version
+        revert("Not implemented");
+    }
+
+    function setPaused(bool paused) external view onlyOwner {
+        // Not implemented in this version
+        revert("Not implemented");
+    }
 } 

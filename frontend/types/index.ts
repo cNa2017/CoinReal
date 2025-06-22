@@ -3,12 +3,12 @@ export interface User {
   address: string // 链上唯一标识（钱包地址）
   username?: string // 前端展示用，非链上数据
   avatar?: string // 前端展示用，非链上数据
-  totalRewards: string // 对应合约 claimedRewards
-  commentTokens: number // CRT Token - 评论获得的部分
-  likeTokens: number // CRT Token - 点赞获得的部分
+  totalRewards: string // 对应合约 claimedRewards (格式化显示)
+  commentTokens: number // CRT Token - 评论获得的部分 (已转换为整数)
+  likeTokens: number // CRT Token - 点赞获得的部分 (已转换为整数)
   totalComments: number // 对应合约 UserStats.totalComments
   totalLikes: number // 对应合约 UserStats.totalLikes  
-  totalCRT: number // 对应合约 UserStats.totalCRT (commentTokens + likeTokens)
+  totalCRT: number // 对应合约 UserStats.totalCRT (已转换为整数)
   joinDate: string // 前端展示用，非链上数据
   status: "Active" | "Verified" | "Elite" // Verified为平台认证（未实现），Elite从getEliteComments获取
   badge?: string // 前端展示用，非链上数据
@@ -21,7 +21,7 @@ export interface Project {
   symbol: string // 对应合约 symbol()
   description: string // 对应合约 description()
   category: string // 对应合约 category()
-  poolValueUSD: number // 对应合约 currentPoolUSD (单位：美分，需除以100)
+  poolValueUSD: number // 对应合约 currentPoolUSD/poolValueUSD (已转换为美分)
   nextDrawTime: number // 对应合约 nextDrawTime (Unix时间戳)
   totalParticipants: number // 对应合约 getProjectStats().totalParticipants
   totalComments: number // 对应合约 totalComments()
@@ -44,7 +44,7 @@ export interface Comment {
   content: string // 对应合约 Comment.content
   likes: number // 对应合约 Comment.likes
   timestamp: number // 对应合约 Comment.timestamp (Unix时间戳)
-  crtReward: number // 对应合约 Comment.crtReward (CRT Token奖励)
+  crtReward: number // 对应合约 Comment.crtReward (已转换为整数)
   isElite: boolean // 对应合约 Comment.isElite
   
   // 前端展示用字段（非链上数据）
@@ -65,8 +65,14 @@ export interface Sponsorship {
 export interface UserStats {
   totalComments: number // 对应合约 UserStats.totalComments
   totalLikes: number // 对应合约 UserStats.totalLikes
-  totalCRT: number // 对应合约 UserStats.totalCRT
-  claimedRewards: number // 对应合约 UserStats.claimedRewards
+  totalCRT: number // 对应合约 UserStats.totalCRT (原始wei值)
+  claimedRewards: number // 对应合约 UserStats.claimedRewards (原始wei值)
+}
+
+// 用户CRT分组统计类型
+export interface UserCRTBreakdown {
+  commentTokens: number // 从评论获得的CRT (原始wei值)
+  likeTokens: number // 从点赞获得的CRT (原始wei值)
 }
 
 // 项目统计类型
@@ -74,7 +80,52 @@ export interface ProjectStats {
   totalParticipants: number
   totalLikes: number
   lastActivityTime: number
-  currentPoolUSD: number
+  currentPoolUSD: number // 8位小数精度的USD值
+}
+
+// 用户活动类型
+export interface UserActivity {
+  id: string
+  type: "comment" | "like" | "sponsor" | "reward" | "achievement"
+  action: string
+  target: string
+  reward: string
+  timestamp: string
+  description: string
+}
+
+// 合约项目详细数据类型（对应合约ProjectDetailedData）
+export interface ContractProjectData {
+  projectAddress: string
+  name: string
+  symbol: string
+  description: string
+  totalParticipants: number
+  totalComments: number
+  totalLikes: number
+  poolValueUSD: number // 8位小数精度
+  nextDrawTime: number
+  category: string
+  isActive: boolean
+}
+
+// 合约评论数据类型（对应合约Comment结构）
+export interface ContractComment {
+  id: number
+  author: string
+  content: string
+  likes: number
+  crtReward: number // 原始wei值
+  isElite: boolean
+  timestamp: number
+}
+
+// 合约用户统计数据类型
+export interface ContractUserStats {
+  totalComments: number
+  totalLikes: number
+  totalCRT: number // 原始wei值
+  claimedRewards: number // 原始wei值
 }
 
 // 链相关类型
@@ -102,6 +153,35 @@ export interface WalletState {
   balance?: string
 }
 
+// 分页查询参数
+export interface PaginationParams {
+  offset: number
+  limit: number
+}
+
+// 分页响应类型
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  offset: number
+  limit: number
+  hasMore: boolean
+}
+
+// 合约错误类型
+export interface ContractError {
+  code: string
+  message: string
+  data?: any
+}
+
+// 交易状态类型
+export interface TransactionStatus {
+  hash?: string
+  status: 'pending' | 'success' | 'failed'
+  confirmations?: number
+}
+
 // 颜色配置（替代原来的Project.color）
 export const PROJECT_COLORS = [
   "from-orange-500 to-yellow-500",    // Bitcoin风格
@@ -114,4 +194,36 @@ export const PROJECT_COLORS = [
   "from-purple-600 to-indigo-500",    // Polygon风格
   "from-green-500 to-teal-500",       // 通用绿色
   "from-gray-500 to-slate-500"        // 通用灰色
-] 
+]
+
+// 数据精度常量
+export const PRECISION_CONSTANTS = {
+  CRT_DECIMALS: 18,           // CRT Token精度
+  USD_DECIMALS: 8,            // USD价值精度（Chainlink标准）
+  ETH_DECIMALS: 18,           // ETH精度
+  USDC_DECIMALS: 6,           // USDC精度
+  CENTS_FACTOR: 100,          // 美分转换因子
+} as const
+
+// 活动类型枚举
+export enum ActivityType {
+  COMMENT = 0,
+  LIKE = 1,
+  SPONSOR = 2,
+  REWARD = 3
+}
+
+// 排序类型枚举
+export enum ProjectSortBy {
+  PARTICIPANTS = 0,
+  COMMENTS = 1,
+  POOL_VALUE = 2,
+  LAST_ACTIVITY = 3
+}
+
+export enum UserSortBy {
+  TOTAL_CRT = 0,
+  COMMENTS = 1,
+  LIKES = 2,
+  REWARDS = 3
+} 

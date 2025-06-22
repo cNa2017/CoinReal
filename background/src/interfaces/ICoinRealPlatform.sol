@@ -90,6 +90,22 @@ interface ICoinRealPlatform {
         bool isActive;
     }
     
+    /**
+     * @dev 用户活动记录结构
+     * @param activityType 活动类型（0:评论, 1:点赞, 2:赞助, 3:获得奖励）
+     * @param projectAddress 相关项目地址
+     * @param timestamp 活动时间戳
+     * @param details 活动详情（评论内容、点赞评论ID等）
+     * @param reward 获得的CRT奖励
+     */
+    struct UserActivity {
+        uint8 activityType;
+        address projectAddress;
+        uint32 timestamp;
+        string details;
+        uint256 reward;
+    }
+    
     // ==================== 核心功能接口 ====================
     
     /**
@@ -236,6 +252,23 @@ interface ICoinRealPlatform {
     ) external view returns (
         address[] memory users,
         uint256[] memory scores
+    );
+    
+    /**
+     * @notice 获取平台用户活动历史
+     * @dev 跨项目的用户活动记录汇总
+     * 
+     * @param user 用户地址
+     * @param offset 起始位置
+     * @param limit 返回数量
+     * @return activities 用户活动记录数组
+     */
+    function getUserPlatformActivity(
+        address user,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (
+        UserActivity[] memory activities
     );
     
     /**
