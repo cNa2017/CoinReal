@@ -17,9 +17,9 @@ const navigationItems = [
 ]
 
 const quickLinks = [
-  { name: "Bitcoin", href: "/projects/bitcoin", symbol: "BTC", color: "text-orange-400" },
-  { name: "Ethereum", href: "/projects/ethereum", symbol: "ETH", color: "text-blue-400" },
-  { name: "Solana", href: "/projects/solana", symbol: "SOL", color: "text-purple-400" },
+  { name: "Bitcoin", href: "/projects/0xdec0b45cd042aabe94be7a484b300b0d09bbc72a", symbol: "BTC", color: "text-orange-400" },
+  { name: "Ethereum", href: "/projects/0x8d2d84edff317afa23323f13cf9edb8fd9cb4b62", symbol: "ETH", color: "text-blue-400" },
+  { name: "Solana", href: "/projects/0x7e643d5c8b6c8f9d784ae4249c45aa757166bdec", symbol: "SOL", color: "text-purple-400" },
 ]
 
 export function Navigation() {

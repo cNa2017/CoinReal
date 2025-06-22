@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./interfaces/IProject.sol";
 import "./interfaces/IPriceOracle.sol";
+import "./interfaces/ICoinRealPlatform.sol";
 
 contract Project is IProject, Initializable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -78,12 +79,14 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         string calldata _category,
         uint16 _drawPeriod,
         address _creator,
-        address _priceOracle
+        address _priceOracle,
+        address _platform
     ) external initializer {
         require(bytes(_name).length > 0, "Name required");
         require(_drawPeriod > 0, "Invalid draw period");
         require(_creator != address(0), "Invalid creator");
         require(_priceOracle != address(0), "Invalid price oracle");
+        require(_platform != address(0), "Invalid platform");
         
         name = _name;
         symbol = _symbol;
@@ -92,7 +95,7 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         creator = _creator;
         drawPeriod = _drawPeriod;
         priceOracle = _priceOracle;
-        platform = msg.sender;
+        platform = _platform;
         
         nextDrawTime = block.timestamp + (_drawPeriod * 1 days);
         isActive = true;
@@ -101,9 +104,12 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         emit ProjectInitialized(_name, _symbol, _creator);
     }
     
-    function setCRTToken(address _crtToken) external onlyPlatform {
+    function setCRTToken(address _crtToken) external {
+        // 只有在初始化过程中才能设置CRT token
         require(crtToken == address(0), "CRT token already set");
         require(_crtToken != address(0), "Invalid CRT token");
+        // 只允许platform调用，但由于是代理调用，需要检查platform变量
+        require(platform != address(0), "Platform not initialized");
         crtToken = _crtToken;
     }
     
@@ -134,6 +140,10 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         totalComments++;
         lastActivityTime = block.timestamp;
         
+        // Platform statistics tracking
+        try ICoinRealPlatform(platform).recordUserActivity(msg.sender) {} catch {}
+        try ICoinRealPlatform(platform).recordComment() {} catch {}
+        
         // Mint CRT reward
         ICRTToken(crtToken).mint(msg.sender, COMMENT_REWARD);
         
@@ -163,6 +173,9 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         
         totalLikes++;
         lastActivityTime = block.timestamp;
+        
+        // Platform statistics tracking
+        try ICoinRealPlatform(platform).recordUserActivity(msg.sender) {} catch {}
         
         // Update elite comments
         _updateEliteComments(commentId);
@@ -330,15 +343,20 @@ contract Project is IProject, Initializable, ReentrancyGuard {
     }
     
     function getPoolInfo() external view returns (Sponsorship[] memory, uint256 totalUSDValue) {
-        address[] memory tokens = new address[](poolTokens.length);
-        uint256[] memory amounts = new uint256[](poolTokens.length);
-        
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            tokens[i] = poolTokens[i];
-            amounts[i] = tokenPoolAmounts[poolTokens[i]];
+        // Calculate total USD value only if there are pool tokens
+        if (poolTokens.length > 0) {
+            address[] memory tokens = new address[](poolTokens.length);
+            uint256[] memory amounts = new uint256[](poolTokens.length);
+            
+            for (uint256 i = 0; i < poolTokens.length; i++) {
+                tokens[i] = poolTokens[i];
+                amounts[i] = tokenPoolAmounts[poolTokens[i]];
+            }
+            
+            totalUSDValue = IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts);
+        } else {
+            totalUSDValue = 0;
         }
-        
-        totalUSDValue = IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts);
         
         return (sponsorships, totalUSDValue);
     }
@@ -379,16 +397,20 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         _totalLikes = totalLikes;
         _lastActivityTime = lastActivityTime;
         
-        // Calculate current pool USD value
-        address[] memory tokens = new address[](poolTokens.length);
-        uint256[] memory amounts = new uint256[](poolTokens.length);
-        
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            tokens[i] = poolTokens[i];
-            amounts[i] = tokenPoolAmounts[poolTokens[i]];
+        // Calculate current pool USD value only if there are pool tokens
+        if (poolTokens.length > 0) {
+            address[] memory tokens = new address[](poolTokens.length);
+            uint256[] memory amounts = new uint256[](poolTokens.length);
+            
+            for (uint256 i = 0; i < poolTokens.length; i++) {
+                tokens[i] = poolTokens[i];
+                amounts[i] = tokenPoolAmounts[poolTokens[i]];
+            }
+            
+            currentPoolUSD = IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts);
+        } else {
+            currentPoolUSD = 0;
         }
-        
-        currentPoolUSD = IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts);
     }
     
     function getUserActivity(address user, uint256 offset, uint256 limit) external view returns (

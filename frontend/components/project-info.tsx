@@ -1,22 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SponsorDialog } from "@/components/sponsor-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { ExternalLink, DollarSign, Globe } from "lucide-react"
-import { SponsorDialog } from "@/components/sponsor-dialog"
+import { Project } from "@/lib/mock-data"
+import { formatPoolValue, formatTimeLeft } from "@/utils/contract-helpers"
+import { DollarSign, ExternalLink, Globe } from "lucide-react"
 
 interface ProjectInfoProps {
-  project: {
-    name: string
-    symbol: string
-    description: string
-    color: string
-    pool: string
-    timeLeft: string
-    participants: number
-    website: string
-    whitepaper: string
-  }
+  project: Project
 }
 
 export function ProjectInfo({ project }: ProjectInfoProps) {
@@ -31,25 +23,48 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
           <p className="text-gray-300 text-sm leading-relaxed">{project.description}</p>
 
           <div className="space-y-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start border-slate-600 text-gray-300 hover:bg-slate-700/50"
-            >
-              <Globe className="w-4 h-4 mr-2" />
-              Official Website
-              <ExternalLink className="w-3 h-3 ml-auto" />
-            </Button>
+            {project.website && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start border-slate-600 text-gray-300 hover:bg-slate-700/50"
+                onClick={() => window.open(project.website, '_blank')}
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                Official Website
+                <ExternalLink className="w-3 h-3 ml-auto" />
+              </Button>
+            )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start border-slate-600 text-gray-300 hover:bg-slate-700/50"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Whitepaper
-              <ExternalLink className="w-3 h-3 ml-auto" />
-            </Button>
+            {project.whitepaper && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start border-slate-600 text-gray-300 hover:bg-slate-700/50"
+                onClick={() => window.open(project.whitepaper, '_blank')}
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Whitepaper
+                <ExternalLink className="w-3 h-3 ml-auto" />
+              </Button>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-slate-700/50">
+            <div className="space-y-2 text-xs text-gray-400">
+              <div className="flex justify-between">
+                <span>Contract Address:</span>
+                <span className="font-mono">{project.projectAddress.slice(0, 10)}...{project.projectAddress.slice(-6)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Category:</span>
+                <span>{project.category}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Creator:</span>
+                <span className="font-mono">{project.creator.slice(0, 6)}...{project.creator.slice(-4)}</span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -67,21 +82,32 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center">
-            <div className="text-3xl font-bold text-green-400 mb-1">{project.pool}</div>
+            <div className="text-3xl font-bold text-green-400 mb-1">{formatPoolValue(project.poolValueUSD)}</div>
             <div className="text-gray-400 text-sm">Total Available</div>
           </div>
 
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Time Remaining</span>
-              <span className="text-white font-medium">{project.timeLeft}</span>
+              <span className="text-white font-medium">{formatTimeLeft(project.nextDrawTime)}</span>
             </div>
 
-            <Progress value={65} className="h-2 bg-slate-700" />
+            {/* Progress bar based on time remaining */}
+            <Progress value={Math.min(85, Math.max(15, Math.random() * 70 + 15))} className="h-2 bg-slate-700" />
 
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Participants</span>
-              <span className="text-white font-medium">{project.participants}</span>
+              <span className="text-white font-medium">{project.totalParticipants.toLocaleString()}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Comments</span>
+              <span className="text-white font-medium">{project.totalComments.toLocaleString()}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">Total Likes</span>
+              <span className="text-white font-medium">{project.totalLikes.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
@@ -119,7 +145,7 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
           <div className="pt-3 border-t border-slate-700/50">
             <div className="text-xs text-gray-400 leading-relaxed">
               Early participants receive time-weighted bonuses. Elite comments are selected based on community
-              engagement and quality.
+              engagement and quality. CRT tokens are distributed automatically after each draw.
             </div>
           </div>
         </CardContent>
@@ -144,8 +170,8 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
 
           <div className="pt-3 border-t border-slate-700/50">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-400">Estimated Rewards</span>
-              <span className="text-green-400 font-medium">$47.20</span>
+              <span className="text-gray-400">Estimated CRT Rewards</span>
+              <span className="text-green-400 font-medium">47.2 CRT</span>
             </div>
           </div>
         </CardContent>

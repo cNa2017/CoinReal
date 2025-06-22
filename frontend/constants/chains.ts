@@ -1,6 +1,14 @@
 import { anvil, arbitrum, bsc, mainnet, polygon, sepolia } from 'wagmi/chains'
 
-export const SUPPORTED_CHAINS = [
+export type SupportedChain = {
+  id: number
+  name: string
+  symbol: string
+  color: string
+  chain: any
+}
+
+export const SUPPORTED_CHAINS: SupportedChain[] = [
   {
     id: anvil.id,
     name: "Anvil 本地网络",

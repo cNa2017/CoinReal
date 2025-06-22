@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { mockApi, Project } from "@/lib/mock-data"
-import { ExternalLink, MessageSquare, TrendingDown, TrendingUp, Users } from "lucide-react"
+import { formatPoolValue, getProjectColor } from "@/utils/contract-helpers"
+import { ExternalLink, MessageSquare, Users } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -57,16 +58,16 @@ export default function LeaderboardPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-cyan-400 mb-2">
-                ${projects.reduce((sum, p) => sum + parseFloat(p.tvl?.replace(/[\$B]/g, "") || "0"), 0).toFixed(1)}T
+                {formatPoolValue(projects.reduce((sum, p) => sum + p.poolValueUSD, 0))}
               </div>
-              <div className="text-gray-400 text-sm">Total Value Locked</div>
+              <div className="text-gray-400 text-sm">Total Pool Value</div>
             </CardContent>
           </Card>
 
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-purple-400 mb-2">
-                {projects.reduce((sum, p) => sum + p.participants, 0).toLocaleString()}
+                {projects.reduce((sum, p) => sum + p.totalParticipants, 0).toLocaleString()}
               </div>
               <div className="text-gray-400 text-sm">Active Participants</div>
             </CardContent>
@@ -75,7 +76,7 @@ export default function LeaderboardPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-green-400 mb-2">
-                {projects.reduce((sum, p) => sum + p.comments, 0).toLocaleString()}
+                {projects.reduce((sum, p) => sum + p.totalComments, 0).toLocaleString()}
               </div>
               <div className="text-gray-400 text-sm">Total Comments</div>
             </CardContent>
@@ -84,9 +85,9 @@ export default function LeaderboardPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-yellow-400 mb-2">
-                ${projects.reduce((sum, p) => sum + parseFloat(p.pool.replace(/[\$,]/g, "")), 0).toLocaleString()}
+                {projects.reduce((sum, p) => sum + p.totalLikes, 0).toLocaleString()}
               </div>
-              <div className="text-gray-400 text-sm">Total Reward Pool</div>
+              <div className="text-gray-400 text-sm">Total Likes</div>
             </CardContent>
           </Card>
         </div>
@@ -103,23 +104,23 @@ export default function LeaderboardPage() {
                   <TableHead className="text-gray-400">#</TableHead>
                   <TableHead className="text-gray-400">Project</TableHead>
                   <TableHead className="text-gray-400">Category</TableHead>
-                  <TableHead className="text-gray-400">TVL</TableHead>
-                  <TableHead className="text-gray-400">24h Change</TableHead>
+                  <TableHead className="text-gray-400">Pool Value</TableHead>
+                  <TableHead className="text-gray-400">Status</TableHead>
                   <TableHead className="text-gray-400">Participants</TableHead>
                   <TableHead className="text-gray-400">Comments</TableHead>
-                  <TableHead className="text-gray-400">Reward Pool</TableHead>
+                  <TableHead className="text-gray-400">Likes</TableHead>
                   <TableHead className="text-gray-400">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {projects.map((project, index) => (
-                  <TableRow key={project.id} className="border-slate-700 hover:bg-slate-700/30">
+                  <TableRow key={project.projectAddress} className="border-slate-700 hover:bg-slate-700/30">
                     <TableCell className="text-white font-medium">#{index + 1}</TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-8 h-8 rounded-full bg-gradient-to-r ${project.color} flex items-center justify-center text-white font-bold text-sm`}
+                          className={`w-8 h-8 rounded-full bg-gradient-to-r ${getProjectColor(project.projectAddress)} flex items-center justify-center text-white font-bold text-sm`}
                         >
                           {project.symbol.slice(0, 2)}
                         </div>
@@ -136,42 +137,41 @@ export default function LeaderboardPage() {
                       </Badge>
                     </TableCell>
 
-                    <TableCell className="text-white font-medium">{project.tvl || 'N/A'}</TableCell>
+                    <TableCell className="text-white font-medium">{formatPoolValue(project.poolValueUSD)}</TableCell>
 
                     <TableCell>
-                      <div
-                        className={`flex items-center gap-1 ${(project.change24h || 0) >= 0 ? "text-green-400" : "text-red-400"}`}
+                      <Badge 
+                        variant="secondary" 
+                        className={`${
+                          project.status === "Active" 
+                            ? "bg-green-500/20 text-green-400 border-green-500/30"
+                            : project.status === "New"
+                            ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                            : "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                        }`}
                       >
-                        {(project.change24h || 0) >= 0 ? (
-                          <TrendingUp className="w-4 h-4" />
-                        ) : (
-                          <TrendingDown className="w-4 h-4" />
-                        )}
-                        <span className="font-medium">
-                          {(project.change24h || 0) >= 0 ? "+" : ""}
-                          {(project.change24h || 0).toFixed(2)}%
-                        </span>
-                      </div>
+                        {project.status}
+                      </Badge>
                     </TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-1 text-gray-300">
                         <Users className="w-4 h-4" />
-                        <span>{project.participants.toLocaleString()}</span>
+                        <span>{project.totalParticipants.toLocaleString()}</span>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-1 text-gray-300">
                         <MessageSquare className="w-4 h-4" />
-                        <span>{project.comments.toLocaleString()}</span>
+                        <span>{project.totalComments.toLocaleString()}</span>
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-cyan-400 font-medium">{project.pool}</TableCell>
+                    <TableCell className="text-cyan-400 font-medium">{project.totalLikes.toLocaleString()}</TableCell>
 
                     <TableCell>
-                      <Link href={`/projects/${project.id}`}>
+                      <Link href={`/projects/${project.projectAddress}`}>
                         <Button size="sm" variant="outline" className="border-slate-600 text-gray-300 hover:bg-slate-700">
                           <ExternalLink className="w-3 h-3 mr-1" />
                           View

@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { mockApi, Project } from "@/lib/mock-data"
-import { MessageSquare, ThumbsUp, TrendingUp, Users } from "lucide-react"
+import { formatPoolValue, formatTimeLeft, getProjectColor } from "@/utils/contract-helpers"
+import { MessageSquare, ThumbsUp, Users } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -28,8 +29,6 @@ export default function ProjectsPage() {
       setLoading(false)
     }
   }
-
-
 
   if (loading) {
     return (
@@ -69,7 +68,7 @@ export default function ProjectsPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-purple-400 mb-2">
-                {projects.reduce((sum, p) => sum + p.participants, 0).toLocaleString()}
+                {projects.reduce((sum, p) => sum + p.totalParticipants, 0).toLocaleString()}
               </div>
               <div className="text-gray-400 text-sm">Total Participants</div>
             </CardContent>
@@ -78,7 +77,7 @@ export default function ProjectsPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-green-400 mb-2">
-                {projects.reduce((sum, p) => sum + p.comments, 0).toLocaleString()}
+                {projects.reduce((sum, p) => sum + p.totalComments, 0).toLocaleString()}
               </div>
               <div className="text-gray-400 text-sm">Total Comments</div>
             </CardContent>
@@ -87,25 +86,23 @@ export default function ProjectsPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-yellow-400 mb-2">
-                ${projects.reduce((sum, p) => sum + parseFloat(p.pool.replace(/[\$,]/g, "")), 0).toLocaleString()}
+                {formatPoolValue(projects.reduce((sum, p) => sum + p.poolValueUSD, 0))}
               </div>
               <div className="text-gray-400 text-sm">Total Pool Amount</div>
             </CardContent>
           </Card>
         </div>
 
-
-
         {/* Projects Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-              <Link key={project.id} href={`/projects/${project.id}`}>
+              <Link key={project.projectAddress} href={`/projects/${project.projectAddress}`}>
                 <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-800/70 transition-all duration-300 cursor-pointer group h-full">
                   <CardHeader>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-12 h-12 rounded-full bg-gradient-to-r ${project.color} flex items-center justify-center text-white font-bold text-lg`}
+                          className={`w-12 h-12 rounded-full bg-gradient-to-r ${getProjectColor(project.projectAddress)} flex items-center justify-center text-white font-bold text-lg`}
                         >
                           {project.symbol.slice(0, 2)}
                         </div>
@@ -127,7 +124,7 @@ export default function ProjectsPage() {
                               : "bg-gray-500/20 text-gray-400 border-gray-500/30"
                           }`}
                         >
-                          {project.status === "Active" ? "Active" : project.status === "New" ? "New" : project.status}
+                          {project.status}
                         </Badge>
                         <Badge variant="outline" className="text-xs border-slate-600 text-gray-300">
                           {project.category}
@@ -143,35 +140,28 @@ export default function ProjectsPage() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2 text-gray-400">
                           <Users className="w-4 h-4" />
-                          <span className="text-sm">{project.participants.toLocaleString()} participants</span>
+                          <span className="text-sm">{project.totalParticipants.toLocaleString()} participants</span>
                         </div>
-                        <div className="text-cyan-400 font-semibold">{project.pool} pool</div>
+                        <div className="text-cyan-400 font-semibold">{formatPoolValue(project.poolValueUSD)} pool</div>
                       </div>
 
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2 text-gray-400">
                           <MessageSquare className="w-4 h-4" />
-                          <span className="text-sm">{project.comments.toLocaleString()} comments</span>
+                          <span className="text-sm">{project.totalComments.toLocaleString()} comments</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-400">
                           <ThumbsUp className="w-4 h-4" />
-                          <span className="text-sm">{project.likes.toLocaleString()} likes</span>
+                          <span className="text-sm">{project.totalLikes.toLocaleString()} likes</span>
                         </div>
                       </div>
 
-                      {project.change24h !== undefined && (
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-700/50">
-                          <div className="text-gray-400 text-sm">24h change</div>
-                          <div
-                            className={`flex items-center gap-1 text-sm font-medium ${
-                              project.change24h >= 0 ? "text-green-400" : "text-red-400"
-                            }`}
-                          >
-                            <TrendingUp className={`w-3 h-3 ${project.change24h < 0 ? "rotate-180" : ""}`} />
-                            {project.change24h >= 0 ? "+" : ""}{project.change24h}%
-                          </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-slate-700/50">
+                        <div className="text-gray-400 text-sm">Next draw</div>
+                        <div className="text-purple-400 font-medium text-sm">
+                          {formatTimeLeft(project.nextDrawTime)}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </CardHeader>
                 </Card>

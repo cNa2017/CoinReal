@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./interfaces/IProjectFactory.sol";
 import "./interfaces/IProject.sol";
 
@@ -29,16 +30,14 @@ contract ProjectFactory is IProjectFactory {
         string calldata category,
         uint16 drawPeriod,
         address creator,
-        address priceOracle
+        address priceOracle,
+        address platform
     ) external returns (address projectAddress) {
         // Use CREATE2 for deterministic addresses
         bytes32 salt = keccak256(abi.encodePacked(name, symbol, block.timestamp));
         
-        // Deploy minimal proxy
-        bytes memory bytecode = _getCloneBytecode(implementation);
-        assembly {
-            projectAddress := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
-        }
+        // Deploy minimal proxy using Clones library
+        projectAddress = Clones.cloneDeterministic(implementation, salt);
         
         require(projectAddress != address(0), "Clone creation failed");
         
@@ -50,22 +49,13 @@ contract ProjectFactory is IProjectFactory {
             category,
             drawPeriod,
             creator,
-            priceOracle
+            priceOracle,
+            platform
         );
         
         emit ProjectCreated(projectAddress, creator);
     }
-    
-    function _getCloneBytecode(address target) private pure returns (bytes memory) {
-        bytes memory bytecode = new bytes(45);
-        assembly {
-            // Store the bytecode
-            mstore(add(bytecode, 0x20), 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
-            mstore(add(bytecode, 0x34), shl(0x60, target))
-            mstore(add(bytecode, 0x48), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
-        }
-        return bytecode;
-    }
+
     
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Invalid owner");

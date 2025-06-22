@@ -1,50 +1,54 @@
-// Mock data type definitions
+// Mock data type definitions - 兼容合约接口
 export interface Project {
-  id: string
-  name: string
-  symbol: string
-  description: string
-  color: string
-  pool: string
-  timeLeft: string
-  participants: number
-  comments: number
-  likes: number
-  website: string
-  whitepaper: string
-  status: "Active" | "New" | "Paused" | "Ended"
-  category: string
-  tvl?: string
-  change24h?: number
-  rank?: number
+  projectAddress: string // 合约地址作为唯一标识
+  name: string // 对应合约 name()
+  symbol: string // 对应合约 symbol()
+  description: string // 对应合约 description()
+  category: string // 对应合约 category()
+  poolValueUSD: number // 对应合约 currentPoolUSD (单位：美分)
+  nextDrawTime: number // 对应合约 nextDrawTime (Unix时间戳)
+  totalParticipants: number // 对应合约 getProjectStats().totalParticipants
+  totalComments: number // 对应合约 totalComments()
+  totalLikes: number // 对应合约 getProjectStats().totalLikes
+  lastActivityTime: number // 对应合约 getProjectStats().lastActivityTime
+  isActive: boolean // 对应合约 isActive()
+  creator: string // 对应合约 creator()
+  
+  // 前端展示用字段（非链上数据）
+  website?: string // 前端保留，默认为空
+  whitepaper?: string // 前端保留，默认为空
+  colorIndex?: number // 用于循环选择10个固定颜色中的一个
+  status: "Active" | "New" | "Paused" | "Ended" // 基于 isActive 计算
 }
 
 export interface Comment {
-  id: number
-  author: string
-  avatar: string
-  content: string
-  likes: number
-  dislikes: number
-  timestamp: string
-  verified: boolean
-  tokens: number
-  projectId: string
+  id: number // 对应合约 Comment.id
+  author: string // 对应合约 Comment.author (钱包地址)
+  content: string // 对应合约 Comment.content
+  likes: number // 对应合约 Comment.likes
+  timestamp: number // 对应合约 Comment.timestamp (Unix时间戳)
+  crtReward: number // 对应合约 Comment.crtReward (CRT Token奖励)
+  isElite: boolean // 对应合约 Comment.isElite
+  
+  // 前端展示用字段（非链上数据）
+  avatar?: string // 前端生成默认头像
+  verified?: boolean // 平台认证状态（暂未实现）
+  dislikes?: number // 保留mock数据，暂不实现
 }
 
 export interface User {
-  id: string
-  name: string
-  avatar: string
-  walletAddress: string
-  totalRewards: string
-  commentTokens: number
-  likeTokens: number
-  totalComments: number
-  totalLikes: number
-  joinDate: string
-  status: "Active" | "Verified" | "Elite"
-  badge?: string
+  address: string // 链上唯一标识（钱包地址）
+  username?: string // 前端展示用，非链上数据
+  avatar?: string // 前端展示用，非链上数据
+  totalRewards: string // 对应合约 claimedRewards
+  commentTokens: number // CRT Token - 评论获得的部分
+  likeTokens: number // CRT Token - 点赞获得的部分
+  totalComments: number // 对应合约 UserStats.totalComments
+  totalLikes: number // 对应合约 UserStats.totalLikes  
+  totalCRT: number // 对应合约 UserStats.totalCRT (commentTokens + likeTokens)
+  joinDate: string // 前端展示用，非链上数据
+  status: "Active" | "Verified" | "Elite" // Verified为平台认证（未实现），Elite从getEliteComments获取
+  badge?: string // 前端展示用，非链上数据
   tokenBalances?: {
     name: string
     symbol: string
@@ -54,338 +58,285 @@ export interface User {
   }[]
 }
 
-// Mock project data
+// Mock project data - 使用合约兼容的数据结构
 export const mockProjects: Project[] = [
   {
-    id: "bitcoin",
+    projectAddress: "0xdec0b45cd042aabe94be7a484b300b0d09bbc72a", // Bitcoin项目合约地址
     name: "Bitcoin",
     symbol: "BTC",
     description: "The original cryptocurrency and digital gold standard. Bitcoin is a decentralized digital currency that enables peer-to-peer transactions without the need for intermediaries.",
-    color: "from-orange-500 to-yellow-500",
-    pool: "$45,230",
-    timeLeft: "5 days",
-    participants: 15420,
-    comments: 8934,
-    likes: 23456,
-    website: "https://bitcoin.org",
-    whitepaper: "https://bitcoin.org/bitcoin.pdf",
-    status: "Active",
     category: "Store of Value",
-    tvl: "$847.2B",
-    change24h: 2.34,
-    rank: 1,
+    poolValueUSD: 4523000, // $45,230 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (5 * 24 * 60 * 60), // 5 days from now
+    totalParticipants: 15420,
+    totalComments: 8934,
+    totalLikes: 23456,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
+    isActive: true,
+    creator: "0x1234567890123456789012345678901234567890",
+    website: "", // 前端保留为空
+    whitepaper: "", // 前端保留为空
+    colorIndex: 0, // 对应PROJECT_COLORS[0]
+    status: "Active",
   },
   {
-    id: "ethereum",
+    projectAddress: "0x8d2d84edff317afa23323f13cf9edb8fd9cb4b62", // Ethereum项目合约地址
     name: "Ethereum",
     symbol: "ETH",
     description: "Smart contract platform powering DeFi and NFTs. Ethereum is a decentralized platform that runs smart contracts and enables developers to build decentralized applications.",
-    color: "from-blue-500 to-purple-500",
-    pool: "$32,450",
-    timeLeft: "3 days",
-    participants: 12890,
-    comments: 7234,
-    likes: 18923,
-    website: "https://ethereum.org",
-    whitepaper: "https://ethereum.org/en/whitepaper/",
-    status: "Active",
     category: "Smart Contracts",
-    tvl: "$423.8B",
-    change24h: -1.23,
-    rank: 2,
+    poolValueUSD: 3245000, // $32,450 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (3 * 24 * 60 * 60), // 3 days from now
+    totalParticipants: 12890,
+    totalComments: 7234,
+    totalLikes: 18923,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 1800, // 30 minutes ago
+    isActive: true,
+    creator: "0x2345678901234567890123456789012345678901",
+    website: "",
+    whitepaper: "",
+    colorIndex: 1,
+    status: "Active",
   },
   {
-    id: "solana",
+    projectAddress: "0x7e643d5c8b6c8f9d784ae4249c45aa757166bdec", // Solana项目合约地址
     name: "Solana",
     symbol: "SOL",
     description: "High-performance blockchain for decentralized applications. Solana is designed to facilitate decentralized app (DApp) creation with fast transaction speeds and low costs.",
-    color: "from-purple-500 to-pink-500",
-    pool: "$18,920",
-    timeLeft: "7 days",
-    participants: 8934,
-    comments: 4567,
-    likes: 12678,
-    website: "https://solana.com",
-    whitepaper: "https://solana.com/solana-whitepaper.pdf",
-    status: "Active",
     category: "Layer 1",
-    tvl: "$89.4B",
-    change24h: 5.67,
-    rank: 3,
+    poolValueUSD: 1892000, // $18,920 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60), // 7 days from now
+    totalParticipants: 8934,
+    totalComments: 4567,
+    totalLikes: 12678,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 7200, // 2 hours ago
+    isActive: true,
+    creator: "0x3456789012345678901234567890123456789012",
+    website: "",
+    whitepaper: "",
+    colorIndex: 2,
+    status: "Active",
   },
   {
-    id: "cardano",
+    projectAddress: "0x4567890123456789012345678901234567890123",
     name: "Cardano",
     symbol: "ADA",
     description: "Research-driven blockchain platform with peer-reviewed development approach. Focuses on sustainability, interoperability, and scalability.",
-    color: "from-blue-600 to-cyan-500",
-    pool: "$12,340",
-    timeLeft: "4 days",
-    participants: 6234,
-    comments: 3421,
-    likes: 8765,
-    website: "https://cardano.org",
-    whitepaper: "https://cardano.org/whitepaper",
-    status: "Active",
     category: "Layer 1",
-    tvl: "$45.2B",
-    change24h: 1.89,
-    rank: 4,
+    poolValueUSD: 1234000, // $12,340 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (4 * 24 * 60 * 60), // 4 days from now
+    totalParticipants: 6234,
+    totalComments: 3421,
+    totalLikes: 8765,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 10800, // 3 hours ago
+    isActive: true,
+    creator: "0x4567890123456789012345678901234567890123",
+    website: "",
+    whitepaper: "",
+    colorIndex: 3,
+    status: "Active",
   },
   {
-    id: "polkadot",
+    projectAddress: "0x5678901234567890123456789012345678901234",
     name: "Polkadot",
     symbol: "DOT",
     description: "Multi-chain protocol enabling blockchain interoperability. Allows different blockchains to transfer messages and value in a trust-free fashion.",
-    color: "from-pink-500 to-rose-500",
-    pool: "$9,870",
-    timeLeft: "6 days",
-    participants: 4567,
-    comments: 2890,
-    likes: 6543,
-    website: "https://polkadot.network",
-    whitepaper: "https://polkadot.network/whitepaper-v1",
-    status: "Active",
     category: "Interoperability",
-    tvl: "$32.1B",
-    change24h: -0.45,
-    rank: 5,
+    poolValueUSD: 987000, // $9,870 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (6 * 24 * 60 * 60), // 6 days from now
+    totalParticipants: 4567,
+    totalComments: 2890,
+    totalLikes: 6543,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 14400, // 4 hours ago
+    isActive: true,
+    creator: "0x5678901234567890123456789012345678901234",
+    website: "",
+    whitepaper: "",
+    colorIndex: 4,
+    status: "Active",
   },
   {
-    id: "chainlink",
+    projectAddress: "0x6789012345678901234567890123456789012345",
     name: "Chainlink",
     symbol: "LINK",
     description: "Decentralized oracle network connecting blockchains to real-world data. Enables smart contracts to securely interact with external data sources.",
-    color: "from-blue-500 to-indigo-500",
-    pool: "$8,450",
-    timeLeft: "8 days",
-    participants: 3890,
-    comments: 2345,
-    likes: 5432,
-    website: "https://chain.link",
-    whitepaper: "https://link.smartcontract.com/whitepaper",
-    status: "Active",
     category: "Oracle",
-    tvl: "$28.9B",
-    change24h: 3.21,
-    rank: 6,
+    poolValueUSD: 845000, // $8,450 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (8 * 24 * 60 * 60), // 8 days from now
+    totalParticipants: 3890,
+    totalComments: 2345,
+    totalLikes: 5432,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 18000, // 5 hours ago
+    isActive: true,
+    creator: "0x6789012345678901234567890123456789012345",
+    website: "",
+    whitepaper: "",
+    colorIndex: 5,
+    status: "Active",
   },
   {
-    id: "avalanche",
+    projectAddress: "0x7890123456789012345678901234567890123456",
     name: "Avalanche",
     symbol: "AVAX",
     description: "Platform for decentralized applications and custom blockchain networks. Designed to be fast, low-cost, and environmentally friendly.",
-    color: "from-red-500 to-pink-500",
-    pool: "$7,230",
-    timeLeft: "5 days",
-    participants: 3456,
-    comments: 1987,
-    likes: 4321,
-    website: "https://avax.network",
-    whitepaper: "https://avalanche.network/whitepapers",
-    status: "Active",
     category: "Layer 1",
-    tvl: "$24.7B",
-    change24h: 2.78,
-    rank: 7,
+    poolValueUSD: 723000, // $7,230 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (5 * 24 * 60 * 60), // 5 days from now
+    totalParticipants: 3456,
+    totalComments: 1987,
+    totalLikes: 4321,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 21600, // 6 hours ago
+    isActive: true,
+    creator: "0x7890123456789012345678901234567890123456",
+    website: "",
+    whitepaper: "",
+    colorIndex: 6,
+    status: "Active",
   },
   {
-    id: "polygon",
+    projectAddress: "0x8901234567890123456789012345678901234567",
     name: "Polygon",
     symbol: "MATIC",
     description: "Ethereum scaling solution providing faster and cheaper transactions. Offers Layer 2 scaling solutions for Ethereum.",
-    color: "from-purple-600 to-indigo-500",
-    pool: "$5,890",
-    timeLeft: "9 days",
-    participants: 2890,
-    comments: 1654,
-    likes: 3210,
-    website: "https://polygon.technology",
-    whitepaper: "https://polygon.technology/lightpaper-polygon.pdf",
-    status: "Active",
     category: "Layer 2",
-    tvl: "$19.3B",
-    change24h: 0.95,
-    rank: 8,
-  },
-  {
-    id: "dogecoin",
-    name: "Dogecoin",
-    symbol: "DOGE",
-    description: "Meme-based cryptocurrency that has become a community-driven digital asset. Originally created as a joke, now has a large and loyal community.",
-    color: "from-yellow-400 to-orange-400",
-    pool: "$4,560",
-    timeLeft: "12 days",
-    participants: 2134,
-    comments: 1432,
-    likes: 2987,
-    website: "https://dogecoin.com",
-    whitepaper: "https://dogecoin.com/whitepaper",
+    poolValueUSD: 589000, // $5,890 in cents
+    nextDrawTime: Math.floor(Date.now() / 1000) + (9 * 24 * 60 * 60), // 9 days from now
+    totalParticipants: 2890,
+    totalComments: 1654,
+    totalLikes: 3987,
+    lastActivityTime: Math.floor(Date.now() / 1000) - 25200, // 7 hours ago
+    isActive: true,
+    creator: "0x8901234567890123456789012345678901234567",
+    website: "",
+    whitepaper: "",
+    colorIndex: 7,
     status: "Active",
-    category: "Community",
-    tvl: "$15.7B",
-    change24h: 4.23,
-    rank: 9,
-  },
-  {
-    id: "cosmos",
-    name: "Cosmos",
-    symbol: "ATOM",
-    description: "Internet of blockchains enabling independent blockchains to communicate with each other. Provides tools for scalable and interoperable blockchain ecosystem.",
-    color: "from-purple-600 to-blue-500",
-    pool: "$3,890",
-    timeLeft: "6 days",
-    participants: 1876,
-    comments: 1245,
-    likes: 2156,
-    website: "https://cosmos.network",
-    whitepaper: "https://cosmos.network/whitepaper",
-    status: "New",
-    category: "Interoperability",
-    tvl: "$12.4B",
-    change24h: 1.67,
-    rank: 10,
-  },
+  }
 ]
 
-// Mock comment data
+// Mock comment data - 兼容合约接口
 export const mockComments: Comment[] = [
   {
     id: 1,
-    author: "CryptoMaster",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-master",
+    author: "0x742d35Cc6634C0532925a3b8D391E00b0BaE93A1", // 钱包地址作为author
     content: "Bitcoin remains digital gold! Long-term holding is never wrong. Recent price fluctuations are just normal corrections, fundamentals remain strong. The institutional adoption rate continues to rise, which is a very positive signal.",
     likes: 234,
-    dislikes: 12,
-    timestamp: "2 hours ago",
-    verified: true,
-    tokens: 15,
-    projectId: "bitcoin",
+    timestamp: Math.floor(Date.now() / 1000) - 7200, // 2小时前
+    crtReward: 15, // CRT Token奖励
+    isElite: true, // 精英评论
+    
+    // 前端展示用字段
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-master",
+    verified: true, // 平台认证状态
+    dislikes: 12, // 保留mock数据
   },
   {
     id: 2,
-    author: "BlockchainAnalyst",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=blockchain-analyst",
+    author: "0x8Ba1f109551bD432803012645Hac136c12456789",
     content: "Ethereum 2.0 upgrade truly changed the game. Energy consumption reduced by 99% and transaction speeds significantly improved. This is huge good news for the entire DeFi ecosystem.",
     likes: 189,
-    dislikes: 8,
-    timestamp: "4 hours ago",
+    timestamp: Math.floor(Date.now() / 1000) - 14400, // 4小时前
+    crtReward: 22,
+    isElite: true,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=blockchain-analyst",
     verified: true,
-    tokens: 22,
-    projectId: "ethereum",
+    dislikes: 8,
   },
   {
     id: 3,
-    author: "DeFiEnthusiast",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=defi-lover",
+    author: "0x456789012345678901234567890123456789012",
     content: "Solana's processing speed is indeed impressive, but network stability still needs improvement. Though there are occasional downtime issues, the ecosystem development is very rapid, especially in NFT and GameFi sectors.",
     likes: 145,
-    dislikes: 23,
-    timestamp: "6 hours ago",
+    timestamp: Math.floor(Date.now() / 1000) - 21600, // 6小时前
+    crtReward: 8,
+    isElite: false,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=defi-lover",
     verified: false,
-    tokens: 8,
-    projectId: "solana",
+    dislikes: 23,
   },
   {
     id: 4,
-    author: "AcademicResearcher",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=researcher",
+    author: "0x567890123456789012345678901234567890123",
     content: "Cardano's academic approach and peer review is indeed interesting. While development progress is relatively slow, every update is well thought out. The launch of smart contract functionality marks an important milestone.",
     likes: 167,
-    dislikes: 15,
-    timestamp: "8 hours ago",
+    timestamp: Math.floor(Date.now() / 1000) - 28800, // 8小时前
+    crtReward: 12,
+    isElite: false,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=researcher",
     verified: true,
-    tokens: 12,
-    projectId: "cardano",
+    dislikes: 15,
   },
   {
     id: 5,
-    author: "ChainConnector",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=chain-connector",
+    author: "0x678901234567890123456789012345678901234",
     content: "Polkadot's parachain concept is very innovative! The ability for different blockchains to communicate seamlessly is truly the future trend. Cross-chain technology will be the next explosive point, worth close attention.",
     likes: 198,
-    dislikes: 9,
-    timestamp: "12 hours ago",
+    timestamp: Math.floor(Date.now() / 1000) - 43200, // 12小时前
+    crtReward: 18,
+    isElite: true,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=chain-connector",
     verified: false,
-    tokens: 18,
-    projectId: "polkadot",
+    dislikes: 9,
   },
   {
     id: 6,
-    author: "OracleExpert",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=oracle-expert",
+    author: "0x789012345678901234567890123456789012345",
     content: "Chainlink's leadership position in the oracle field is indisputable. Providing reliable external data sources for smart contracts is the infrastructure for DeFi development. Partners span across various industries with broad prospects.",
     likes: 176,
-    dislikes: 7,
-    timestamp: "1 day ago",
+    timestamp: Math.floor(Date.now() / 1000) - 86400, // 1天前
+    crtReward: 25,
+    isElite: true,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=oracle-expert",
     verified: true,
-    tokens: 25,
-    projectId: "chainlink",
+    dislikes: 7,
   },
   {
     id: 7,
-    author: "AvalancheFan",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=avalanche-fan",
+    author: "0x890123456789012345678901234567890123456",
     content: "Avalanche's subnet feature allows enterprises to create their own blockchains, which is a forward-thinking concept. Fast transaction speeds, low fees, and rapidly developing ecosystem. Worth long-term attention!",
     likes: 134,
-    dislikes: 11,
-    timestamp: "1 day ago",
+    timestamp: Math.floor(Date.now() / 1000) - 86400, // 1天前
+    crtReward: 14,
+    isElite: false,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=avalanche-fan",
     verified: false,
-    tokens: 14,
-    projectId: "avalanche",
+    dislikes: 11,
   },
   {
     id: 8,
-    author: "PolygonWarrior",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=polygon-warrior",
+    author: "0x901234567890123456789012345678901234567",
     content: "Polygon as an Ethereum scaling solution indeed solves many problems. Gas fees significantly reduced, transaction speeds notably improved. Many DeFi projects are migrating to Polygon.",
     likes: 156,
+    timestamp: Math.floor(Date.now() / 1000) - 172800, // 2天前
+    crtReward: 16,
+    isElite: false,
+    
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=polygon-warrior",
+    verified: true,
     dislikes: 18,
-    timestamp: "2 days ago",
-    verified: true,
-    tokens: 16,
-    projectId: "polygon",
-  },
-  {
-    id: 9,
-    author: "DogeBeliever",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=doge-believer",
-    content: "Dogecoin's community power is truly not to be underestimated! While it may not be the most technically advanced, the community's cohesion and popularity are incomparable to other coins. To the moon! 🚀",
-    likes: 87,
-    dislikes: 34,
-    timestamp: "3 days ago",
-    verified: false,
-    tokens: 6,
-    projectId: "dogecoin",
-  },
-  {
-    id: 10,
-    author: "CosmosExplorer",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=cosmos-explorer",
-    content: "Cosmos's interoperability vision is grand. Communication between different blockchains will open up new possibilities. The development of IBC protocol shows us the prototype of a real blockchain internet.",
-    likes: 123,
-    dislikes: 13,
-    timestamp: "3 days ago",
-    verified: true,
-    tokens: 19,
-    projectId: "cosmos",
   },
 ]
 
-// Mock user data
+// Mock user data - 兼容合约接口
 export const mockUser: User = {
-  id: "user-1",
-  name: "CryptoInvestor",
-  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-investor",
-  walletAddress: "0x742d35Cc6634C0532925a3b8D391E00b0BaE93A1",
-  totalRewards: "$1,247.65",
-  commentTokens: 485,
-  likeTokens: 312,
-  totalComments: 127,
-  totalLikes: 2341,
-  joinDate: "August 15, 2023",
-  status: "Verified",
-  badge: "Active Contributor",
+  address: "0x742d35Cc6634C0532925a3b8D391E00b0BaE93A1", // 钱包地址作为唯一标识
+  username: "CryptoInvestor", // 前端展示用
+  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=crypto-investor", // 前端展示用
+  totalRewards: "$1,247.65", // 对应合约 claimedRewards
+  commentTokens: 485, // CRT Token - 评论获得的部分
+  likeTokens: 312, // CRT Token - 点赞获得的部分
+  totalCRT: 797, // commentTokens + likeTokens = 485 + 312
+  totalComments: 127, // 对应合约 UserStats.totalComments
+  totalLikes: 2341, // 对应合约 UserStats.totalLikes
+  joinDate: "August 15, 2023", // 前端展示用
+  status: "Verified", // 平台认证状态
+  badge: "Active Contributor", // 前端展示用
   tokenBalances: [
     {
       name: "Bitcoin",
@@ -511,32 +462,36 @@ export const mockApi = {
   },
 
   // Get single project
-  async getProject(id: string): Promise<Project | null> {
+  async getProject(projectAddress: string): Promise<Project | null> {
     await new Promise(resolve => setTimeout(resolve, 500))
-    return mockProjects.find(p => p.id === id) || null
+    return mockProjects.find(p => p.projectAddress === projectAddress) || null
   },
 
   // Get project comments
-  async getProjectComments(projectId: string): Promise<Comment[]> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getProjectComments(_projectAddress: string): Promise<Comment[]> {
     await new Promise(resolve => setTimeout(resolve, 800))
-    return mockComments.filter(c => c.projectId === projectId)
+    // 根据项目地址过滤评论（简化实现，实际应从合约获取）
+    return mockComments
   },
 
   // Post comment
-  async postComment(projectId: string, content: string): Promise<Comment> {
+  async postComment(projectAddress: string, content: string): Promise<Comment> {
     await new Promise(resolve => setTimeout(resolve, 1200))
     
     const newComment: Comment = {
       id: Date.now(),
-      author: "Current User",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=current-user",
+      author: "0x742d35Cc6634C0532925a3b8D391E00b0BaE93A1", // 当前用户钱包地址
       content,
       likes: 0,
-      dislikes: 0,
-      timestamp: "just now",
+      timestamp: Math.floor(Date.now() / 1000), // Unix时间戳
+      crtReward: Math.floor(Math.random() * 20) + 5, // CRT奖励
+      isElite: false, // 新评论默认不是精英
+      
+      // 前端展示用字段
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=current-user",
       verified: false,
-      tokens: Math.floor(Math.random() * 20) + 5,
-      projectId,
+      dislikes: 0,
     }
     
     mockComments.push(newComment)
@@ -568,6 +523,6 @@ export const mockApi = {
   // Get leaderboard
   async getLeaderboard(): Promise<Project[]> {
     await new Promise(resolve => setTimeout(resolve, 500))
-    return mockProjects.sort((a, b) => b.participants - a.participants)
+    return mockProjects.sort((a, b) => b.totalParticipants - a.totalParticipants)
   },
 } 

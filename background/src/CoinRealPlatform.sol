@@ -56,7 +56,8 @@ contract CoinRealPlatform is ICoinRealPlatform {
             category,
             drawPeriod,
             msg.sender,
-            priceOracle
+            priceOracle,
+            address(this)
         );
         
         // Set CRT token for the project

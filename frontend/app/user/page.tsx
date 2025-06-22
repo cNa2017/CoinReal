@@ -50,8 +50,8 @@ export default function UserPage() {
   }
 
   const copyWalletAddress = () => {
-    if (user?.walletAddress) {
-      navigator.clipboard.writeText(user.walletAddress)
+    if (user?.address) {
+      navigator.clipboard.writeText(user.address)
       // TODO: Add toast notification
     }
   }
@@ -88,15 +88,15 @@ export default function UserPage() {
           <CardContent className="p-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <Avatar className="w-24 h-24">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-2xl">
-                  {user.name.slice(0, 2)}
-                </AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.username} />
+                                  <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-2xl">
+                    {user.username?.slice(0, 2) || "U"}
+                  </AvatarFallback>
               </Avatar>
 
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
-                  <h1 className="text-3xl font-bold text-white">{user.name}</h1>
+                  <h1 className="text-3xl font-bold text-white">{user.username}</h1>
                   <div className="flex gap-2 justify-center md:justify-start">
                     <Badge 
                       variant="secondary" 
@@ -120,7 +120,7 @@ export default function UserPage() {
 
                 <div className="flex items-center gap-2 text-gray-400 mb-4 justify-center md:justify-start">
                   <Wallet className="w-4 h-4" />
-                  <span className="font-mono text-sm">{user.walletAddress}</span>
+                  <span className="font-mono text-sm">{user.address}</span>
                   <Button
                     variant="ghost"
                     size="sm"

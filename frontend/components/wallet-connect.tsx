@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { SUPPORTED_CHAINS, getChainById } from "@/constants/chains"
+import { getChainById, SUPPORTED_CHAINS, SupportedChain } from "@/constants/chains"
 import { useWallet } from "@/hooks/use-wallet"
 import { ChevronDown, Copy, LogOut, Wallet, Wifi } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -28,7 +28,7 @@ export function WalletConnect() {
     setMounted(true)
   }, [])
 
-  const handleNetworkChange = (network: any) => {
+  const handleNetworkChange = (network: SupportedChain) => {
     switchNetwork(network.id)
   }
 
