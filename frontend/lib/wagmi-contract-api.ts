@@ -450,16 +450,22 @@ export class WagmiContractAPI {
         throw new Error('Project ABI not loaded')
       }
 
-      const comments = await readContract(contractConfig, {
+      const result = await readContract(contractConfig, {
         address: projectAddress as Address,
         abi: ProjectABI,
         functionName: 'getComments',
         args: [BigInt(offset), BigInt(limit)]
-      }) as ContractComment[]
+      }) as [ContractComment[], bigint]
 
-      console.log('项目评论:', comments)
+      console.log('项目评论原始数据:', result)
 
-      return comments.map(convertContractCommentToFrontend)
+      // 正确解构合约返回的元组：[commentList, total]
+      const [commentList, total] = result
+      
+      console.log('解析后的评论:', { commentList, total: total.toString() })
+
+      // 只处理评论数组部分
+      return commentList.map(convertContractCommentToFrontend)
     } catch (error) {
       console.error('Failed to get project comments:', error)
       return []
