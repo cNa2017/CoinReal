@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Comment, mockApi } from "@/lib/mock-data"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { useLikeComment, usePostComment, useProjectComments } from "@/hooks/use-project"
 import { formatTimestamp, shortenAddress } from "@/utils/contract-helpers"
 import { Coins, MessageSquare, Send, ThumbsDown, ThumbsUp } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 interface CommentSectionProps {
   projectId: string
@@ -18,32 +19,21 @@ interface CommentSectionProps {
 
 export function CommentSection({ projectId }: CommentSectionProps) {
   const [newComment, setNewComment] = useState("")
-  const [comments, setComments] = useState<Comment[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const loadComments = async () => {
-      setLoading(true)
-      try {
-        const data = await mockApi.getProjectComments(projectId)
-        setComments(data)
-      } catch (error) {
-        console.error("Failed to load comments:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadComments()
-  }, [projectId])
+  
+  // 使用hooks获取数据和操作
+  useContractApi() // 自动连接钱包和合约
+  const { data: commentsData, isLoading: loading } = useProjectComments(projectId)
+  const postCommentMutation = usePostComment()
+  const likeCommentMutation = useLikeComment(projectId)
+  
+  const comments = commentsData?.comments || []
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newComment.trim()) return
 
     try {
-      const comment = await mockApi.postComment(projectId, newComment)
-      setComments([comment, ...comments])
+      await postCommentMutation.mutateAsync({ projectId, content: newComment })
       setNewComment("")
     } catch (error) {
       console.error("Failed to post comment:", error)
@@ -52,14 +42,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
 
   const handleLike = async (commentId: number) => {
     try {
-      await mockApi.likeComment(commentId)
-      setComments(
-        comments.map((comment) => 
-          comment.id === commentId 
-            ? { ...comment, likes: comment.likes + 1 } 
-            : comment
-        )
-      )
+      await likeCommentMutation.mutateAsync(commentId)
     } catch (error) {
       console.error("Failed to like comment:", error)
     }
@@ -67,13 +50,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
 
   const handleDislike = (commentId: number) => {
     // 暂时保留mock功能，因为合约未实现dislikes
-    setComments(
-      comments.map((comment) =>
-        comment.id === commentId 
-          ? { ...comment, dislikes: (comment.dislikes || 0) + 1 } 
-          : comment
-      )
-    )
+    console.log('Dislike not implemented in contract:', commentId)
   }
 
   if (loading) {

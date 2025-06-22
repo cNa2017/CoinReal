@@ -1,10 +1,74 @@
-import Link from "next/link"
+"use client"
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Rocket, Zap, Shield, MessageSquare, Coins } from "lucide-react"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { Project } from "@/lib/mock-data"
+import { Coins, MessageSquare, Rocket, Shield, Zap } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function HomePage() {
+  const [stats, setStats] = useState({
+    activeProjects: 0,
+    totalComments: 0,
+    rewardsDistributed: "$0"
+  })
+  const [trendingProjects, setTrendingProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const api = useContractApi()
+
+  useEffect(() => {
+    loadPlatformStats()
+  }, [api])
+
+  const loadPlatformStats = async () => {
+    if (!api) return
+
+    setLoading(true)
+    try {
+      // 获取项目列表来统计数据
+      const projects = await api.contractApi.getProjects(0, 100)
+      
+      // 计算统计数据
+      const activeProjects = projects.filter(p => p.isActive).length
+      const totalComments = projects.reduce((sum, p) => sum + p.totalComments, 0)
+      const totalPoolValue = projects.reduce((sum, p) => sum + p.poolValueUSD, 0)
+      
+      setStats({
+        activeProjects,
+        totalComments,
+        rewardsDistributed: `$${Math.floor(totalPoolValue / 100).toLocaleString()}`
+      })
+
+      // 获取前3个项目作为热门项目
+      const topProjects = projects.slice(0, 3)
+      setTrendingProjects(topProjects)
+    } catch (error) {
+      console.error('Failed to load platform stats:', error)
+      // 使用默认值
+      setStats({
+        activeProjects: 0,
+        totalComments: 0,
+        rewardsDistributed: "$0"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getProjectColor = (index: number) => {
+    const colors = [
+      "from-orange-500 to-yellow-500",
+      "from-blue-500 to-purple-500", 
+      "from-purple-500 to-pink-500",
+      "from-green-500 to-cyan-500",
+      "from-red-500 to-pink-500"
+    ]
+    return colors[index % colors.length]
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Hero Section */}
@@ -117,21 +181,21 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                247
+                {loading ? "..." : stats.activeProjects}
               </div>
               <div className="text-gray-400">Active Projects</div>
             </div>
 
             <div>
               <div className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-                15,432
+                {loading ? "..." : stats.totalComments.toLocaleString()}
               </div>
               <div className="text-gray-400">Total Comments</div>
             </div>
 
             <div>
               <div className="text-4xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-                $89,234
+                {loading ? "..." : stats.rewardsDistributed}
               </div>
               <div className="text-gray-400">Rewards Distributed</div>
             </div>
@@ -147,43 +211,64 @@ export default function HomePage() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { name: "Bitcoin", symbol: "BTC", pool: "$12,450", comments: 1247, color: "from-orange-500 to-yellow-500" },
-            { name: "Ethereum", symbol: "ETH", pool: "$8,920", comments: 892, color: "from-blue-500 to-purple-500" },
-            { name: "Solana", symbol: "SOL", pool: "$5,680", comments: 634, color: "from-purple-500 to-pink-500" },
-          ].map((project, index) => (
-            <Card
-              key={index}
-              className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-800/70 transition-all duration-300 cursor-pointer group"
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-full bg-gradient-to-r ${project.color} flex items-center justify-center text-white font-bold text-sm`}
-                    >
-                      {project.symbol.slice(0, 2)}
+          {loading ? (
+            // Loading skeletons
+            [1, 2, 3].map((i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm animate-pulse">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-600"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-slate-600 rounded w-20"></div>
+                        <div className="h-3 bg-slate-600 rounded w-12"></div>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-white text-lg">{project.name}</CardTitle>
-                      <CardDescription className="text-gray-400">{project.symbol}</CardDescription>
-                    </div>
+                    <div className="h-6 bg-slate-600 rounded w-16"></div>
                   </div>
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                    Active
-                  </Badge>
-                </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <div className="h-4 bg-slate-600 rounded w-24"></div>
+                    <div className="h-4 bg-slate-600 rounded w-16"></div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))
+          ) : (
+            trendingProjects.map((project, index) => (
+              <Link key={project.projectAddress} href={`/projects/${project.projectAddress}`}>
+                <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-800/70 transition-all duration-300 cursor-pointer group">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full bg-gradient-to-r ${getProjectColor(index)} flex items-center justify-center text-white font-bold text-sm`}
+                        >
+                          {project.symbol.slice(0, 2)}
+                        </div>
+                        <div>
+                          <CardTitle className="text-white text-lg">{project.name}</CardTitle>
+                          <CardDescription className="text-gray-400">{project.symbol}</CardDescription>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                        {project.status}
+                      </Badge>
+                    </div>
 
-                <div className="flex justify-between items-center pt-4">
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <MessageSquare className="w-4 h-4" />
-                    <span className="text-sm">{project.comments} comments</span>
-                  </div>
-                  <div className="text-cyan-400 font-semibold">{project.pool} pool</div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+                    <div className="flex justify-between items-center pt-4">
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <MessageSquare className="w-4 h-4" />
+                        <span className="text-sm">{project.totalComments} comments</span>
+                      </div>
+                      <div className="text-cyan-400 font-semibold">
+                        ${Math.floor(project.poolValueUSD / 100)} pool
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))
+          )}
         </div>
       </div>
 

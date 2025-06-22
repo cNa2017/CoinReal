@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { WalletConnect } from "@/components/wallet-connect"
+import { WalletStatus } from "@/components/wallet-status"
 import { cn } from "@/lib/utils"
 import { Coins, Home, Rocket, Settings, TrendingUp, User } from "lucide-react"
 import Link from "next/link"
@@ -93,7 +93,7 @@ export function Navigation() {
           <div className="text-xs text-gray-400">USDC Equivalent</div>
         </div>
 
-        <WalletConnect />
+        <WalletStatus />
       </div>
     </div>
   )

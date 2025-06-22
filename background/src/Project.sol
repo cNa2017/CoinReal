@@ -515,6 +515,11 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         (,,, poolValueUSD) = this.getProjectStats();
     }
     
+    // 新增的getter函数，为前端API兼容性
+    function getTotalParticipants() external view returns (uint256) {
+        return participants.length;
+    }
+    
     // Internal functions
     function _updateEliteComments(uint256 commentId) private {
         uint256 newLikes = comments[commentId].likes;

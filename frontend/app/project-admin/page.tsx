@@ -8,24 +8,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { Project } from "@/lib/mock-data"
 import {
-    AlertCircle,
-    BarChart3,
-    Calendar,
-    Coins,
-    DollarSign,
-    Edit,
-    Eye,
-    MessageSquare,
-    Pause,
-    Play,
-    Plus,
-    Settings,
-    TrendingUp,
-    Users,
-    Wallet
+  AlertCircle,
+  BarChart3,
+  Calendar,
+  Coins,
+  DollarSign,
+  Edit,
+  Eye,
+  MessageSquare,
+  Pause,
+  Play,
+  Plus,
+  Settings,
+  TrendingUp,
+  Users,
+  Wallet
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 interface ProjectData {
   id: string
@@ -50,105 +52,115 @@ interface PoolHistory {
 type TabType = "overview" | "pool" | "analytics" | "settings"
 
 export default function ProjectAdminPage() {
-  const [selectedProject, setSelectedProject] = useState<string>("bitcoin")
+  const [selectedProject, setSelectedProject] = useState<string>("")
   const [activeTab, setActiveTab] = useState<TabType>("overview")
   const [isLoading, setIsLoading] = useState(false)
   const [newPoolAmount, setNewPoolAmount] = useState("")
   const [drawPeriod, setDrawPeriod] = useState("7")
+  const [userProjects, setUserProjects] = useState<ProjectData[]>([])
+  const [poolHistory, setPoolHistory] = useState<PoolHistory[]>([])
+  const api = useContractApi()
 
-  // Mock数据
-  const userProjects: ProjectData[] = [
-    {
-      id: "bitcoin",
-      name: "Bitcoin Community",
-      symbol: "BTC",
-      status: "Active",
-      pool: "$45,230",
-      participants: 15420,
-      comments: 1247,
-      nextDraw: "2024-12-25",
-      createdAt: "2024-01-15"
-    },
-    {
-      id: "ethereum",
-      name: "Ethereum DeFi Hub",
-      symbol: "ETH",
-      status: "Active",
-      pool: "$32,450",
-      participants: 12890,
-      comments: 892,
-      nextDraw: "2024-12-23",
-      createdAt: "2024-02-20"
-    },
-    {
-      id: "solana",
-      name: "Solana Builders",
-      symbol: "SOL",
-      status: "Paused",
-      pool: "$18,920",
-      participants: 8934,
-      comments: 634,
-      nextDraw: "2024-12-30",
-      createdAt: "2024-03-10"
-    }
-  ]
+  useEffect(() => {
+    loadUserProjects()
+  }, [api])
 
-  const poolHistory: PoolHistory[] = [
-    {
-      id: "1",
-      amount: "+$5,000",
-      type: "Add",
-      date: "2024-12-20",
-      status: "Completed"
-    },
-    {
-      id: "2",
-      amount: "-$2,340",
-      type: "Reward",
-      date: "2024-12-15",
-      status: "Completed"
-    },
-    {
-      id: "3",
-      amount: "+$10,000",
-      type: "Add",
-      date: "2024-12-10",
-      status: "Completed"
-    },
-    {
-      id: "4",
-      amount: "-$3,200",
-      type: "Reward",
-      date: "2024-12-05",
-      status: "Completed"
+  const loadUserProjects = async () => {
+    if (!api?.isConnected) return
+
+    setIsLoading(true)
+    try {
+      // 获取用户创建的项目
+      const projects = await api.contractApi.getProjects()
+      
+      // 转换为管理界面需要的格式
+      const adminProjects: ProjectData[] = projects.map((project: Project) => ({
+        id: project.projectAddress,
+        name: project.name,
+        symbol: project.symbol,
+        status: project.isActive ? "Active" : "Paused",
+        pool: `$${Math.floor(project.poolValueUSD / 100).toLocaleString()}`,
+        participants: project.totalParticipants,
+        comments: project.totalComments,
+        nextDraw: new Date(project.nextDrawTime * 1000).toLocaleDateString(),
+        createdAt: new Date().toLocaleDateString() // 临时使用当前时间
+      }))
+      
+      setUserProjects(adminProjects)
+      
+      if (adminProjects.length > 0 && !selectedProject) {
+        setSelectedProject(adminProjects[0].id)
+      }
+      
+      // 模拟池历史数据
+      const mockHistory: PoolHistory[] = [
+        {
+          id: "1",
+          amount: "+$5,000",
+          type: "Add",
+          date: "2024-12-20",
+          status: "Completed"
+        },
+        {
+          id: "2",
+          amount: "-$2,340",
+          type: "Reward",
+          date: "2024-12-15",
+          status: "Completed"
+        }
+      ]
+      
+      setPoolHistory(mockHistory)
+    } catch (error) {
+      console.error('Failed to load user projects:', error)
+    } finally {
+      setIsLoading(false)
     }
-  ]
+  }
 
   const currentProject = userProjects.find(p => p.id === selectedProject)
 
   const handleAddPool = async () => {
     if (!newPoolAmount || parseFloat(newPoolAmount) <= 0) return
+    if (!api?.isConnected) {
+      alert('请先连接钱包')
+      return
+    }
     
     setIsLoading(true)
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // 这里应该调用赞助项目的合约方法
+      // 暂时使用USDC地址作为示例
+      const usdcAddress = "0xA0b86a33E6417AbCF4C53E47D0A47C9A36B88D4" // 示例USDC地址
+      await api.contractApi.sponsorProject(selectedProject, usdcAddress, newPoolAmount)
+      
       console.log(`Adding $${newPoolAmount} to ${selectedProject}`)
       setNewPoolAmount("")
+      // 重新加载项目数据
+      await loadUserProjects()
     } catch (error) {
       console.error("Failed to add pool:", error)
+      alert('添加奖池失败: ' + (error as Error).message)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleStatusChange = async (projectId: string, newStatus: string) => {
+    if (!api?.isConnected) {
+      alert('请先连接钱包')
+      return
+    }
+    
     setIsLoading(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // 这里需要调用合约方法来暂停/激活项目
+      // 目前只是日志输出
       console.log(`Changing ${projectId} status to ${newStatus}`)
+      await loadUserProjects()
     } catch (error) {
       console.error("Failed to change status:", error)
+      alert('状态修改失败: ' + (error as Error).message)
     } finally {
       setIsLoading(false)
     }
@@ -178,6 +190,22 @@ export default function ProjectAdminPage() {
     { id: "analytics", label: "数据分析", icon: TrendingUp },
     { id: "settings", label: "设置", icon: Settings }
   ]
+
+  if (!api?.isConnected) {
+    return (
+      <ProjectLayout>
+        <div className="flex items-center justify-center py-20">
+          <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <Wallet className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">连接钱包</h2>
+              <p className="text-gray-400 mb-4">请先连接您的钱包以访问项目管理功能</p>
+            </CardContent>
+          </Card>
+        </div>
+      </ProjectLayout>
+    )
+  }
 
   return (
     <ProjectLayout>

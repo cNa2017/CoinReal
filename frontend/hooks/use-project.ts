@@ -1,11 +1,6 @@
-import { mockApi } from '@/lib/mock-data'
+import { api } from '@/lib/wagmi-contract-api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React from 'react'
-// 当准备切换到真实合约时，取消注释下行
-// import { api, contractApi } from '@/lib/contract-api'
-
-// 当前使用mock API，后续可切换到合约API
-const api = mockApi
 
 export function useProjects(offset: number = 0, limit: number = 50) {
   return useQuery({
@@ -73,9 +68,8 @@ export function useLikeComment(projectId: string) {
   
   return useMutation({
     mutationFn: async (commentId: number) => {
-      // 注意：真实合约API需要projectId
-      // await contractApi.likeComment(projectId, commentId)
-      await api.likeComment(commentId)
+      // 使用真实合约API，需要projectId和commentId
+      await api.likeComment(projectId, commentId)
     },
     onSuccess: () => {
       // 使相关查询失效

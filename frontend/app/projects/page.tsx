@@ -4,31 +4,39 @@ import { ProjectLayout } from "@/components/project-layout"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { mockApi, Project } from "@/lib/mock-data"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { Project } from "@/types"
 import { formatPoolValue, formatTimeLeft, getProjectColor } from "@/utils/contract-helpers"
 import { MessageSquare, ThumbsUp, Users } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const api = useContractApi()
 
-  useEffect(() => {
-    loadProjects()
-  }, [])
-
-  const loadProjects = async () => {
+  // 使用 useCallback 稳定函数引用
+  const loadProjects = useCallback(async () => {
+    if (!api.canRead) return
+    
     setLoading(true)
+    setError(null)
     try {
-      const data = await mockApi.getProjects()
+      const data = await api.contractApi.getProjects()
       setProjects(data)
     } catch (error) {
       console.error("Failed to load projects:", error)
+      setError("Failed to load projects. Please check your network connection.")
     } finally {
       setLoading(false)
     }
-  }
+  }, [api.canRead, api.contractApi])
+
+  useEffect(() => {
+    loadProjects()
+  }, [loadProjects])
 
   if (loading) {
     return (
@@ -36,7 +44,23 @@ export default function ProjectsPage() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading projects...</p>
+            <p className="text-gray-400">Loading projects from {api.contractNetwork}...</p>
+          </div>
+        </div>
+      </ProjectLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <ProjectLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="text-red-400 mb-4">⚠️ Error</div>
+            <p className="text-gray-400 mb-4">{error}</p>
+            <Button onClick={loadProjects} variant="outline">
+              Retry
+            </Button>
           </div>
         </div>
       </ProjectLayout>
@@ -52,6 +76,13 @@ export default function ProjectsPage() {
             Crypto Projects Community
           </h1>
           <p className="text-gray-400 text-lg">Explore the most active cryptocurrency projects and participate in discussions to earn rewards</p>
+          
+          {/* Network Status */}
+          <div className="mt-4 flex justify-center">
+            <Badge variant="outline" className="border-cyan-500/50 text-cyan-400">
+              Connected to {api.contractNetwork}
+            </Badge>
+          </div>
         </div>
 
         {/* Stats Overview */}
@@ -178,12 +209,14 @@ export default function ProjectsPage() {
             <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
               Create a dedicated discussion forum for your crypto project, set up reward pools to incentivize community participation, and get real user feedback and support
             </p>
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8 py-3"
-            >
-              Create Project Forum
-            </Button>
+            <Link href="/create-project">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white px-8 py-3"
+              >
+                Create Project Forum
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

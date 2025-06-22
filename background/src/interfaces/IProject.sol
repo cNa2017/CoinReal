@@ -408,4 +408,12 @@ interface IProject {
      * @return poolValueUSD 奖池USD价值（8位小数精度）
      */
     function getPoolValueUSD() external view returns (uint256 poolValueUSD);
+
+    /**
+     * @notice 获取项目总参与人数（兼容前端API）
+     * @dev 别名方法，返回与getProjectStats()相同的totalParticipants值
+     * 
+     * @return totalParticipants 总参与人数
+     */
+    function getTotalParticipants() external view returns (uint256 totalParticipants);
 } 

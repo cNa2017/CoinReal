@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { mockApi, Project } from "@/lib/mock-data"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { Project } from "@/lib/mock-data"
 import { formatPoolValue, getProjectColor } from "@/utils/contract-helpers"
 import { ExternalLink, MessageSquare, Users } from "lucide-react"
 import Link from "next/link"
@@ -14,15 +15,18 @@ import { useEffect, useState } from "react"
 export default function LeaderboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const api = useContractApi()
 
   useEffect(() => {
     loadLeaderboard()
-  }, [])
+  }, [api])
 
   const loadLeaderboard = async () => {
+    if (!api) return
+    
     setLoading(true)
     try {
-      const data = await mockApi.getLeaderboard()
+      const data = await api.contractApi.getLeaderboard()
       setProjects(data)
     } catch (error) {
       console.error("Failed to load leaderboard:", error)

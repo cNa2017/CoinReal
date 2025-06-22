@@ -7,7 +7,7 @@ import { useWallet } from "@/hooks/use-wallet"
 import { ChevronDown, Copy, LogOut, Wallet, Wifi } from "lucide-react"
 import { useEffect, useState } from "react"
 
-export function WalletConnect() {
+export function WalletStatus() {
   const {
     address,
     isConnected,

@@ -77,7 +77,7 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
               <DollarSign className="w-5 h-5 text-green-500" />
               Reward Pool
             </CardTitle>
-            <SponsorDialog projectName={project.name} />
+            <SponsorDialog projectName={project.name} projectAddress={project.projectAddress} />
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

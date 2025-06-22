@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { mockApi, User } from "@/lib/mock-data"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { User } from "@/lib/mock-data"
 import {
   Clock,
   Copy,
@@ -28,17 +29,20 @@ export default function UserPage() {
   const [activities, setActivities] = useState<typeof import("@/lib/mock-data").mockUserActivities>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
+  const api = useContractApi()
 
   useEffect(() => {
     loadUserData()
-  }, [])
+  }, [api])
 
   const loadUserData = async () => {
+    if (!api) return
+    
     setLoading(true)
     try {
       const [userData, activityData] = await Promise.all([
-        mockApi.getUser(),
-        mockApi.getUserActivity()
+        api.contractApi.getUser(),
+        api.contractApi.getUserActivity()
       ])
       setUser(userData)
       setActivities(activityData)

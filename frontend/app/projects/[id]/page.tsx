@@ -4,7 +4,8 @@ import { CommentSection } from "@/components/comment-section"
 import { ProjectInfo } from "@/components/project-info"
 import { ProjectLayout } from "@/components/project-layout"
 import { Badge } from "@/components/ui/badge"
-import { mockApi, Project } from "@/lib/mock-data"
+import { useContractApi } from "@/hooks/use-contract-api"
+import { Project } from "@/lib/mock-data"
 import { getProjectColor } from "@/utils/contract-helpers"
 import { useEffect, useState } from "react"
 
@@ -13,6 +14,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string>("")
+  const api = useContractApi()
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -24,13 +26,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   }, [params])
 
   useEffect(() => {
-    if (!projectId) return
+    if (!projectId || !api) return
     
     const loadProject = async () => {
       setLoading(true)
       setError(null)
       try {
-        const projectData = await mockApi.getProject(projectId)
+        const projectData = await api.contractApi.getProject(projectId)
         if (projectData) {
           setProject(projectData)
         } else {
@@ -45,7 +47,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     }
 
     loadProject()
-  }, [projectId])
+  }, [projectId, api])
 
   if (loading) {
     return (

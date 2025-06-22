@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useContractApi } from "@/hooks/use-contract-api"
 import { AlertCircle, CheckCircle, Coins, FileText, Globe, Wallet } from "lucide-react"
 import { useState } from "react"
 
@@ -41,6 +42,7 @@ export default function CreateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [isSuccess, setIsSuccess] = useState(false)
+  const api = useContractApi()
 
   const projectCategories = [
     "DeFi", "NFT", "GameFi", "L1", "L2", "Infrastructure", 
@@ -97,14 +99,28 @@ export default function CreateProjectPage() {
     e.preventDefault()
     
     if (!validateForm()) return
+    if (!api?.isConnected) {
+      setValidationErrors({ general: "请先连接钱包" })
+      return
+    }
 
     setIsSubmitting(true)
     
     try {
-      // 模拟API提交
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const projectData = {
+        name: formData.name,
+        symbol: formData.symbol,
+        description: formData.description,
+        category: formData.category,
+        website: formData.website,
+        whitepaper: formData.whitepaper || "",
+        logoUrl: formData.logoUrl || "",
+        drawPeriodDays: parseInt(formData.drawPeriod)
+      }
+
+      await api.contractApi.createProject(projectData)
       
-      console.log("提交的项目数据:", formData)
+      console.log("提交的项目数据:", projectData)
       setIsSuccess(true)
       
       // 3秒后重置表单
@@ -126,6 +142,7 @@ export default function CreateProjectPage() {
       
     } catch (error) {
       console.error("提交失败:", error)
+      setValidationErrors({ general: "提交失败，请重试" })
     } finally {
       setIsSubmitting(false)
     }
@@ -139,7 +156,7 @@ export default function CreateProjectPage() {
             <CardContent className="p-8 text-center">
               <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">提交成功！</h2>
-              <p className="text-gray-400 mb-4">您的项目申请已提交，我们将在24小时内审核并回复。</p>
+              <p className="text-gray-400 mb-4">您的项目已成功创建并提交到区块链。</p>
               <div className="text-sm text-gray-500">
                 页面将自动刷新...
               </div>
@@ -159,6 +176,17 @@ export default function CreateProjectPage() {
           </h1>
           <p className="text-gray-400 text-lg">提交您的加密货币项目，创建专属讨论社区</p>
         </div>
+
+        {validationErrors.general && (
+          <Card className="bg-red-500/10 border-red-500/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-red-400">
+                <AlertCircle className="w-4 h-4" />
+                <span>{validationErrors.general}</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
           <CardHeader>
