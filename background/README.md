@@ -147,7 +147,7 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY -
 }
 ```
 
-### 合约abi
+### 合约abi：在 `background/abi-json` 文件夹下
 ```
 forge inspect src/CoinRealPlatform.sol:CoinRealPlatform abi --json > abi-json/CoinRealPlatform.json
 forge inspect src/Project.sol:Project abi --json > abi-json/Project.json
