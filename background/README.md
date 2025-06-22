@@ -147,6 +147,16 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY -
 }
 ```
 
+### 合约abi
+```
+forge inspect src/CoinRealPlatform.sol:CoinRealPlatform abi --json > abi-json/CoinRealPlatform.json
+forge inspect src/Project.sol:Project abi --json > abi-json/Project.json
+forge inspect src/ProjectFactory.sol:ProjectFactory abi --json > abi-json/ProjectFactory.json
+forge inspect src/CRTToken.sol:CRTToken abi --json > abi-json/CRTToken.json
+forge inspect src/mocks/MockPriceOracle.sol:MockPriceOracle abi --json > abi-json/MockPriceOracle.json
+forge inspect src/mocks/MockERC20.sol:MockERC20 abi --json > abi-json/MockERC20.json
+```
+
 ## 📊 Gas 成本优化
 
 ### 项目创建成本对比
@@ -177,25 +187,6 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY -
 - ✅ **CRT 锁定** - Soulbound Token
 - ✅ **开奖条件** - 参与度验证
 
-## 🧪 测试覆盖
-
-### 测试类型
-- **单元测试** - 各合约功能测试
-- **集成测试** - 合约间交互测试
-- **端到端测试** - 完整业务流程测试
-- **Gas 优化测试** - 成本效益验证
-
-### 运行测试套件
-```bash
-# 运行推荐的简化测试
-forge test --match-contract DeployScriptTest -v
-
-# 运行高级交互测试
-forge test --match-contract AdvancedInteractionTest -vvv
-
-# 运行完整工作流测试
-forge test --match-test test_CompleteWorkflow -vvv
-```
 
 ## 📈 项目状态
 
@@ -227,21 +218,5 @@ forge test --match-test test_CompleteWorkflow -vvv
 - 确保测试覆盖率 > 90%
 - 通过安全检查工具验证
 
-## 📞 技术支持
-
-如果您在使用过程中遇到问题，请：
-
-1. 查看 **[详细接口文档](./INTERFACE_DOCUMENTATION.md)**
-2. 查看 **[测试文档](./test/README.md)**
-3. 提交 GitHub Issue
-4. 联系开发团队
-
----
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](../LICENSE) 文件。
-
----
 
 **🎯 下一步：查看 [详细接口文档](./INTERFACE_DOCUMENTATION.md) 了解完整的 API 设计和使用方法！**
