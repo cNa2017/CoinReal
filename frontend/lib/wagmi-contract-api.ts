@@ -194,6 +194,63 @@ const convertContractCommentToFrontend = (contractComment: ContractComment): Com
 }
 
 /**
+ * 通用的写合约函数，带有连接器重试机制
+ * 解决页面刷新后 connection.connector.getChainId is not a function 的问题
+ */
+const writeContractWithRetry = async (contractCallConfig: any, maxRetries: number = 3): Promise<string> => {
+  let attempt = 0
+  
+  while (attempt < maxRetries) {
+    try {
+      // 等待连接器完全初始化（根据重试次数递增等待时间）
+      if (attempt > 0) {
+        const waitTime = 300 * attempt
+        console.log(`等待连接器就绪: ${waitTime}ms (重试 ${attempt}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+      }
+
+      console.log(`尝试写合约操作 (第${attempt + 1}次尝试)`)
+      
+      // 使用用户配置，因为连接状态在userConfig中管理
+      const { userConfig } = await import('./wagmi')
+      const txHash = await writeContract(userConfig, contractCallConfig)
+      console.log('交易哈希:', txHash)
+      return txHash
+      
+    } catch (error: any) {
+      attempt++
+      
+      // 检查是否是连接器未就绪的错误
+      const isConnectorError = error.message?.includes('getChainId is not a function') ||
+                              error.message?.includes('connector') ||
+                              error.name === 'ConnectorNotFoundError'
+      
+      if (isConnectorError && attempt < maxRetries) {
+        console.warn(`连接器未就绪，准备重试 ${attempt}/${maxRetries}:`, error.message)
+        continue
+      }
+      
+      // 其他错误或达到最大重试次数，直接抛出
+      console.error(`写合约操作失败 (尝试 ${attempt}/${maxRetries}):`, error)
+      
+      // 提供更友好的错误信息
+      if (error.message?.includes('getChainId is not a function')) {
+        throw new Error('钱包连接状态异常，请刷新页面后重试')
+      } else if (error.message?.includes('User rejected')) {
+        throw new Error('用户取消了交易')
+      } else if (error.message?.includes('insufficient funds')) {
+        throw new Error('余额不足')
+      }
+      
+      throw error
+    }
+  }
+  
+  // 如果所有重试都失败了
+  throw new Error('连接器状态异常，请刷新页面后重试')
+}
+
+/**
  * 真实合约API类
  * 使用固定的合约网络配置，与区块链合约进行真实交互
  */
@@ -609,21 +666,22 @@ export class WagmiContractAPI {
 
   /**
    * 发表评论
+   * 使用通用重试机制避免连接器状态异常
    */
   async postComment(projectAddress: string, content: string): Promise<Comment> {
     try {
       await ensureInitialized()
       
       if (!this.address) {
-        throw new Error('No wallet address set')
+        throw new Error('钱包未连接，请先连接钱包')
       }
 
       if (!ProjectABI) {
-        throw new Error('Project ABI not loaded')
+        throw new Error('合约ABI未加载')
       }
 
       // 调用合约发表评论
-      const txHash = await writeContract(contractConfig, {
+      const txHash = await writeContractWithRetry({
         address: projectAddress as Address,
         abi: ProjectABI,
         functionName: 'postComment',
@@ -647,7 +705,7 @@ export class WagmiContractAPI {
       }
 
       return newComment
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to post comment:', error)
       throw error
     }
@@ -655,28 +713,28 @@ export class WagmiContractAPI {
 
   /**
    * 点赞评论
+   * 使用通用重试机制避免连接器状态异常
    */
   async likeComment(projectAddress: string, commentId: number): Promise<void> {
     try {
       await ensureInitialized()
       
       if (!this.address) {
-        throw new Error('No wallet address set')
+        throw new Error('钱包未连接，请先连接钱包')
       }
 
       if (!ProjectABI) {
-        throw new Error('Project ABI not loaded')
+        throw new Error('合约ABI未加载')
       }
 
-      const txHash = await writeContract(contractConfig, {
+      await writeContractWithRetry({
         address: projectAddress as Address,
         abi: ProjectABI,
         functionName: 'likeComment',
         args: [BigInt(commentId)]
       })
 
-      console.log('点赞交易哈希:', txHash)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to like comment:', error)
       throw error
     }
@@ -1015,7 +1073,8 @@ export class WagmiContractAPI {
   }
 
   /**
-   * 创建新项目
+   * 创建项目
+   * 使用通用重试机制避免连接器状态异常
    */
   async createProject(projectData: {
     name: string
@@ -1031,15 +1090,15 @@ export class WagmiContractAPI {
       await ensureInitialized()
       
       if (!this.address) {
-        throw new Error('No connected wallet')
+        throw new Error('钱包未连接，请先连接钱包')
       }
 
       if (!deploymentsInfo?.platform || !CoinRealPlatformABI) {
-        throw new Error('Platform contract data not loaded')
+        throw new Error('平台合约数据未加载')
       }
 
       // 调用平台合约创建项目
-      const txHash = await writeContract(contractConfig, {
+      const txHash = await writeContractWithRetry({
         address: deploymentsInfo.platform as Address,
         abi: CoinRealPlatformABI,
         functionName: 'createProject',
@@ -1054,7 +1113,7 @@ export class WagmiContractAPI {
       
       console.log('Project created successfully, tx hash:', txHash)
       return txHash
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create project:', error)
       throw error
     }
@@ -1062,21 +1121,22 @@ export class WagmiContractAPI {
 
   /**
    * 赞助项目
+   * 使用通用重试机制避免连接器状态异常
    */
   async sponsorProject(projectAddress: string, tokenAddress: string, amount: string): Promise<void> {
     try {
       await ensureInitialized()
       
       if (!this.address) {
-        throw new Error('No wallet address set')
+        throw new Error('钱包未连接，请先连接钱包')
       }
 
       if (!ProjectABI || !ERC20ABI) {
-        throw new Error('Contract ABI not loaded')
+        throw new Error('合约ABI未加载')
       }
 
       // 首先授权代币转移
-      const approveTx = await writeContract(contractConfig, {
+      const approveTx = await writeContractWithRetry({
         address: tokenAddress as Address,
         abi: ERC20ABI,
         functionName: 'approve',
@@ -1086,7 +1146,7 @@ export class WagmiContractAPI {
       console.log('代币授权交易哈希:', approveTx)
 
       // 然后调用项目合约的赞助功能
-      const sponsorTx = await writeContract(contractConfig, {
+      const sponsorTx = await writeContractWithRetry({
         address: projectAddress as Address,
         abi: ProjectABI,
         functionName: 'sponsor',
@@ -1094,7 +1154,7 @@ export class WagmiContractAPI {
       })
 
       console.log('赞助项目交易哈希:', sponsorTx)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to sponsor project:', error)
       throw error
     }
@@ -1102,23 +1162,24 @@ export class WagmiContractAPI {
 
   /**
    * 创建Campaign
+   * 使用通用重试机制避免连接器状态异常
    */
   async createCampaign(params: CreateCampaignParams): Promise<string> {
     try {
       await ensureInitialized()
       
       if (!this.address) {
-        throw new Error('No connected wallet')
+        throw new Error('钱包未连接，请先连接钱包')
       }
 
       if (!deploymentsInfo?.campaignFactory || !CampaignFactoryABI || !ERC20ABI) {
-        throw new Error('Campaign factory contract data not loaded')
+        throw new Error('Campaign工厂合约数据未加载')
       }
 
       const { projectAddress, sponsorName, duration, rewardToken, rewardAmount } = params
 
       // 首先授权代币转移给CampaignFactory
-      const approveTx = await writeContract(contractConfig, {
+      const approveTx = await writeContractWithRetry({
         address: rewardToken as Address,
         abi: ERC20ABI,
         functionName: 'approve',
@@ -1128,7 +1189,7 @@ export class WagmiContractAPI {
       console.log('代币授权交易哈希:', approveTx)
 
       // 调用CampaignFactory创建Campaign
-      const createTx = await writeContract(contractConfig, {
+      const createTx = await writeContractWithRetry({
         address: deploymentsInfo.campaignFactory as Address,
         abi: CampaignFactoryABI,
         functionName: 'createCampaign',
@@ -1143,7 +1204,7 @@ export class WagmiContractAPI {
 
       console.log('Campaign创建交易哈希:', createTx)
       return createTx
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create campaign:', error)
       throw error
     }
@@ -1408,20 +1469,21 @@ export class WagmiContractAPI {
 
   /**
    * 用户领取Campaign奖励
+   * 使用通用重试机制避免连接器状态异常
    */
   async claimCampaignReward(campaignAddress: string): Promise<string> {
     try {
       await ensureInitialized()
       
       if (!this.address) {
-        throw new Error('No connected wallet')
+        throw new Error('钱包未连接，请先连接钱包')
       }
 
       if (!CampaignABI) {
-        throw new Error('Campaign ABI not loaded')
+        throw new Error('Campaign ABI未加载')
       }
 
-      const txHash = await writeContract(contractConfig, {
+      const txHash = await writeContractWithRetry({
         address: campaignAddress as Address,
         abi: CampaignABI,
         functionName: 'claimRewards',
@@ -1430,7 +1492,7 @@ export class WagmiContractAPI {
 
       console.log('领取奖励交易哈希:', txHash)
       return txHash
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to claim campaign reward:', error)
       throw error
     }
