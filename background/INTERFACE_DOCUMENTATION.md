@@ -221,21 +221,11 @@ function createProject(
 ```
 
 **技术实现：**
-- 使用CREATE2确定性部署
+- 使用标准Clone模式部署
 - 最小代理模式节省95% Gas成本
 - 自动调用initialize函数初始化
 
-#### 3.2 地址预测
-```solidity
-function predictProjectAddress(bytes32 salt) external view returns (address predicted);
-```
-
-**使用场景：**
-- 前端预计算项目地址
-- 验证地址生成逻辑
-- 离线地址计算
-
-#### 3.3 合约验证
+#### 3.2 合约验证
 ```solidity
 function isValidProject(address projectAddress) external view returns (bool isValid);
 ```
@@ -375,7 +365,7 @@ function validatePrice(address token, uint256 expectedPrice) external view retur
 - **批量RPC调用**：使用multicall合并查询
 - **数据缓存**：缓存项目基础信息
 - **分页加载**：避免一次加载大量数据
-- **离线计算**：预计算项目地址
+- **智能加载**：根据用户行为优化数据获取
 
 ---
 

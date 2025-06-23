@@ -625,13 +625,6 @@ interface IProjectFactory {
      * @return implementation 实现合约地址
      */
     function getImplementation() external view returns (address);
-    
-    /**
-     * @notice 预测项目地址
-     * @param salt 创建盐值
-     * @return predicted 预测的地址
-     */
-    function predictProjectAddress(bytes32 salt) external view returns (address);
 }
 ```
 

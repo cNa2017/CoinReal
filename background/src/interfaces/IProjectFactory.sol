@@ -10,7 +10,7 @@ pragma solidity ^0.8.19;
  * - 使用Clone模式大幅降低项目创建的Gas成本
  * - 所有项目共享同一个实现合约逻辑
  * - 每个项目都是独立的代理合约，拥有独立的存储空间
- * - 支持确定性地址生成，便于地址预测
+ * - 使用标准Clone创建，地址由网络状态决定
  * 
  * Gas优化：
  * - 标准合约部署：~2,000,000 gas
@@ -57,16 +57,15 @@ interface IProjectFactory {
      * @dev 使用EIP-1167最小代理模式克隆实现合约
      * 
      * 创建流程：
-     * 1. 生成唯一的salt值（基于项目信息和时间戳）
-     * 2. 使用CREATE2部署最小代理合约
-     * 3. 调用代理合约的initialize函数进行初始化
-     * 4. 验证初始化成功
-     * 5. 触发ProjectCreated事件
+     * 1. 使用Clone创建最小代理合约
+     * 2. 调用代理合约的initialize函数进行初始化
+     * 3. 验证初始化成功
+     * 4. 触发ProjectCreated事件
      * 
-     * 为什么使用CREATE2：
-     * - 地址可预测性，便于前端计算
-     * - 避免地址碰撞
-     * - 支持离线地址计算
+     * 使用标准Clone的优势：
+     * - 更低的Gas消耗
+     * - 简单的创建流程
+     * - 避免地址冲突问题
      * 
      * @param name 项目名称（如：Bitcoin, Ethereum）
      * @param symbol 项目符号（如：BTC, ETH）
@@ -103,23 +102,6 @@ interface IProjectFactory {
      * @return implementation 实现合约地址
      */
     function implementation() external view returns (address implementation);
-    
-    /**
-     * @notice 预测项目合约地址
-     * @dev 使用CREATE2算法预测部署地址
-     * 
-     * 算法：
-     * address = keccak256(0xff + factory_address + salt + bytecode_hash)[12:]
-     * 
-     * 使用场景：
-     * - 前端预先计算项目地址
-     * - 验证地址生成逻辑
-     * - 离线地址计算
-     * 
-     * @param salt 用于地址生成的盐值
-     * @return predicted 预测的项目合约地址
-     */
-    function predictProjectAddress(bytes32 salt) external view returns (address predicted);
     
     /**
      * @notice 验证项目合约是否由此工厂创建

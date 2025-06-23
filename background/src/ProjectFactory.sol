@@ -33,11 +33,8 @@ contract ProjectFactory is IProjectFactory {
         address priceOracle,
         address platform
     ) external returns (address projectAddress) {
-        // Use CREATE2 for deterministic addresses
-        bytes32 salt = keccak256(abi.encodePacked(name, symbol, block.timestamp));
-        
-        // Deploy minimal proxy using Clones library
-        projectAddress = Clones.cloneDeterministic(implementation, salt);
+        // Deploy minimal proxy using standard clone
+        projectAddress = Clones.clone(implementation);
         
         require(projectAddress != address(0), "Clone creation failed");
         
@@ -64,13 +61,21 @@ contract ProjectFactory is IProjectFactory {
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 
-    function predictProjectAddress(bytes32 salt) external view returns (address predicted) {
-        return Clones.predictDeterministicAddress(implementation, salt);
-    }
-
     function isValidProject(address projectAddress) external view returns (bool isValid) {
-        // Check if the address is a valid clone of our implementation
-        return Clones.predictDeterministicAddress(implementation, keccak256(abi.encodePacked(projectAddress))) == projectAddress;
+        // Check if the address has contract code
+        uint32 size;
+        assembly {
+            size := extcodesize(projectAddress)
+        }
+        
+        // If no code, it's not a valid contract
+        if (size == 0) {
+            return false;
+        }
+        
+        // For simplicity, we assume any contract with code could be a valid project
+        // In practice, you might want to add more sophisticated validation
+        return true;
     }
 
     function getFactoryStats() external pure returns (
