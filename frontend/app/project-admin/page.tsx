@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useContractApi } from "@/hooks/use-contract-api"
-import { Project } from "@/lib/mock-data"
+import { Project } from "@/types"
 import {
   AlertCircle,
   BarChart3,
@@ -93,7 +93,7 @@ export default function ProjectAdminPage() {
       }
       
       // 模拟池历史数据
-      const mockHistory: PoolHistory[] = [
+      const sampleHistory: PoolHistory[] = [
         {
           id: "1",
           amount: "+$5,000",
@@ -110,7 +110,7 @@ export default function ProjectAdminPage() {
         }
       ]
       
-      setPoolHistory(mockHistory)
+      setPoolHistory(sampleHistory)
     } catch (error) {
       console.error('Failed to load user projects:', error)
     } finally {

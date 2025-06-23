@@ -239,6 +239,30 @@ export class WagmiContractAPI {
     this.address = address
     console.log('用户地址设置为:', address || 'undefined')
   }
+
+  /**
+   * 获取合约数据（供hooks使用）
+   */
+  async getContractData() {
+    await ensureInitialized()
+    
+    if (!deploymentsInfo || !CoinRealPlatformABI) {
+      return null
+    }
+
+    return {
+      platform: deploymentsInfo.platform,
+      campaignFactory: deploymentsInfo.campaignFactory,
+      projectFactory: deploymentsInfo.projectFactory,
+      priceOracle: deploymentsInfo.priceOracle,
+      tokens: deploymentsInfo.tokens,
+      CoinRealPlatformABI,
+      ProjectABI,
+      ERC20ABI,
+      CampaignABI,
+      CampaignFactoryABI
+    }
+  }
   
   /**
    * 获取所有项目列表（支持分页）

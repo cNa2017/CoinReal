@@ -45,8 +45,8 @@ const initContractData = async () => {
 }
 
 /**
- * 真实合约API类
- * 替代mockApi，与区块链合约进行真实交互
+ * 合约API类
+ * 与区块链合约进行真实交互
  */
 export class ContractAPI {
   private address: string | undefined = undefined
@@ -146,7 +146,7 @@ export class ContractAPI {
       console.log('调用合约: postComment', projectAddress, content)
       
       // 简单模拟一个评论对象作为返回
-      const mockComment = {
+      const newComment = {
         id: Math.floor(Math.random() * 1000) + 1000,
         author: this.address,
         content: content,
@@ -159,7 +159,7 @@ export class ContractAPI {
         dislikes: 0,
       }
       
-      return mockComment
+      return newComment
     } catch (error) {
       console.error('Failed to post comment:', error)
       throw error
@@ -324,7 +324,7 @@ export class ContractAPI {
 // 导出单例实例
 export const contractApi = new ContractAPI()
 
-// 默认导出，保持与mockApi相同的接口
+// 默认导出合约API
 export const api = {
   async getProjects(): Promise<Project[]> {
     return contractApi.getProjects()

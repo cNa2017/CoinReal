@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useContractApi } from "@/hooks/use-contract-api"
-import { User } from "@/lib/mock-data"
+import { User, UserActivity } from "@/types"
 import {
   Clock,
   Copy,
@@ -26,7 +26,7 @@ import { useEffect, useState } from "react"
 
 export default function UserPage() {
   const [user, setUser] = useState<User | null>(null)
-  const [activities, setActivities] = useState<typeof import("@/lib/mock-data").mockUserActivities>([])
+  const [activities, setActivities] = useState<UserActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
   const api = useContractApi()

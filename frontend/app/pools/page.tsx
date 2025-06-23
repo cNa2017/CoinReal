@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import {
-    Award,
-    Clock,
-    DollarSign,
-    History,
-    MessageSquare,
-    Target,
-    Trophy,
-    Users
+  Award,
+  Clock,
+  DollarSign,
+  History,
+  MessageSquare,
+  Target,
+  Trophy,
+  Users
 } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -63,7 +63,7 @@ export default function PoolsPage() {
     seconds: 56
   })
 
-  // Mock数据
+  // 示例数据
   const poolData: PoolData = {
     id: "bitcoin-pool",
     name: "Bitcoin 社区奖池",

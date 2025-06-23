@@ -49,8 +49,8 @@ export function CommentSection({ projectId }: CommentSectionProps) {
   }
 
   const handleDislike = (commentId: number) => {
-    // 暂时保留mock功能，因为合约未实现dislikes
-    console.log('Dislike not implemented in contract:', commentId)
+    // 功能开发中，暂不可用
+    console.log('Dislike feature is under development:', commentId)
   }
 
   if (loading) {
@@ -156,7 +156,9 @@ export function CommentSection({ projectId }: CommentSectionProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDislike(comment.id)}
-                          className="text-gray-400 hover:text-red-400 hover:bg-red-500/10 gap-2"
+                          disabled
+                          className="text-gray-500 cursor-not-allowed gap-2"
+                          title="功能开发中"
                         >
                           <ThumbsDown className="w-4 h-4" />
                           {comment.dislikes || 0}

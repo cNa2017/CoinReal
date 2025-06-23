@@ -12,6 +12,13 @@ export interface User {
   joinDate: string // 前端展示用，非链上数据
   status: "Active" | "Verified" | "Elite" // Verified为平台认证（未实现），Elite从getEliteComments获取
   badge?: string // 前端展示用，非链上数据
+  tokenBalances?: {
+    name: string
+    symbol: string
+    amount: string
+    value: string
+    change24h: number
+  }[]
 }
 
 // 项目相关类型
@@ -50,7 +57,7 @@ export interface Comment {
   // 前端展示用字段（非链上数据）
   avatar?: string // 前端生成默认头像
   verified?: boolean // 平台认证状态（暂未实现）
-  dislikes?: number // 保留mock数据，暂不实现
+  dislikes?: number // 暂不实现
 }
 
 // 赞助相关类型（简化设计）

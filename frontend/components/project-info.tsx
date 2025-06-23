@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Project } from "@/lib/mock-data"
+import { Project } from "@/types"
 import { formatPoolValue, formatTimeLeft } from "@/utils/contract-helpers"
 import { ExternalLink, Globe, Trophy, Zap } from "lucide-react"
 

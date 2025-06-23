@@ -6,7 +6,7 @@ import { ProjectInfo } from "@/components/project-info"
 import { ProjectLayout } from "@/components/project-layout"
 import { Badge } from "@/components/ui/badge"
 import { useContractApi } from "@/hooks/use-contract-api"
-import { Project } from "@/lib/mock-data"
+import { Project } from "@/types"
 import { getProjectColor } from "@/utils/contract-helpers"
 import { useEffect, useState } from "react"
 

@@ -134,7 +134,7 @@ export function prepareCommentForDisplay(contractComment: any) {
     timeAgo: formatTimestamp(contractComment.timestamp),
     crtRewardFormatted: formatCRTAmount(contractComment.crtReward),
     authorShort: shortenAddress(contractComment.author),
-    // 保留dislikes作为mock数据
+    // dislikes 暂不实现
     dislikes: contractComment.dislikes || 0,
   }
 }
