@@ -1,6 +1,6 @@
 {
   "network": "localhost",
-  "timestamp": "1750600307",
+  "timestamp": "1750641586",
   "platform": "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
   "crtToken": "0xcafac3dd18ac6c6e92c921884f9e4176737c052c",
   "priceOracle": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
@@ -14,15 +14,15 @@
     "bnb": "0x8a791620dd6260079bf849dc5567adc3f2fdc318"
   },
   "projects": {
-    "btc": "0x81b14f33439b9b8adc2946b41fc44ed91224dcbf",
-    "eth": "0x61a964ba345440bd3de184037fe1ce51882209e0",
-    "sol": "0xfd0322e5db41ed1c879bef0ad007ed3b3f8a1dba",
-    "matic": "0x209f124368ec0abf27a7890065c4a691a3090acd",
-    "arb": "0xcf57ea3eeca23038ab0f456c5e3523f41441b38c",
-    "uni": "0xa101a83be5efc271097b47ffc67e381b22d87e06",
-    "aave": "0x6afc0e137fa83b491da91ade8cabbcc5b14a0060",
-    "os": "0x2acf77861490f7f55207ae7aca58120ce5aa3f6d",
-    "axs": "0xe72907c973ea9e22ff1bac8ef6c2b9f76dc7ff7b"
+    "btc": "0x37e4bb3f04327a184692e9d2e84e1160be0a2499",
+    "eth": "0xcb39784c314400a6cad5e36a9f11db5b230eae4c",
+    "sol": "0x8ca3b0eef6b62ed21c36b8e9cc666e4eb218f2d8",
+    "matic": "0x4e96ec5da1e3b41df1a5025bf641b57d32518e47",
+    "arb": "0xba5fe53a296c2bb2756be77865c5d4b5f167439e",
+    "uni": "0x8ab4a48b83da1dc4494e5dd9cab7c8599d949125",
+    "aave": "0x3ea174d857b4cff6cdc5d56bb147dc4335b1779c",
+    "os": "0xcfa4b4dadffb26e3fb74a8b3ae1120035cb0729e",
+    "axs": "0x9391919b42af3a1f88a502067065eb0c12b2c669"
   },
   "sampleUsers": {
     "alice": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
