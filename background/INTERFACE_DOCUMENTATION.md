@@ -2,28 +2,31 @@
 
 ## 概述
 
-CoinReal 是一个创新的去中心化内容社区平台，通过区块链技术实现"评论即收益、点赞即赚币"的商业模式。本文档详细描述了平台所有智能合约接口的设计和实现。
+CoinReal 是一个创新的去中心化内容社区平台，通过区块链技术和Campaign奖励机制实现"评论即收益、点赞即赚币"的商业模式。本文档详细描述了平台所有智能合约接口的设计和实现。
 
 ## 核心设计理念
 
-### 代币经济模型
-- **CRT代币**：非转让代币（Soulbound Token），代表用户贡献度
-- **评论奖励**：发表评论获得5个CRT
+### Campaign奖励机制
+- **Project-Campaign分离**：项目专注评论点赞系统，Campaign管理奖励分配
+- **独立CRT代币**：每个Campaign发行独立的CRT代币（"项目名-Campaign编号"）
+- **评论奖励**：发表评论在所有活跃Campaign中获得5个CRT
 - **点赞奖励**：点赞获得1个CRT，被点赞者获得1个CRT
-- **奖池分配**：60%评论奖励 + 25%点赞奖励 + 15%精英奖励
+- **奖池分配**：60%评论奖励 + 25%点赞奖励 + 15%精英奖励（开发中）
+- **Soulbound特性**：CRT代币不可转移，代表真实贡献度
 
 ### 技术架构
-- **最小代理模式**：节省95%项目创建成本
+- **最小代理模式**：节省95%项目和Campaign创建成本
 - **模块化设计**：职责分离，便于升级维护
 - **价格预言机**：支持多种代币的USD价值计算
 - **批量操作**：优化Gas消耗和用户体验
+- **时间控制**：Campaign有明确的活动时间窗口
 
 ---
 
 ## 1. ICoinRealPlatform - 平台主合约接口
 
 ### 职责范围
-平台主合约负责整体项目管理、用户统计、排行榜功能等核心业务。
+平台主合约负责整体项目管理、Campaign管理、用户统计、排行榜功能等核心业务。
 
 ### 核心功能
 
@@ -34,18 +37,30 @@ function createProject(
     string calldata symbol,      // 项目符号 (1-20字符)
     string calldata description, // 项目描述 (最大1000字符)
     string calldata category,    // 项目分类 (Layer1/DeFi/NFT等)
-    uint16 drawPeriod           // 开奖周期 (1-30天)
+    uint16 drawPeriod           // 兼容性参数（保留）
 ) external returns (address projectAddress);
 ```
 
 **业务流程：**
 1. 验证调用者权限（仅owner）
 2. 通过ProjectFactory创建项目代理合约
-3. 为项目设置CRT代币铸造权限
-4. 注册项目到平台并分类存储
-5. 触发ProjectCreated事件
+3. 注册项目到平台并分类存储
+4. 触发ProjectCreated事件
 
-#### 1.2 项目查询
+#### 1.2 Campaign管理
+```solidity
+function addCampaignToProject(
+    address project,
+    address campaign
+) external;
+```
+
+**业务流程：**
+1. 验证Campaign合约有效性
+2. 将Campaign添加到Project的活跃列表
+3. 更新平台统计数据
+
+#### 1.3 项目查询
 ```solidity
 // 分页获取项目列表
 function getProjects(uint256 offset, uint256 limit) external view returns (
@@ -60,19 +75,19 @@ function getProjectsByCategory(string calldata category) external view returns (
 function getUserProjects(address user) external view returns (address[] memory);
 ```
 
-#### 1.3 统计和排行榜
+#### 1.4 统计和排行榜
 ```solidity
 // 平台统计数据
 function getPlatformStats() external view returns (
     uint256 totalProjects,    // 总项目数
     uint256 totalUsers,       // 总用户数
     uint256 totalComments,    // 总评论数
-    uint256 totalPoolValue    // 总奖池价值(USD)
+    uint256 totalCampaigns    // 总Campaign数
 );
 
 // 项目排行榜
 function getProjectLeaderboard(
-    uint8 sortBy,    // 排序方式: 0-参与人数, 1-评论数, 2-奖池金额, 3-最新活动
+    uint8 sortBy,    // 排序方式: 0-参与人数, 1-评论数, 2-Campaign数, 3-最新活动
     uint256 offset,  // 起始位置
     uint256 limit    // 返回数量
 ) external view returns (
@@ -81,24 +96,12 @@ function getProjectLeaderboard(
 );
 ```
 
-#### 1.4 批量数据获取
-```solidity
-function batchGetProjectsData(
-    address[] calldata projectAddresses
-) external view returns (ProjectDetailedData[] memory projectsData);
-```
-
-**优化目的：**
-- 减少RPC调用次数
-- 提升前端加载速度
-- 降低Gas消耗
-
 ---
 
 ## 2. IProject - 项目合约接口
 
 ### 职责范围
-管理单个项目的评论、点赞、奖池和奖励分配系统。
+管理单个项目的评论、点赞系统，并与多个Campaign协调奖励分配。
 
 ### 核心功能
 
@@ -108,8 +111,8 @@ function postComment(string calldata content) external returns (uint256 commentI
 ```
 
 **业务规则：**
-- 内容长度限制：10-1000字符
-- 自动获得5个CRT基础奖励
+- 内容长度限制：1-1000字符
+- 通知所有活跃Campaign铸造5个CRT奖励
 - 评论ID自增，保证时间顺序
 - 更新用户统计数据
 
@@ -120,35 +123,31 @@ function likeComment(uint256 commentId) external;
 
 **业务规则：**
 - 每个用户只能对同一评论点赞一次
-- 点赞者获得1个CRT奖励
-- 被点赞者获得1个CRT奖励
-- 可能更新精英评论排名（前10名）
+- 通知所有活跃Campaign为点赞者和被点赞者各铸造1个CRT奖励
+- 更新评论点赞计数
 
-#### 2.3 赞助系统
+#### 2.3 Campaign管理
 ```solidity
-function sponsor(address token, uint256 amount) external;
+// 添加Campaign到项目
+function addCampaign(address campaign) external; // 仅平台可调用
+
+// 获取项目的所有Campaign
+function getCampaigns() external view returns (address[] memory);
+
+// 获取用户在所有Campaign中的CRT总数
+function getUserTotalCRT(address user) external view returns (uint256 totalCRT);
+
+// 获取用户在所有Campaign中的详细CRT信息
+function getUserCampaignCRTDetails(address user) external view returns (
+    address[] memory campaignAddresses,
+    uint256[] memory commentCRTs,
+    uint256[] memory likeCRTs,
+    uint256[] memory totalCRTs,
+    uint256[] memory pendingRewards
+);
 ```
 
-**业务规则：**
-- 最低赞助金额100 USD（通过预言机验证）
-- 支持任何ERC20代币
-- 记录赞助历史，更新奖池余额
-
-#### 2.4 奖励分配
-```solidity
-function distributeRewards() external;
-```
-
-**分配规则：**
-- **60%**：按CRT占比分配给所有参与者
-- **25%**：按点赞数占比分配给点赞者  
-- **15%**：平均分配给精英评论者（点赞数前10）
-
-**触发条件：**
-- 达到开奖周期时间
-- 至少有1条评论和1个参与者
-
-#### 2.5 数据查询
+#### 2.4 数据查询
 ```solidity
 // 获取评论详情
 function getComment(uint256 commentId) external view returns (Comment memory);
@@ -159,16 +158,18 @@ function getComments(uint256 offset, uint256 limit) external view returns (
     uint256 total
 );
 
-// 获取精英评论（点赞数前10）
-function getEliteComments() external view returns (Comment[] memory);
+// 获取项目统计
+function getProjectStats() external view returns (
+    uint256 totalParticipants,
+    uint256 totalLikes,
+    uint256 lastActivityTime,
+    uint256 currentPoolUSD // 兼容性保留，返回0
+);
 
-// 获取用户统计
-function getUserStats(address user) external view returns (UserStats memory);
-
-// 获取奖池信息
-function getPoolInfo() external view returns (
-    Sponsorship[] memory sponsorships,
-    uint256 totalUSDValue
+// 获取用户活动
+function getUserActivity(address user, uint256 offset, uint256 limit) external view returns (
+    uint256[] memory commentIds,
+    uint256[] memory likedCommentIds
 );
 ```
 
@@ -181,32 +182,156 @@ struct Comment {
     address author;      // 评论作者地址
     string content;      // 评论内容
     uint256 likes;       // 点赞数量
-    uint256 crtReward;   // 累计CRT奖励
-    bool isElite;        // 是否为精英评论
+    uint256 crtReward;   // 兼容性保留（不使用）
+    bool isElite;        // 精英状态由Campaign决定
     uint32 timestamp;    // 发布时间戳
-}
-```
-
-#### UserStats 结构
-```solidity
-struct UserStats {
-    uint256 totalComments;   // 总评论数
-    uint256 totalLikes;      // 总点赞数
-    uint256 totalCRT;        // 总CRT数量
-    uint256 claimedRewards;  // 已领取奖励价值
 }
 ```
 
 ---
 
-## 3. IProjectFactory - 项目工厂接口
+## 3. ICampaign - Campaign合约接口
+
+### 职责范围
+管理单个Campaign的CRT代币铸造、奖池管理和奖励分配。每个Campaign是一个独立的ERC20代币合约。
+
+### 核心功能
+
+#### 3.1 Campaign信息
+```solidity
+// 基本信息
+function projectAddress() external view returns (address);
+function sponsor() external view returns (address);
+function sponsorName() external view returns (string memory);
+function startTime() external view returns (uint256);
+function endTime() external view returns (uint256);
+function rewardToken() external view returns (address);
+function totalRewardPool() external view returns (uint256);
+
+// 状态查询
+function isCurrentlyActive() external view returns (bool);
+function rewardsDistributed() external view returns (bool);
+```
+
+#### 3.2 CRT代币功能（继承ERC20）
+```solidity
+// ERC20基础功能
+function name() external view returns (string memory); // "项目名-Campaign编号"
+function symbol() external view returns (string memory); // "CRT"
+function balanceOf(address account) external view returns (uint256);
+function totalSupply() external view returns (uint256);
+
+// Soulbound特性 - 以下函数会revert
+function transfer(address to, uint256 amount) external returns (bool);
+function transferFrom(address from, address to, uint256 amount) external returns (bool);
+function approve(address spender, uint256 amount) external returns (bool);
+```
+
+#### 3.3 Project回调函数
+```solidity
+// 当用户发表评论时由Project合约调用
+function onCommentPosted(address user, uint256 commentId) external; // 铸造5 CRT
+
+// 当用户点赞评论时由Project合约调用
+function onCommentLiked(address liker, address author, uint256 commentId) external; // 各铸造1 CRT
+```
+
+#### 3.4 奖励分配
+```solidity
+// 分配奖励 - 仅平台可调用
+function distributeRewards() external;
+
+// 用户领取奖励
+function claimRewards() external;
+
+// 延长Campaign时间 - 仅平台可调用
+function extendEndTime(uint256 additionalDays) external;
+```
+
+**分配规则：**
+- **60%**：按CRT占比分配给所有参与者
+- **25%**：按点赞获得的CRT占比分配给点赞者
+- **15%**：精英奖励（开发中）
+
+**自动延期机制：**
+- 如果Campaign结束时没有参与者，自动延长7天
+- 避免奖励资源浪费
+
+#### 3.5 数据查询
+```solidity
+// 获取用户的CRT详情
+function getUserCRTBreakdown(address user) external view returns (
+    uint256 commentTokens,   // 评论获得的CRT
+    uint256 likeTokens,      // 点赞获得的CRT
+    uint256 totalTokens,     // 总CRT数量
+    uint256 pendingReward    // 待领取奖励
+);
+
+// 获取Campaign统计信息
+function getCampaignStats() external view returns (
+    uint256 totalParticipants,
+    uint256 totalComments,
+    uint256 totalLikes,
+    uint256 totalCRT,
+    uint256 remainingTime
+);
+```
+
+---
+
+## 4. ICampaignFactory - Campaign工厂接口
+
+### 职责范围
+使用最小代理模式创建Campaign合约，管理代币转移和Campaign注册。
+
+### 核心功能
+
+#### 4.1 Campaign创建
+```solidity
+function createCampaign(
+    address project,         // 目标项目地址
+    string calldata sponsorName,  // 赞助者名称
+    uint256 duration,        // 持续时间（天）
+    address rewardToken,     // 奖励代币地址
+    uint256 rewardAmount     // 奖励代币数量
+) external returns (address campaignAddress);
+```
+
+**业务流程：**
+1. 验证参数有效性
+2. 从调用者转移奖励代币到Factory
+3. 使用最小代理模式创建Campaign合约
+4. 将代币转移到Campaign合约
+5. 通过平台将Campaign添加到Project
+6. 触发CampaignCreated事件
+
+#### 4.2 Campaign验证
+```solidity
+function isValidCampaign(address campaignAddress) external view returns (bool);
+```
+
+**验证内容：**
+- 检查合约是否存在
+- 验证字节码是否匹配最小代理模式
+- 验证实现合约地址是否正确
+
+### Gas成本对比
+
+| 部署方式 | Gas消耗 | 成本节省 |
+|---------|---------|----------|
+| 标准Campaign部署 | ~1,500,000 | - |
+| Clone模式部署 | ~40,000 | 97% |
+
+---
+
+## 5. IProjectFactory - 项目工厂接口
 
 ### 职责范围
 使用最小代理模式（EIP-1167）创建项目合约，节省部署成本。
 
 ### 核心功能
 
-#### 3.1 项目创建
+#### 5.1 项目创建
 ```solidity
 function createProject(
     string calldata name,
@@ -225,33 +350,21 @@ function createProject(
 - 最小代理模式节省95% Gas成本
 - 自动调用initialize函数初始化
 
-#### 3.2 合约验证
+#### 5.2 合约验证
 ```solidity
 function isValidProject(address projectAddress) external view returns (bool isValid);
 ```
 
-**验证内容：**
-- 检查合约是否存在
-- 验证字节码是否匹配最小代理模式
-- 验证实现合约地址是否正确
-
-### Gas成本对比
-
-| 部署方式 | Gas消耗 | 成本节省 |
-|---------|---------|----------|
-| 标准合约部署 | ~2,000,000 | - |
-| Clone模式部署 | ~50,000 | 95% |
-
 ---
 
-## 4. IPriceOracle - 价格预言机接口
+## 6. IPriceOracle - 价格预言机接口
 
 ### 职责范围
 提供代币USD价值查询服务，支持多代币批量查询。
 
 ### 核心功能
 
-#### 4.1 价值计算
+#### 6.1 价值计算
 ```solidity
 function getUSDValue(address token, uint256 amount) external view returns (uint256 usdValue);
 ```
@@ -261,12 +374,7 @@ function getUSDValue(address token, uint256 amount) external view returns (uint2
 USD Value = (token_amount * token_price) / (10^token_decimals)
 ```
 
-**示例：**
-- 1 USDC (6 decimals) = 1,000,000
-- USDC price = 100,000,000 ($1.00 with 8 decimals)
-- USD Value = (1,000,000 * 100,000,000) / 10^6 = 100,000,000 ($1.00)
-
-#### 4.2 批量查询
+#### 6.2 批量查询
 ```solidity
 function getBatchUSDValue(
     address[] calldata tokens,
@@ -274,120 +382,94 @@ function getBatchUSDValue(
 ) external view returns (uint256 totalUSDValue);
 ```
 
-**优化效果：**
-- 避免多次外部调用的Gas开销
-- 减少RPC调用次数
-- 提升查询性能
-
-#### 4.3 价格验证
-```solidity
-function validatePrice(address token, uint256 expectedPrice) external view returns (
-    bool isValid,
-    uint256 deviation
-);
-```
-
-**验证规则：**
-- 价格不能为0
-- 不能超过历史最高价的10倍
-- 不能低于历史最低价的0.1倍
-- 更新时间不能超过24小时
-
 ### 价格精度标准
 
 所有价格采用8位小数精度（类似Chainlink标准）：
 - $1.00 = 100,000,000 (1 * 10^8)
 - $2000.50 = 200,050,000,000 (2000.5 * 10^8)
 
-### 支持的数据源
-
-1. **Chainlink Price Feeds**（推荐）
-2. **DEX聚合价格**（如Uniswap TWAP）
-3. **中心化交易所API**（备用）
-4. **手动设置**（测试环境）
-
 ---
 
-## 5. 完整的用户交互流程
+## 7. 完整的用户交互流程
 
-### 5.1 新用户入门流程
+### 7.1 Campaign创建流程
+1. **选择项目** → 浏览现有项目列表
+2. **设置Campaign** → 选择奖励代币、金额、持续时间
+3. **批准代币** → 授权CampaignFactory转移代币
+4. **创建Campaign** → 调用createCampaign函数
+5. **Campaign激活** → 自动开始接收用户活动并铸造CRT
+
+### 7.2 用户参与流程
 1. **连接钱包** → 检测资产情况
-2. **选择项目** → 浏览项目列表，选择感兴趣的项目
-3. **发表评论** → 获得5个CRT奖励
-4. **点赞互动** → 点赞他人评论获得奖励
-5. **等待开奖** → 按CRT占比分配奖池奖励
+2. **选择项目** → 浏览项目列表，查看活跃Campaign
+3. **发表评论** → 在所有活跃Campaign中获得5个CRT奖励
+4. **点赞互动** → 点赞他人评论，双方都获得奖励
+5. **查看收益** → 实时查看在各Campaign中的CRT余额
 
-### 5.2 项目赞助流程
-1. **选择代币** → 支持任何ERC20代币
-2. **验证金额** → 最低100 USD等值
-3. **转账赞助** → 代币转入项目合约
-4. **记录历史** → 永久记录赞助信息
-
-### 5.3 奖励分配流程
-1. **触发开奖** → 到达开奖周期时间
-2. **计算分配** → 按60%-25%-15%规则分配
-3. **更新账户** → 用户待领取奖励更新
-4. **用户领取** → 调用claimRewards领取
+### 7.3 奖励领取流程
+1. **Campaign结束** → 到达设定的结束时间
+2. **平台分配** → 平台按规则计算并分配奖池奖励
+3. **查看待领取** → 用户查看各Campaign中的待领取奖励
+4. **领取奖励** → 调用claimRewards领取具体代币奖励
 
 ---
 
-## 6. 安全机制
+## 8. 安全机制
 
-### 6.1 智能合约安全
+### 8.1 智能合约安全
 - **重入攻击防护**：使用ReentrancyGuard
-- **权限控制**：关键函数仅管理员可调用
+- **权限控制**：关键函数仅平台可调用
 - **数值溢出检查**：Solidity 0.8+内置检查
-- **安全代币转账**：使用SafeERC20
+- **安全代币转移**：使用SafeERC20
 
-### 6.2 业务逻辑安全
-- **防重复点赞**：mapping记录点赞关系
+### 8.2 Campaign安全
+- **时间控制**：严格的活动时间窗口验证
+- **代币锁定**：CRT代币不可转移（Soulbound）
+- **权限分离**：Campaign管理权限归平台所有
+- **防重复奖励**：确保同一活动不会重复获得奖励
+
+### 8.3 经济模型安全
 - **最低赞助限制**：通过预言机验证USD价值
-- **CRT代币锁定**：Soulbound Token不可转移
-- **开奖条件验证**：确保有足够参与度
-
-### 6.3 价格安全
-- **多数据源验证**：支持多种价格数据源
-- **异常检测**：价格偏差警告机制
-- **时效性验证**：价格数据过期检查
-- **紧急暂停**：异常情况下暂停服务
+- **奖励分配透明**：固定的60%-25%-15%分配比例
+- **自动延期机制**：避免无效Campaign浪费资源
 
 ---
 
-## 7. Gas优化策略
+## 9. Gas优化策略
 
-### 7.1 合约层面优化
-- **最小代理模式**：节省95%部署成本
-- **紧凑数据结构**：合理安排struct字段顺序
+### 9.1 合约层面优化
+- **最小代理模式**：节省95%+部署成本
 - **批量操作**：支持批量查询和批量领取
 - **事件存储**：评论内容通过事件存储
+- **紧凑数据结构**：合理安排struct字段顺序
 
-### 7.2 前端优化建议
+### 9.2 前端优化建议
 - **批量RPC调用**：使用multicall合并查询
-- **数据缓存**：缓存项目基础信息
+- **Campaign数据缓存**：缓存Campaign基础信息
 - **分页加载**：避免一次加载大量数据
-- **智能加载**：根据用户行为优化数据获取
+- **智能预加载**：根据用户行为优化数据获取
 
 ---
 
-## 8. 扩展性设计
+## 10. 扩展性设计
 
-### 8.1 模块化架构
-- **职责分离**：各合约功能明确，便于维护
+### 10.1 模块化架构
+- **职责分离**：Project专注内容，Campaign专注奖励
 - **接口抽象**：核心功能抽象为接口
-- **代理模式**：支持逻辑升级（工厂合约）
+- **代理模式**：支持逻辑升级
 - **事件驱动**：完整的事件系统
 
-### 8.2 未来扩展方向
-- **跨链支持**：多链部署和资产跨链
+### 10.2 未来扩展方向
+- **精英奖励算法**：基于机器学习的内容质量评估
+- **跨链Campaign**：多链部署和资产跨链
 - **NFT奖励**：引入NFT奖励机制
-- **DAO治理**：社区治理功能
-- **高级分析**：数据分析和商业智能
+- **DAO治理**：社区治理Campaign参数
 
 ---
 
-## 9. 开发指南
+## 11. 开发指南
 
-### 9.1 本地开发环境
+### 11.1 本地开发环境
 ```bash
 # 安装依赖
 forge install
@@ -396,13 +478,13 @@ forge install
 forge build
 
 # 运行测试
-forge test
+forge test --match-contract CampaignSystemTest
 
 # 部署到本地网络
 forge script script/Deploy.s.sol --fork-url http://localhost:8545 --broadcast
 ```
 
-### 9.2 测试覆盖率
+### 11.2 测试覆盖率
 ```bash
 # 生成测试覆盖率报告
 forge coverage
@@ -411,25 +493,17 @@ forge coverage
 forge coverage --report lcov
 ```
 
-### 9.3 安全审计
-```bash
-# 使用Slither进行静态分析
-slither .
-
-# 使用Mythril进行安全扫描
-myth analyze src/
-```
-
 ---
 
-## 10. 总结
+## 12. 总结
 
-CoinReal平台通过精心设计的智能合约架构，实现了：
+CoinReal平台通过创新的Campaign系统架构，实现了：
 
-✅ **完整的代币经济模型** - CRT奖励机制激励用户参与  
-✅ **高效的Gas优化** - 最小代理模式节省95%成本  
-✅ **强大的安全机制** - 多层次安全防护  
-✅ **优秀的扩展性** - 模块化设计便于升级  
-✅ **流畅的用户体验** - 批量操作和优化查询  
+✅ **灵活的奖励机制** - 任何人可创建Campaign，自定义奖励  
+✅ **多Campaign并行** - 用户同时在多个Campaign中获得奖励  
+✅ **高效的Gas优化** - 最小代理模式节省97%成本  
+✅ **强大的安全机制** - 多层次安全防护和权限控制  
+✅ **优秀的扩展性** - 模块化设计便于功能扩展  
+✅ **流畅的用户体验** - 批量操作和智能查询优化  
 
-平台为Web3内容社区提供了一个可持续、可扩展的技术基础，真正实现了"评论即收益、点赞即赚币"的愿景。 
+Campaign系统为Web3内容社区提供了一个更加灵活、可持续的技术基础，真正实现了"评论即收益、点赞即赚币"的愿景，并为未来的功能扩展预留了充足的空间。 

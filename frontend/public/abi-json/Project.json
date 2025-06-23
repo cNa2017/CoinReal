@@ -1,6 +1,38 @@
 [
   {
     "type": "function",
+    "name": "addCampaign",
+    "inputs": [
+      {
+        "name": "campaign",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "campaigns",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "category",
     "inputs": [],
     "outputs": [
@@ -17,13 +49,13 @@
     "name": "claimRewards",
     "inputs": [
       {
-        "name": "tokens",
+        "name": "",
         "type": "address[]",
         "internalType": "address[]"
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -102,19 +134,6 @@
   },
   {
     "type": "function",
-    "name": "crtToken",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "description",
     "inputs": [],
     "outputs": [
@@ -131,7 +150,7 @@
     "name": "distributeRewards",
     "inputs": [],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -148,32 +167,13 @@
   },
   {
     "type": "function",
-    "name": "eliteCommentIds",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "eliteCount",
+    "name": "getCampaigns",
     "inputs": [],
     "outputs": [
       {
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "address[]",
+        "internalType": "address[]"
       }
     ],
     "stateMutability": "view"
@@ -306,7 +306,7 @@
     "inputs": [],
     "outputs": [
       {
-        "name": "eliteCommentList",
+        "name": "",
         "type": "tuple[]",
         "internalType": "struct IProject.Comment[]",
         "components": [
@@ -348,14 +348,14 @@
         ]
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
     "name": "getPendingRewards",
     "inputs": [
       {
-        "name": "user",
+        "name": "",
         "type": "address",
         "internalType": "address"
       }
@@ -372,7 +372,7 @@
         "internalType": "uint256[]"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -380,7 +380,7 @@
     "inputs": [],
     "outputs": [
       {
-        "name": "",
+        "name": "sponsorships",
         "type": "tuple[]",
         "internalType": "struct IProject.Sponsorship[]",
         "components": [
@@ -412,7 +412,7 @@
         "internalType": "uint256"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -420,12 +420,12 @@
     "inputs": [],
     "outputs": [
       {
-        "name": "poolValueUSD",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -507,7 +507,7 @@
     "name": "getUserCRTBreakdown",
     "inputs": [
       {
-        "name": "user",
+        "name": "",
         "type": "address",
         "internalType": "address"
       }
@@ -524,6 +524,45 @@
         "internalType": "uint256"
       }
     ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getUserCampaignCRTDetails",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "campaignAddresses",
+        "type": "address[]",
+        "internalType": "address[]"
+      },
+      {
+        "name": "commentCRTs",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "likeCRTs",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "totalCRTs",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "pendingRewards",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
     "stateMutability": "view"
   },
   {
@@ -531,24 +570,24 @@
     "name": "getUserDetailedActivity",
     "inputs": [
       {
-        "name": "user",
+        "name": "",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "offset",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       },
       {
-        "name": "limit",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
     "outputs": [
       {
-        "name": "comments",
+        "name": "projectComments",
         "type": "tuple[]",
         "internalType": "struct IProject.Comment[]",
         "components": [
@@ -632,21 +671,21 @@
         ]
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
     "name": "getUserStats",
     "inputs": [
       {
-        "name": "user",
+        "name": "",
         "type": "address",
         "internalType": "address"
       }
     ],
     "outputs": [
       {
-        "name": "",
+        "name": "stats",
         "type": "tuple",
         "internalType": "struct IProject.UserStats",
         "components": [
@@ -671,6 +710,25 @@
             "internalType": "uint256"
           }
         ]
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getUserTotalCRT",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "totalCRT",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -786,6 +844,25 @@
   },
   {
     "type": "function",
+    "name": "isCampaign",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "isParticipant",
     "inputs": [
       {
@@ -805,39 +882,7 @@
   },
   {
     "type": "function",
-    "name": "isPoolToken",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "lastActivityTime",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "lastDistributionTime",
     "inputs": [],
     "outputs": [
       {
@@ -908,51 +953,8 @@
   },
   {
     "type": "function",
-    "name": "pendingRewards",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "platform",
     "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "poolTokens",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
     "outputs": [
       {
         "name": "",
@@ -999,65 +1001,31 @@
     "name": "setCRTToken",
     "inputs": [
       {
-        "name": "_crtToken",
+        "name": "",
         "type": "address",
         "internalType": "address"
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
     "name": "sponsor",
     "inputs": [
       {
-        "name": "token",
+        "name": "",
         "type": "address",
         "internalType": "address"
       },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "sponsorships",
-    "inputs": [
       {
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
-    "outputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "sponsor",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "timestamp",
-        "type": "uint32",
-        "internalType": "uint32"
-      }
-    ],
-    "stateMutability": "view"
+    "outputs": [],
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -1068,25 +1036,6 @@
         "name": "",
         "type": "string",
         "internalType": "string"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "tokenPoolAmounts",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -1108,25 +1057,6 @@
     "type": "function",
     "name": "totalLikes",
     "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "userCommentCRT",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
     "outputs": [
       {
         "name": "",
@@ -1161,57 +1091,17 @@
     "stateMutability": "view"
   },
   {
-    "type": "function",
-    "name": "userLikeCRT",
+    "type": "event",
+    "name": "CampaignAdded",
     "inputs": [
       {
-        "name": "",
+        "name": "campaign",
         "type": "address",
+        "indexed": true,
         "internalType": "address"
       }
     ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "userStats",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "totalComments",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "totalLikes",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "totalCRT",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "claimedRewards",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
+    "anonymous": false
   },
   {
     "type": "event",
@@ -1296,56 +1186,6 @@
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "RewardsDistributed",
-    "inputs": [
-      {
-        "name": "timestamp",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "totalComments",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "totalLikes",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "SponsorshipAdded",
-    "inputs": [
-      {
-        "name": "sponsor",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "token",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
     "type": "error",
     "name": "InvalidInitialization",
     "inputs": []
@@ -1354,21 +1194,5 @@
     "type": "error",
     "name": "NotInitializing",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "ReentrancyGuardReentrantCall",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "SafeERC20FailedOperation",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
   }
 ]

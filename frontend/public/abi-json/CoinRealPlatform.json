@@ -12,6 +12,24 @@
   },
   {
     "type": "function",
+    "name": "addCampaignToProject",
+    "inputs": [
+      {
+        "name": "projectAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "campaignAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "allProjects",
     "inputs": [
       {
@@ -31,76 +49,13 @@
   },
   {
     "type": "function",
-    "name": "batchGetProjectsData",
-    "inputs": [
-      {
-        "name": "projectAddresses",
-        "type": "address[]",
-        "internalType": "address[]"
-      }
-    ],
+    "name": "campaignFactory",
+    "inputs": [],
     "outputs": [
       {
-        "name": "projectsData",
-        "type": "tuple[]",
-        "internalType": "struct ICoinRealPlatform.ProjectDetailedData[]",
-        "components": [
-          {
-            "name": "projectAddress",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "symbol",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "totalParticipants",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "totalComments",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "totalLikes",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "poolValueUSD",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "nextDrawTime",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "category",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "isActive",
-            "type": "bool",
-            "internalType": "bool"
-          }
-        ]
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -143,19 +98,6 @@
       }
     ],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "crtToken",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -295,96 +237,6 @@
         "name": "",
         "type": "address[]",
         "internalType": "address[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getUserLeaderboard",
-    "inputs": [
-      {
-        "name": "sortBy",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "offset",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "limit",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "users",
-        "type": "address[]",
-        "internalType": "address[]"
-      },
-      {
-        "name": "scores",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getUserPlatformActivity",
-    "inputs": [
-      {
-        "name": "user",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "offset",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "limit",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "activities",
-        "type": "tuple[]",
-        "internalType": "struct ICoinRealPlatform.UserActivity[]",
-        "components": [
-          {
-            "name": "activityType",
-            "type": "uint8",
-            "internalType": "uint8"
-          },
-          {
-            "name": "projectAddress",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "timestamp",
-            "type": "uint32",
-            "internalType": "uint32"
-          },
-          {
-            "name": "details",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "reward",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
       }
     ],
     "stateMutability": "view"
@@ -531,6 +383,19 @@
   },
   {
     "type": "function",
+    "name": "setCampaignFactory",
+    "inputs": [
+      {
+        "name": "newFactory",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setProjectFactory",
     "inputs": [
       {
@@ -607,13 +472,13 @@
   },
   {
     "type": "event",
-    "name": "PlatformFeeUpdated",
+    "name": "CampaignFactoryUpdated",
     "inputs": [
       {
-        "name": "newFee",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
+        "name": "newFactory",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
       }
     ],
     "anonymous": false

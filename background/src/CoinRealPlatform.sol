@@ -3,14 +3,14 @@ pragma solidity ^0.8.19;
 
 import "./interfaces/ICoinRealPlatform.sol";
 import "./interfaces/IProjectFactory.sol";
+import "./interfaces/ICampaignFactory.sol";
 import "./interfaces/IProject.sol";
-import "./CRTToken.sol";
 
 contract CoinRealPlatform is ICoinRealPlatform {
     address public owner;
     address public projectFactory;
+    address public campaignFactory;
     address public priceOracle;
-    address public crtToken;
     
     // Project tracking
     address[] public allProjects;
@@ -32,9 +32,6 @@ contract CoinRealPlatform is ICoinRealPlatform {
         require(_priceOracle != address(0), "Invalid price oracle");
         owner = msg.sender;
         priceOracle = _priceOracle;
-        
-        // Deploy CRT token
-        crtToken = address(new CRTToken());
     }
     
     function createProject(
@@ -59,12 +56,6 @@ contract CoinRealPlatform is ICoinRealPlatform {
             priceOracle,
             address(this)
         );
-        
-        // Set CRT token for the project
-        IProject(projectAddress).setCRTToken(crtToken);
-        
-        // Add CRT minter permission
-        CRTToken(crtToken).addMinter(projectAddress);
         
         // Track project
         allProjects.push(projectAddress);
@@ -126,6 +117,20 @@ contract CoinRealPlatform is ICoinRealPlatform {
         emit ProjectFactoryUpdated(newFactory);
     }
     
+    function setCampaignFactory(address newFactory) external onlyOwner {
+        require(newFactory != address(0), "Invalid campaign factory");
+        campaignFactory = newFactory;
+        emit CampaignFactoryUpdated(newFactory);
+    }
+    
+    function addCampaignToProject(address projectAddress, address campaignAddress) external {
+        require(msg.sender == campaignFactory, "Only campaign factory can call");
+        require(isProject[projectAddress], "Invalid project");
+        require(campaignAddress != address(0), "Invalid campaign");
+        
+        IProject(projectAddress).addCampaign(campaignAddress);
+    }
+    
     function getPlatformStats() external view returns (
         uint256 _totalProjects,
         uint256 _totalUsers,
@@ -135,12 +140,7 @@ contract CoinRealPlatform is ICoinRealPlatform {
         _totalProjects = allProjects.length;
         _totalUsers = totalUsers;
         _totalComments = totalComments;
-        
-        // Calculate total pool value across all projects
-        for (uint256 i = 0; i < allProjects.length; i++) {
-            (, uint256 projectPoolValue) = IProject(allProjects[i]).getPoolInfo();
-            totalPoolValue += projectPoolValue;
-        }
+        totalPoolValue = 0; // Campaign系统中不再有统一奖池
     }
     
     function getProjectLeaderboard(
@@ -168,9 +168,8 @@ contract CoinRealPlatform is ICoinRealPlatform {
                 allStats[i] = participants;
             } else if (sortBy == 1) { // By comments
                 allStats[i] = project.totalComments();
-            } else if (sortBy == 2) { // By pool value
-                (, uint256 poolValue) = project.getPoolInfo();
-                allStats[i] = poolValue;
+            } else if (sortBy == 2) { // By pool value (always 0 now)
+                allStats[i] = 0;
             } else if (sortBy == 3) { // By last activity
                 (,, uint256 lastActivity,) = project.getProjectStats();
                 allStats[i] = lastActivity;
@@ -200,58 +199,20 @@ contract CoinRealPlatform is ICoinRealPlatform {
             end = total;
         }
         
-        uint256 size = end - offset;
-        projects = new address[](size);
-        stats = new uint256[](size);
+        projects = new address[](end - offset);
+        stats = new uint256[](end - offset);
         
-        for (uint256 i = 0; i < size; i++) {
+        for (uint256 i = 0; i < end - offset; i++) {
             uint256 idx = indices[offset + i];
             projects[i] = allProjects[idx];
             stats[i] = allStats[idx];
         }
     }
     
-    function getUserLeaderboard(
-        uint8 sortBy,
-        uint256 offset,
-        uint256 limit
-    ) external view returns (
-        address[] memory users,
-        uint256[] memory scores
-    ) {
-        // Simplified implementation - in production, track users globally
-        revert("Not implemented");
-    }
-    
-    function batchGetProjectsData(
-        address[] calldata projectAddresses
-    ) external view returns (ProjectDetailedData[] memory projectsData) {
-        projectsData = new ProjectDetailedData[](projectAddresses.length);
-        
-        for (uint256 i = 0; i < projectAddresses.length; i++) {
-            IProject project = IProject(projectAddresses[i]);
-            
-            (uint256 participants, uint256 likes, uint256 lastActivity, uint256 poolUSD) = project.getProjectStats();
-            
-            projectsData[i] = ProjectDetailedData({
-                projectAddress: projectAddresses[i],
-                name: project.name(),
-                symbol: project.symbol(),
-                description: project.description(),
-                totalParticipants: participants,
-                totalComments: project.totalComments(),
-                totalLikes: likes,
-                poolValueUSD: poolUSD,
-                nextDrawTime: project.nextDrawTime(),
-                category: project.category(),
-                isActive: project.isActive()
-            });
-        }
-    }
-    
-    // Function to track user and comment stats (called by projects)
+    // User activity tracking
     function recordUserActivity(address user) external {
         require(isProject[msg.sender], "Only projects can call");
+        
         if (!isUser[user]) {
             isUser[user] = true;
             totalUsers++;
@@ -261,16 +222,5 @@ contract CoinRealPlatform is ICoinRealPlatform {
     function recordComment() external {
         require(isProject[msg.sender], "Only projects can call");
         totalComments++;
-    }
-
-    function getUserPlatformActivity(
-        address user,
-        uint256 offset,
-        uint256 limit
-    ) external view returns (
-        UserActivity[] memory activities
-    ) {
-        // Simplified implementation - in production, track activities globally
-        revert("Not implemented");
     }
 } 

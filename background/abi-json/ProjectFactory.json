@@ -134,25 +134,6 @@
   },
   {
     "type": "function",
-    "name": "predictProjectAddress",
-    "inputs": [
-      {
-        "name": "salt",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "predicted",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "setCreationFee",
     "inputs": [
       {

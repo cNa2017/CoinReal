@@ -1,5 +1,6 @@
 "use client"
 
+import { CampaignList } from "@/components/campaign-list"
 import { CommentSection } from "@/components/comment-section"
 import { ProjectInfo } from "@/components/project-info"
 import { ProjectLayout } from "@/components/project-layout"
@@ -109,9 +110,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <CommentSection projectId={project.projectAddress} />
         </div>
 
-        {/* Right Sidebar - Project Info (2/5) */}
-        <div className="col-span-2">
+        {/* Right Sidebar - Project Info & Campaigns (2/5) */}
+        <div className="col-span-2 space-y-6">
           <ProjectInfo project={project} />
+          <CampaignList projectAddress={project.projectAddress} projectName={project.name} />
         </div>
       </div>
     </ProjectLayout>

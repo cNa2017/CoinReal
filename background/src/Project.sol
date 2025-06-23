@@ -1,70 +1,45 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./interfaces/IProject.sol";
-import "./interfaces/IPriceOracle.sol";
+import "./interfaces/ICampaign.sol";
 import "./interfaces/ICoinRealPlatform.sol";
 
-contract Project is IProject, Initializable, ReentrancyGuard {
-    using SafeERC20 for IERC20;
+contract Project is IProject, Initializable {
     
-    // Constants
-    uint256 private constant COMMENT_REWARD = 5 ether; // 5 CRT
-    uint256 private constant LIKE_REWARD = 1 ether; // 1 CRT
-    uint256 private constant MIN_SPONSOR_USD = 100 * 10**8; // $100 minimum
-    uint256 private constant MAX_ELITE_COUNT = 10;
+    // ====== 基本信息字段 ======
+    string public name;                    // 项目名称
+    string public symbol;                  // 项目符号  
+    string public description;             // 项目描述
+    string public category;                // 项目分类
+    address public creator;                // 项目创建者
+    bool public isActive;                  // 项目是否激活
+    address public platform;               // 平台合约地址
+    address public priceOracle;            // 价格预言机（空实现，准入门槛用）
     
-    // State variables
-    string public name;
-    string public symbol;
-    string public description;
-    string public category;
-    address public creator;
-    uint16 public drawPeriod; // in days
-    uint256 public nextDrawTime;
-    bool public isActive;
+    // ====== 评论系统字段 ======
+    uint256 public commentIdCounter;                           // 评论ID计数器
+    mapping(uint256 => Comment) public comments;               // 评论映射
+    mapping(address => uint256[]) public userComments;         // 用户评论列表
+    mapping(address => mapping(uint256 => bool)) public hasLiked; // 点赞记录
     
-    address public crtToken;
-    address public priceOracle;
-    address public platform;
+    // ====== 统计字段 ======
+    uint256 public totalComments;          // 总评论数
+    uint256 public totalLikes;             // 总点赞数
+    uint256 public lastActivityTime;       // 最后活动时间
+    address[] public participants;         // 参与者列表
+    mapping(address => bool) public isParticipant; // 参与者映射
     
-    // Comment tracking
-    uint256 public commentIdCounter;
-    mapping(uint256 => Comment) public comments;
-    mapping(address => uint256[]) public userComments;
-    mapping(address => mapping(uint256 => bool)) public hasLiked;
+    // ====== Campaign管理字段 ======
+    address[] public campaigns;            // 该项目的所有Campaign列表
+    mapping(address => bool) public isCampaign; // Campaign验证映射
     
-    // Elite comments tracking
-    uint256[MAX_ELITE_COUNT] public eliteCommentIds;
-    uint256 public eliteCount;
+    // ====== 兼容性字段 (保留旧接口) ======
+    uint16 public drawPeriod; // 兼容性保留
+    uint256 public nextDrawTime; // 兼容性保留
     
-    // User stats
-    mapping(address => UserStats) public userStats;
-    address[] public participants;
-    mapping(address => bool) public isParticipant;
-    
-    // CRT分组统计
-    mapping(address => uint256) public userCommentCRT;
-    mapping(address => uint256) public userLikeCRT;
-    
-    // Sponsorship tracking
-    Sponsorship[] public sponsorships;
-    mapping(address => uint256) public tokenPoolAmounts;
-    address[] public poolTokens;
-    mapping(address => bool) public isPoolToken;
-    
-    // Rewards distribution
-    uint256 public lastDistributionTime;
-    mapping(address => mapping(address => uint256)) public pendingRewards;
-    
-    // Stats
-    uint256 public totalComments;
-    uint256 public totalLikes;
-    uint256 public lastActivityTime;
+    // 注意：事件在接口中已定义，这里不再重复定义
     
     modifier onlyPlatform() {
         require(msg.sender == platform, "Only platform can call");
@@ -81,15 +56,13 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         string calldata _symbol,
         string calldata _description,
         string calldata _category,
-        uint16 _drawPeriod,
+        uint16 _drawPeriod, // 保留兼容性，但不使用
         address _creator,
         address _priceOracle,
         address _platform
     ) external initializer {
         require(bytes(_name).length > 0, "Name required");
-        require(_drawPeriod > 0, "Invalid draw period");
         require(_creator != address(0), "Invalid creator");
-        require(_priceOracle != address(0), "Invalid price oracle");
         require(_platform != address(0), "Invalid platform");
         
         name = _name;
@@ -97,26 +70,22 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         description = _description;
         category = _category;
         creator = _creator;
-        drawPeriod = _drawPeriod;
-        priceOracle = _priceOracle;
+        priceOracle = _priceOracle; // 空实现，准入门槛用
         platform = _platform;
+        drawPeriod = _drawPeriod; // 兼容性
+        nextDrawTime = block.timestamp + (_drawPeriod * 1 days); // 兼容性
         
-        nextDrawTime = block.timestamp + (_drawPeriod * 1 days);
         isActive = true;
         lastActivityTime = block.timestamp;
         
         emit ProjectInitialized(_name, _symbol, _creator);
     }
     
-    function setCRTToken(address _crtToken) external {
-        // 只有在初始化过程中才能设置CRT token
-        require(crtToken == address(0), "CRT token already set");
-        require(_crtToken != address(0), "Invalid CRT token");
-        // 只允许platform调用，但由于是代理调用，需要检查platform变量
-        require(platform != address(0), "Platform not initialized");
-        crtToken = _crtToken;
-    }
+    // ====== 评论系统核心功能 ======
     
+    /**
+     * @dev 发表评论
+     */
     function postComment(string calldata content) external onlyActive returns (uint256 commentId) {
         require(bytes(content).length > 0, "Content required");
         require(bytes(content).length <= 1000, "Content too long");
@@ -128,35 +97,34 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         comment.author = msg.sender;
         comment.content = content;
         comment.timestamp = uint32(block.timestamp);
-        comment.crtReward = COMMENT_REWARD;
+        comment.likes = 0;
+        comment.crtReward = 0; // 兼容性，不再使用
+        comment.isElite = false; // 精英状态由Campaign决定
         
         userComments[msg.sender].push(commentId);
         
-        // Update user stats
+        // 更新参与者
         if (!isParticipant[msg.sender]) {
             isParticipant[msg.sender] = true;
             participants.push(msg.sender);
         }
         
-        userStats[msg.sender].totalComments++;
-        userStats[msg.sender].totalCRT += COMMENT_REWARD;
-        
-        // 更新CRT分组统计
-        userCommentCRT[msg.sender] += COMMENT_REWARD;
-        
         totalComments++;
         lastActivityTime = block.timestamp;
         
-        // Platform statistics tracking
+        // 平台统计追踪
         try ICoinRealPlatform(platform).recordUserActivity(msg.sender) {} catch {}
         try ICoinRealPlatform(platform).recordComment() {} catch {}
         
-        // Mint CRT reward
-        ICRTToken(crtToken).mint(msg.sender, COMMENT_REWARD);
+        // 通知所有活跃的Campaign
+        _notifyCampaignsCommentPosted(msg.sender, commentId);
         
         emit CommentPosted(commentId, msg.sender, content);
     }
     
+    /**
+     * @dev 点赞评论
+     */
     function likeComment(uint256 commentId) external onlyActive {
         require(commentId < commentIdCounter, "Invalid comment ID");
         require(!hasLiked[msg.sender][commentId], "Already liked");
@@ -166,164 +134,107 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         
         hasLiked[msg.sender][commentId] = true;
         comment.likes++;
-        comment.crtReward += LIKE_REWARD;
         
-        // Update user stats
+        // 更新参与者
         if (!isParticipant[msg.sender]) {
             isParticipant[msg.sender] = true;
             participants.push(msg.sender);
         }
         
-        userStats[msg.sender].totalLikes++;
-        userStats[msg.sender].totalCRT += LIKE_REWARD;
-        userStats[comment.author].totalCRT += LIKE_REWARD;
-        
-        // 更新CRT分组统计
-        userLikeCRT[msg.sender] += LIKE_REWARD;
-        userLikeCRT[comment.author] += LIKE_REWARD;
-        
         totalLikes++;
         lastActivityTime = block.timestamp;
         
-        // Platform statistics tracking
+        // 平台统计追踪
         try ICoinRealPlatform(platform).recordUserActivity(msg.sender) {} catch {}
         
-        // Update elite comments
-        _updateEliteComments(commentId);
-        
-        // Mint CRT rewards
-        ICRTToken(crtToken).mint(msg.sender, LIKE_REWARD);
-        ICRTToken(crtToken).mint(comment.author, LIKE_REWARD);
+        // 通知所有活跃的Campaign
+        _notifyCampaignsCommentLiked(msg.sender, comment.author, commentId);
         
         emit CommentLiked(commentId, msg.sender);
     }
     
-    function sponsor(address token, uint256 amount) external nonReentrant onlyActive {
-        require(token != address(0), "Invalid token");
-        require(amount > 0, "Amount must be greater than 0");
+    // ====== Campaign管理功能 ======
+    
+    /**
+     * @dev 添加Campaign - 只能由平台调用
+     */
+    function addCampaign(address campaign) external onlyPlatform {
+        require(campaign != address(0), "Invalid campaign");
+        require(!isCampaign[campaign], "Campaign already added");
         
-        // Check minimum USD value
-        uint256 usdValue = IPriceOracle(priceOracle).getUSDValue(token, amount);
-        require(usdValue >= MIN_SPONSOR_USD, "Below minimum sponsorship");
+        campaigns.push(campaign);
+        isCampaign[campaign] = true;
         
-        // Transfer tokens
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        
-        // Track sponsorship
-        sponsorships.push(Sponsorship({
-            token: token,
-            amount: amount,
-            sponsor: msg.sender,
-            timestamp: uint32(block.timestamp)
-        }));
-        
-        tokenPoolAmounts[token] += amount;
-        
-        if (!isPoolToken[token]) {
-            isPoolToken[token] = true;
-            poolTokens.push(token);
-        }
-        
-        emit SponsorshipAdded(msg.sender, token, amount);
+        emit CampaignAdded(campaign);
     }
     
-    function distributeRewards() external nonReentrant {
-        require(block.timestamp >= nextDrawTime, "Draw period not ended");
-        require(totalComments > 0, "No comments to distribute");
-        require(participants.length > 0, "No participants");
-        
-        // Calculate total CRT for distribution
-        uint256 totalCRT = 0;
-        uint256 eliteCRT = 0;
-        
-        for (uint256 i = 0; i < participants.length; i++) {
-            totalCRT += userStats[participants[i]].totalCRT;
-        }
-        
-        // Mark elite comments (if any)
-        for (uint256 i = 0; i < eliteCount; i++) {
-            comments[eliteCommentIds[i]].isElite = true;
-            eliteCRT += comments[eliteCommentIds[i]].crtReward;
-        }
-        
-        // Distribute rewards for each token in pool
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            address token = poolTokens[i];
-            uint256 poolAmount = tokenPoolAmounts[token];
-            
-            if (poolAmount > 0) {
-                // Elite rewards (15%) - 精英评论奖励
-                uint256 elitePool = (poolAmount * 15) / 100;
-                if (eliteCRT > 0 && eliteCount > 0) {
-                    for (uint256 j = 0; j < eliteCount; j++) {
-                        Comment memory eliteComment = comments[eliteCommentIds[j]];
-                        uint256 reward = (elitePool * eliteComment.crtReward) / eliteCRT;
-                        pendingRewards[eliteComment.author][token] += reward;
-                    }
-                } else {
-                    // If no elite comments, add to normal pool
-                    elitePool = 0;
-                }
-                
-                // Comment rewards (60%) - 评论奖励
-                uint256 commentPool = (poolAmount * 60) / 100 + (elitePool > 0 ? 0 : (poolAmount * 15) / 100);
-                if (totalCRT > 0) {
-                    for (uint256 j = 0; j < participants.length; j++) {
-                        address user = participants[j];
-                        uint256 userCRT = userStats[user].totalCRT;
-                        if (userCRT > 0) {
-                            uint256 reward = (commentPool * userCRT) / totalCRT;
-                            pendingRewards[user][token] += reward;
-                        }
-                    }
-                }
-                
-                // Like rewards (25%) - 点赞奖励
-                uint256 likePool = (poolAmount * 25) / 100;
-                if (totalLikes > 0) {
-                    for (uint256 j = 0; j < participants.length; j++) {
-                        address user = participants[j];
-                        uint256 userLikes = userStats[user].totalLikes;
-                        if (userLikes > 0) {
-                            uint256 reward = (likePool * userLikes) / totalLikes;
-                            pendingRewards[user][token] += reward;
-                        }
-                    }
-                }
-                
-                // Reset pool amount
-                tokenPoolAmounts[token] = 0;
-            }
-        }
-        
-        // Update distribution time and next draw time
-        lastDistributionTime = block.timestamp;
-        nextDrawTime = block.timestamp + (drawPeriod * 1 days);
-        
-        // Reset stats for next period
-        _resetPeriodStats();
-        
-        emit RewardsDistributed(block.timestamp, totalComments, totalLikes);
+    /**
+     * @dev 获取项目的所有Campaign
+     */
+    function getCampaigns() external view returns (address[] memory) {
+        return campaigns;
     }
     
-    function claimRewards(address[] calldata tokens) external nonReentrant {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            address token = tokens[i];
-            uint256 amount = pendingRewards[msg.sender][token];
-            
-            if (amount > 0) {
-                pendingRewards[msg.sender][token] = 0;
-                userStats[msg.sender].claimedRewards += amount;
-                IERC20(token).safeTransfer(msg.sender, amount);
+    /**
+     * @dev 获取用户在所有Campaign中的CRT总数
+     */
+    function getUserTotalCRT(address user) external view returns (uint256 totalCRT) {
+        for (uint256 i = 0; i < campaigns.length; i++) {
+            try ICampaign(campaigns[i]).balanceOf(user) returns (uint256 balance) {
+                totalCRT += balance;
+            } catch {
+                // 忽略错误，继续下一个Campaign
             }
         }
     }
     
-    // View functions
+    /**
+     * @dev 获取用户在所有Campaign中的详细CRT信息
+     */
+    function getUserCampaignCRTDetails(address user) external view returns (
+        address[] memory campaignAddresses,
+        uint256[] memory commentCRTs,
+        uint256[] memory likeCRTs,
+        uint256[] memory totalCRTs,
+        uint256[] memory pendingRewards
+    ) {
+        uint256 length = campaigns.length;
+        campaignAddresses = new address[](length);
+        commentCRTs = new uint256[](length);
+        likeCRTs = new uint256[](length);
+        totalCRTs = new uint256[](length);
+        pendingRewards = new uint256[](length);
+        
+        for (uint256 i = 0; i < length; i++) {
+            campaignAddresses[i] = campaigns[i];
+            try ICampaign(campaigns[i]).getUserCRTBreakdown(user) returns (
+                uint256 commentTokens,
+                uint256 likeTokens,
+                uint256 totalTokens,
+                uint256 pendingReward
+            ) {
+                commentCRTs[i] = commentTokens;
+                likeCRTs[i] = likeTokens;
+                totalCRTs[i] = totalTokens;
+                pendingRewards[i] = pendingReward;
+            } catch {
+                // 如果调用失败，保持默认值0
+            }
+        }
+    }
+    
+    // ====== 查询函数 ======
+    
+    /**
+     * @dev 获取评论详情
+     */
     function getComment(uint256 commentId) external view returns (Comment memory) {
         return comments[commentId];
     }
     
+    /**
+     * @dev 分页获取评论列表
+     */
     function getComments(uint256 offset, uint256 limit) external view returns (Comment[] memory commentList, uint256 total) {
         total = commentIdCounter;
         
@@ -342,93 +253,43 @@ contract Project is IProject, Initializable, ReentrancyGuard {
         }
     }
     
-    function getEliteComments() external view returns (Comment[] memory eliteCommentList) {
-        eliteCommentList = new Comment[](eliteCount);
-        for (uint256 i = 0; i < eliteCount; i++) {
-            eliteCommentList[i] = comments[eliteCommentIds[i]];
-        }
-    }
-    
-    function getUserStats(address user) external view returns (UserStats memory) {
-        return userStats[user];
-    }
-    
-    function getPoolInfo() external view returns (Sponsorship[] memory, uint256 totalUSDValue) {
-        // Calculate total USD value only if there are pool tokens
-        if (poolTokens.length > 0) {
-            address[] memory tokens = new address[](poolTokens.length);
-            uint256[] memory amounts = new uint256[](poolTokens.length);
-            
-            for (uint256 i = 0; i < poolTokens.length; i++) {
-                tokens[i] = poolTokens[i];
-                amounts[i] = tokenPoolAmounts[poolTokens[i]];
-            }
-            
-            totalUSDValue = IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts);
-        } else {
-            totalUSDValue = 0;
-        }
-        
-        return (sponsorships, totalUSDValue);
-    }
-    
-    function getPendingRewards(address user) external view returns (address[] memory tokens, uint256[] memory amounts) {
-        uint256 count = 0;
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            if (pendingRewards[user][poolTokens[i]] > 0) {
-                count++;
-            }
-        }
-        
-        tokens = new address[](count);
-        amounts = new uint256[](count);
-        
-        uint256 index = 0;
-        for (uint256 i = 0; i < poolTokens.length; i++) {
-            uint256 amount = pendingRewards[user][poolTokens[i]];
-            if (amount > 0) {
-                tokens[index] = poolTokens[i];
-                amounts[index] = amount;
-                index++;
-            }
-        }
-    }
-    
-    function hasUserLikedComment(address user, uint256 commentId) external view returns (bool) {
-        return hasLiked[user][commentId];
-    }
-    
+    /**
+     * @dev 获取项目统计信息
+     */
     function getProjectStats() external view returns (
         uint256 totalParticipants,
         uint256 _totalLikes,
         uint256 _lastActivityTime,
-        uint256 currentPoolUSD
+        uint256 currentPoolUSD // 兼容性保留，返回0
     ) {
         totalParticipants = participants.length;
         _totalLikes = totalLikes;
         _lastActivityTime = lastActivityTime;
-        
-        // Calculate current pool USD value only if there are pool tokens
-        if (poolTokens.length > 0) {
-            address[] memory tokens = new address[](poolTokens.length);
-            uint256[] memory amounts = new uint256[](poolTokens.length);
-            
-            for (uint256 i = 0; i < poolTokens.length; i++) {
-                tokens[i] = poolTokens[i];
-                amounts[i] = tokenPoolAmounts[poolTokens[i]];
-            }
-            
-            currentPoolUSD = IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts);
-        } else {
-            currentPoolUSD = 0;
-        }
+        currentPoolUSD = 0; // 不再有统一奖池
     }
     
+    /**
+     * @dev 获取总参与者数量
+     */
+    function getTotalParticipants() external view returns (uint256) {
+        return participants.length;
+    }
+    
+    /**
+     * @dev 检查用户是否点赞了评论
+     */
+    function hasUserLikedComment(address user, uint256 commentId) external view returns (bool) {
+        return hasLiked[user][commentId];
+    }
+    
+    /**
+     * @dev 获取用户活动
+     */
     function getUserActivity(address user, uint256 offset, uint256 limit) external view returns (
         uint256[] memory commentIds,
         uint256[] memory likedCommentIds
     ) {
-        // Get user comments
+        // 获取用户评论
         uint256[] memory userCommentList = userComments[user];
         uint256 total = userCommentList.length;
         
@@ -446,7 +307,7 @@ contract Project is IProject, Initializable, ReentrancyGuard {
             }
         }
         
-        // Get liked comments (simplified - returns first 'limit' liked comments)
+        // 获取点赞的评论（简化实现）
         uint256 likedCount = 0;
         likedCommentIds = new uint256[](limit);
         
@@ -456,134 +317,149 @@ contract Project is IProject, Initializable, ReentrancyGuard {
             }
         }
         
-        // Resize array to actual count
+        // 调整数组大小
         assembly {
             mstore(likedCommentIds, likedCount)
         }
     }
     
-    // 新增接口实现
-    function getUserCRTBreakdown(address user) external view returns (
+    // ====== 内部函数 ======
+    
+    /**
+     * @dev 通知所有活跃Campaign有新评论
+     */
+    function _notifyCampaignsCommentPosted(address user, uint256 commentId) private {
+        for (uint256 i = 0; i < campaigns.length; i++) {
+            try ICampaign(campaigns[i]).isCurrentlyActive() returns (bool campaignActive) {
+                if (campaignActive) {
+                    try ICampaign(campaigns[i]).onCommentPosted(user, commentId) {
+                        // 成功通知Campaign
+                    } catch {
+                        // 忽略错误，继续下一个Campaign
+                    }
+                }
+            } catch {
+                // 忽略错误，继续下一个Campaign
+            }
+        }
+    }
+    
+    /**
+     * @dev 通知所有活跃Campaign有新点赞
+     */
+    function _notifyCampaignsCommentLiked(address liker, address author, uint256 commentId) private {
+        for (uint256 i = 0; i < campaigns.length; i++) {
+            try ICampaign(campaigns[i]).isCurrentlyActive() returns (bool campaignActive) {
+                if (campaignActive) {
+                    try ICampaign(campaigns[i]).onCommentLiked(liker, author, commentId) {
+                        // 成功通知Campaign
+                    } catch {
+                        // 忽略错误，继续下一个Campaign
+                    }
+                }
+            } catch {
+                // 忽略错误，继续下一个Campaign
+            }
+        }
+    }
+    
+    // ====== 兼容性函数 (保留旧接口，避免前端报错) ======
+    
+    /**
+     * @dev 兼容性函数 - 返回空的奖池信息
+     */
+    function getPoolInfo() external pure returns (
+        Sponsorship[] memory sponsorships,
+        uint256 totalUSDValue
+    ) {
+        sponsorships = new Sponsorship[](0);
+        totalUSDValue = 0;
+    }
+    
+    /**
+     * @dev 兼容性函数 - 返回0
+     */
+    function getPoolValueUSD() external pure returns (uint256) {
+        return 0;
+    }
+    
+    /**
+     * @dev 兼容性函数 - 返回空的用户统计
+     */
+    function getUserStats(address) external pure returns (UserStats memory stats) {
+        stats = UserStats({
+            totalComments: 0,
+            totalLikes: 0,
+            totalCRT: 0,
+            claimedRewards: 0
+        });
+    }
+    
+    /**
+     * @dev 兼容性函数 - 返回空的CRT分解
+     */
+    function getUserCRTBreakdown(address) external pure returns (
         uint256 commentTokens,
         uint256 likeTokens
     ) {
-        commentTokens = userCommentCRT[user];
-        likeTokens = userLikeCRT[user];
+        commentTokens = 0;
+        likeTokens = 0;
     }
     
-    function getUserDetailedActivity(address user, uint256 offset, uint256 limit) external view returns (
-        Comment[] memory comments,
+    /**
+     * @dev 兼容性函数 - 返回空的详细活动
+     */
+    function getUserDetailedActivity(address, uint256, uint256) external pure returns (
+        Comment[] memory projectComments,
         Comment[] memory likedComments
     ) {
-        // 获取用户评论
-        uint256[] memory userCommentList = userComments[user];
-        uint256 total = userCommentList.length;
-        
-        if (offset >= total) {
-            comments = new Comment[](0);
-        } else {
-            uint256 end = offset + limit;
-            if (end > total) {
-                end = total;
-            }
-            
-            comments = new Comment[](end - offset);
-            for (uint256 i = 0; i < end - offset; i++) {
-                comments[i] = this.getComment(userCommentList[offset + i]);
-            }
-        }
-        
-        // 获取用户点赞的评论
-        uint256 likedCount = 0;
-        Comment[] memory tempLikedComments = new Comment[](limit);
-        
-        for (uint256 i = 0; i < commentIdCounter && likedCount < limit; i++) {
-            if (hasLiked[user][i]) {
-                tempLikedComments[likedCount] = this.getComment(i);
-                likedCount++;
-            }
-        }
-        
-        // 调整数组大小
-        likedComments = new Comment[](likedCount);
-        for (uint256 i = 0; i < likedCount; i++) {
-            likedComments[i] = tempLikedComments[i];
-        }
+        projectComments = new Comment[](0);
+        likedComments = new Comment[](0);
     }
     
-    function getPoolValueUSD() external view returns (uint256 poolValueUSD) {
-        (,,, poolValueUSD) = this.getProjectStats();
+    /**
+     * @dev 兼容性函数 - 返回空的精英评论
+     */
+    function getEliteComments() external pure returns (Comment[] memory) {
+        return new Comment[](0);
     }
     
-    // 新增的getter函数，为前端API兼容性
-    function getTotalParticipants() external view returns (uint256) {
-        return participants.length;
+    /**
+     * @dev 兼容性函数 - 返回空的待领取奖励
+     */
+    function getPendingRewards(address) external pure returns (
+        address[] memory tokens,
+        uint256[] memory amounts
+    ) {
+        tokens = new address[](0);
+        amounts = new uint256[](0);
     }
     
-    // Internal functions
-    function _updateEliteComments(uint256 commentId) private {
-        uint256 newLikes = comments[commentId].likes;
-        
-        // Check if comment should be in elite list
-        if (eliteCount < MAX_ELITE_COUNT) {
-            // Add to elite list if not full
-            eliteCommentIds[eliteCount++] = commentId;
-            _sortEliteComments();
-        } else {
-            // Check if it should replace the lowest elite comment
-            uint256 lowestEliteId = eliteCommentIds[MAX_ELITE_COUNT - 1];
-            uint256 lowestLikes = comments[lowestEliteId].likes;
-            
-            if (newLikes > lowestLikes || 
-                (newLikes == lowestLikes && commentId < lowestEliteId)) {
-                eliteCommentIds[MAX_ELITE_COUNT - 1] = commentId;
-                _sortEliteComments();
-            }
-        }
+    /**
+     * @dev 兼容性函数 - 空实现
+     */
+    function setCRTToken(address) external pure {
+        // 空实现，保持兼容性
     }
     
-    function _sortEliteComments() private {
-        // Simple bubble sort for small fixed array
-        for (uint256 i = 0; i < eliteCount - 1; i++) {
-            for (uint256 j = 0; j < eliteCount - i - 1; j++) {
-                uint256 id1 = eliteCommentIds[j];
-                uint256 id2 = eliteCommentIds[j + 1];
-                uint256 likes1 = comments[id1].likes;
-                uint256 likes2 = comments[id2].likes;
-                
-                // Sort by likes desc, then by ID asc (earlier comments first)
-                if (likes1 < likes2 || (likes1 == likes2 && id1 > id2)) {
-                    eliteCommentIds[j] = id2;
-                    eliteCommentIds[j + 1] = id1;
-                }
-            }
-        }
+    /**
+     * @dev 兼容性函数 - 空实现
+     */
+    function sponsor(address, uint256) external pure {
+        revert("Use Campaign system instead");
     }
     
-    function _resetPeriodStats() private {
-        // Reset user stats for new period
-        for (uint256 i = 0; i < participants.length; i++) {
-            delete userStats[participants[i]];
-        }
-        
-        // Clear participants
-        delete participants;
-        
-        // Clear elite comments
-        eliteCount = 0;
-        
-        // Reset comment rewards and elite status
-        for (uint256 i = 0; i < commentIdCounter; i++) {
-            comments[i].crtReward = COMMENT_REWARD;
-            comments[i].isElite = false;
-        }
-        
-        // Reset totals
-        totalComments = 0;
-        totalLikes = 0;
+    /**
+     * @dev 兼容性函数 - 空实现
+     */
+    function distributeRewards() external pure {
+        revert("Use Campaign system instead");
     }
-}
-
-interface ICRTToken {
-    function mint(address to, uint256 amount) external;
+    
+    /**
+     * @dev 兼容性函数 - 空实现
+     */
+    function claimRewards(address[] calldata) external pure {
+        revert("Use Campaign system instead");
+    }
 } 

@@ -20,11 +20,23 @@ export default function HomePage() {
   const api = useContractApi()
 
   useEffect(() => {
-    loadPlatformStats()
+    // 确保在客户端环境且API可用时才加载数据
+    if (typeof window !== 'undefined' && api) {
+      loadPlatformStats()
+    }
   }, [api])
 
   const loadPlatformStats = async () => {
-    if (!api) return
+    if (!api) {
+      console.log('API not available, skipping stats load')
+      return
+    }
+
+    // 只在客户端环境加载数据
+    if (typeof window === 'undefined') {
+      console.log('Server environment, skipping stats load')
+      return
+    }
 
     setLoading(true)
     try {

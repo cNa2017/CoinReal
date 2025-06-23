@@ -5,17 +5,22 @@ import {Script, console} from "forge-std/Script.sol";
 import "../src/CoinRealPlatform.sol";
 import "../src/ProjectFactory.sol";
 import "../src/Project.sol";
+import "../src/Campaign.sol";
+import "../src/CampaignFactory.sol";
 import "../src/mocks/MockPriceOracle.sol";
 import "../src/mocks/MockERC20.sol";
 import "../src/interfaces/IProject.sol";
+import "../src/interfaces/ICampaign.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DeployScript is Script {
     // 部署的合约实例
     CoinRealPlatform public platform;
     MockPriceOracle public priceOracle;
-    ProjectFactory public factory;
+    ProjectFactory public projectFactory;
     Project public projectImpl;
+    CampaignFactory public campaignFactory;
+    Campaign public campaignImpl;
     
     // Mock代币
     MockERC20 public usdc;
@@ -26,6 +31,7 @@ contract DeployScript is Script {
     
     // 项目地址
     address[] public allProjects;
+    address[] public allCampaigns;
     
     // 示例用户地址（用私钥生成的确定性地址）
     address public alice = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;   // 私钥2
@@ -53,16 +59,16 @@ contract DeployScript is Script {
         // 4. Setup sample users funds
         _setupUsers();
         
-        // 5. Add project sponsorship
-        _addSponsorship();
+        // 5. Create sample campaigns
+        _createCampaigns();
         
-        // 6. Simulate user interactions
-        _simulateUserInteractions();
-        
-        // 7. Output final state
+        // 6. Output final state
         _outputFinalState();
         
         vm.stopBroadcast();
+        
+        // 7. Simulate user interactions (after broadcast)
+        _simulateUserInteractions();
         
         // 8. Generate deployment info file
         _writeDeploymentInfo();
@@ -77,22 +83,35 @@ contract DeployScript is Script {
         priceOracle = new MockPriceOracle();
         console.log("MockPriceOracle deployed at:", address(priceOracle));
         
-        // Deploy platform main contract
+        // Deploy platform main contract (不再需要CRT Token)
         platform = new CoinRealPlatform(address(priceOracle));
         console.log("CoinRealPlatform deployed at:", address(platform));
-        console.log("CRTToken deployed at:", platform.crtToken());
         
         // Deploy project implementation contract
         projectImpl = new Project();
         console.log("Project implementation deployed at:", address(projectImpl));
         
         // Deploy project factory
-        factory = new ProjectFactory(address(projectImpl));
-        console.log("ProjectFactory deployed at:", address(factory));
+        projectFactory = new ProjectFactory(address(projectImpl));
+        console.log("ProjectFactory deployed at:", address(projectFactory));
+        
+        // Deploy campaign implementation contract
+        campaignImpl = new Campaign();
+        console.log("Campaign implementation deployed at:", address(campaignImpl));
+        
+        // Deploy campaign factory
+        campaignFactory = new CampaignFactory(address(campaignImpl));
+        console.log("CampaignFactory deployed at:", address(campaignFactory));
         
         // Configure platform
-        platform.setProjectFactory(address(factory));
+        platform.setProjectFactory(address(projectFactory));
+        platform.setCampaignFactory(address(campaignFactory));
         console.log("+ Project factory configured to platform");
+        console.log("+ Campaign factory configured to platform");
+        
+        // Configure campaign factory with platform address
+        campaignFactory.setPlatform(address(platform));
+        console.log("+ Platform address configured to campaign factory");
     }
     
     function _deployTokens() private {
@@ -223,207 +242,173 @@ contract DeployScript is Script {
     }
     
     function _setupUsers() private {
-        console.log("\n[Step 4] Allocating funds to sample users...");
+        console.log("\n[Step 4] Setting up user funds...");
         
-        // Allocate test tokens to sample users
         address[] memory users = new address[](4);
         users[0] = alice;
-        users[1] = bob; 
+        users[1] = bob;
         users[2] = charlie;
         users[3] = david;
         
+        // 给每个用户分配代币
         for (uint256 i = 0; i < users.length; i++) {
-            // Allocate different amounts of tokens
-            uint256 multiplier = i + 1;
+            address user = users[i];
             
-            usdc.mint(users[i], 50000 * 10**6 * multiplier);  // 50K-200K USDC
-            weth.mint(users[i], 20 * 10**18 * multiplier);    // 20-80 WETH
-            dai.mint(users[i], 30000 * 10**18 * multiplier);  // 30K-120K DAI
-            usdt.mint(users[i], 40000 * 10**6 * multiplier);  // 40K-160K USDT
-            bnb.mint(users[i], 1000 * 10**18 * multiplier);   // 1000-4000 BNB
+            // 分配各种代币
+            usdc.transfer(user, 10000 * 10**6);      // 10K USDC
+            weth.transfer(user, 10 * 10**18);        // 10 WETH
+            dai.transfer(user, 10000 * 10**18);      // 10K DAI
+            usdt.transfer(user, 10000 * 10**6);      // 10K USDT
+            bnb.transfer(user, 100 * 10**18);        // 100 BNB
             
-            console.log("+ User", users[i], "received test tokens");
+            console.log("+ User", user, "funded with test tokens");
         }
     }
     
-    function _addSponsorship() private {
-        console.log("\n[Step 5] Adding project sponsorship...");
+    function _createCampaigns() private {
+        console.log("\n[Step 5] Creating sample campaigns...");
         
-        // Add different scales of sponsorship to different projects
-        
-        // Bitcoin - Large USDC sponsorship
-        _sponsorProject(allProjects[0], address(usdc), 100000 * 10**6); // 100K USDC
-        _sponsorProject(allProjects[0], address(weth), 20 * 10**18);     // 20 WETH
-        console.log("+ Bitcoin project received sponsorship");
-        
-        // Ethereum - Diversified sponsorship
-        _sponsorProject(allProjects[1], address(usdc), 150000 * 10**6); // 150K USDC
-        _sponsorProject(allProjects[1], address(weth), 30 * 10**18);     // 30 WETH
-        _sponsorProject(allProjects[1], address(dai), 80000 * 10**18);   // 80K DAI
-        console.log("+ Ethereum project received sponsorship");
-        
-        // Solana - Medium sponsorship
-        _sponsorProject(allProjects[2], address(weth), 25 * 10**18);     // 25 WETH
-        _sponsorProject(allProjects[2], address(bnb), 2000 * 10**18);    // 2000 BNB
-        console.log("+ Solana project received sponsorship");
-        
-        // Polygon - Small sponsorship
-        _sponsorProject(allProjects[3], address(usdc), 30000 * 10**6);   // 30K USDC
-        _sponsorProject(allProjects[3], address(dai), 25000 * 10**18);   // 25K DAI
-        console.log("+ Polygon project received sponsorship");
-        
-        // Other projects receive basic sponsorship
-        for (uint256 i = 4; i < allProjects.length; i++) {
-            _sponsorProject(allProjects[i], address(usdc), 10000 * 10**6); // 10K USDC
-            console.log("+ Project", i+1, "received basic sponsorship");
+        // 为每个项目创建Campaign
+        for (uint256 i = 0; i < allProjects.length; i++) {
+            address projectAddr = allProjects[i];
+            string memory projectName = IProject(projectAddr).name();
+            
+            // 创建Campaign 1 - USDC奖池
+            usdc.approve(address(campaignFactory), 1000 * 10**6); // 1000 USDC
+            address campaign1 = campaignFactory.createCampaign(
+                projectAddr,
+                string(abi.encodePacked(projectName, " Community")),
+                30, // 30天
+                address(usdc),
+                1000 * 10**6 // 1000 USDC
+            );
+            allCampaigns.push(campaign1);
+            console.log("+ Campaign created for", projectName, "with USDC:", campaign1);
+            
+            // 创建Campaign 2 - WETH奖池 (仅为前两个项目)
+            if (i < 2) {
+                weth.approve(address(campaignFactory), 1 * 10**18); // 1 WETH
+                address campaign2 = campaignFactory.createCampaign(
+                    projectAddr,
+                    "Crypto Foundation",
+                    60, // 60天
+                    address(weth),
+                    1 * 10**18 // 1 WETH
+                );
+                allCampaigns.push(campaign2);
+                console.log("+ Second campaign created for", projectName, "with WETH:", campaign2);
+            }
         }
     }
     
     function _simulateUserInteractions() private {
-        console.log("\n[Step 6] Simulating user interactions...");
+        console.log("\n[Step 7] Simulating user interactions...");
         
-        // Simulate Alice's activity
-        vm.stopBroadcast();
-        vm.startBroadcast(0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d); // Alice's private key
-        _simulateUserActivity(alice, "Alice");
-        vm.stopBroadcast();
-        
-        // Simulate Bob's activity  
-        vm.startBroadcast(0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a); // Bob's private key
-        _simulateUserActivity(bob, "Bob");
-        vm.stopBroadcast();
-        
-        // Simulate Charlie's activity
-        vm.startBroadcast(0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6); // Charlie's private key
-        _simulateUserActivity(charlie, "Charlie");
-        vm.stopBroadcast();
-        
-        // Restore original broadcast
-        vm.startBroadcast(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80);
-        
-        // Now simulate likes after all comments are posted
-        _simulateLikes();
-        
-        console.log("+ User interactions simulation completed");
-    }
-    
-    function _simulateUserActivity(address user, string memory userName) private {
-        // Each user posts comments on different projects
-        string[] memory comments = new string[](5);
-        comments[0] = string(abi.encodePacked(userName, " is very interested in this project, great tech prospects!"));
-        comments[1] = string(abi.encodePacked("Deep analysis from ", userName, ": this ecosystem has huge development potential"));
-        comments[2] = string(abi.encodePacked(userName, " thinks this is a project worth long-term attention"));
-        comments[3] = string(abi.encodePacked("As ", userName, ", I'm bullish on this project's future development"));
-        comments[4] = string(abi.encodePacked(userName, "'s view: community building is a key success factor"));
-        
-        // Post comments on first 5 projects
-        for (uint256 i = 0; i < 5 && i < allProjects.length; i++) {
-            try IProject(allProjects[i]).postComment(comments[i]) {
-                // Comment successful
-            } catch {
-                // Ignore errors, continue to next
-            }
-        }
-    }
-    
-    function _simulateLikes() private {
-        console.log("+ Simulating likes on comments...");
-        
-        // Each user likes some existing comments
-        
-        // Alice likes comments
-        vm.stopBroadcast();
-        vm.startBroadcast(0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d);
-        _likeComments("Alice");
-        vm.stopBroadcast();
-        
-        // Bob likes comments
-        vm.startBroadcast(0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a);
-        _likeComments("Bob");
-        vm.stopBroadcast();
-        
-        // Charlie likes comments
-        vm.startBroadcast(0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6);
-        _likeComments("Charlie");
-        vm.stopBroadcast();
-        
-        // Restore broadcast
-        vm.startBroadcast(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80);
-    }
-    
-    function _likeComments(string memory userName) private {
-        // Like comments on first few projects (where we know comments exist)
-        for (uint256 i = 0; i < 3 && i < allProjects.length; i++) {
-            // Try to like the first few comments on each project
-            for (uint256 j = 0; j < 3; j++) {
-                try IProject(allProjects[i]).likeComment(j) {
-                    // Like successful
-                } catch {
-                    // Comment doesn't exist or other error, ignore
-                    break; // No more comments on this project
-                }
-            }
-        }
-    }
-    
-    function _sponsorProject(address project, address token, uint256 amount) private {
-        IERC20(token).approve(project, amount);
-        try IProject(project).sponsor(token, amount) {
-            // Sponsorship successful
-        } catch {
-            // Ignore errors, continue execution
+        // 模拟用户评论和点赞
+        for (uint256 i = 0; i < allProjects.length; i++) {
+            address projectAddr = allProjects[i];
+            IProject project = IProject(projectAddr);
+            string memory projectName = project.name();
+            
+            console.log("+ Simulating interactions for", projectName);
+            
+            // Alice 发表评论
+            vm.prank(alice);
+            uint256 comment1 = project.postComment(
+                string(abi.encodePacked("Great project! ", projectName, " has amazing potential for the future of blockchain."))
+            );
+            
+            // Bob 发表评论
+            vm.prank(bob);
+            uint256 comment2 = project.postComment(
+                string(abi.encodePacked("I'm bullish on ", projectName, ". The technology is revolutionary!"))
+            );
+            
+            // Charlie 发表评论
+            vm.prank(charlie);
+            uint256 comment3 = project.postComment(
+                string(abi.encodePacked(projectName, " is leading the innovation in crypto space. Excited to be part of this community!"))
+            );
+            
+            // 用户互相点赞
+            vm.prank(bob);
+            project.likeComment(comment1);
+            
+            vm.prank(charlie);
+            project.likeComment(comment1);
+            
+            vm.prank(alice);
+            project.likeComment(comment2);
+            
+            vm.prank(david);
+            project.likeComment(comment2);
+            
+            vm.prank(alice);
+            project.likeComment(comment3);
+            
+            console.log("  - 3 comments posted, 5 likes given");
         }
     }
     
     function _outputFinalState() private {
-        console.log("\n[Step 7] Final state statistics...");
+        console.log("\n[Step 6] Final deployment state:");
+        console.log("Platform:", address(platform));
+        console.log("ProjectFactory:", address(projectFactory));
+        console.log("CampaignFactory:", address(campaignFactory));
+        console.log("PriceOracle:", address(priceOracle));
         
-        (uint256 totalProjects, uint256 totalUsers, uint256 totalComments, uint256 totalPoolValue) 
-            = platform.getPlatformStats();
-            
-        console.log("=== Platform Statistics ===");
-        console.log("Total Projects:", totalProjects);
-        console.log("Total Users:", totalUsers);
-        console.log("Total Comments:", totalComments);
-        console.log("Total Pool Value (USD):", totalPoolValue / 10**8);
-        
-        console.log("\n=== Project Details ===");
+        console.log("\nProjects created:", allProjects.length);
         for (uint256 i = 0; i < allProjects.length; i++) {
-            IProject project = IProject(allProjects[i]);
-            (, uint256 poolValue) = project.getPoolInfo();
-            
-            console.log(string(abi.encodePacked(
-                project.name(), " (", project.symbol(), "): $", 
-                _uint2str(poolValue / 10**8), " - ", project.category()
-            )));
+            console.log("  -", IProject(allProjects[i]).name(), ":", allProjects[i]);
         }
+        
+        console.log("\nCampaigns created:", allCampaigns.length);
+        for (uint256 i = 0; i < allCampaigns.length; i++) {
+            ICampaign campaign = ICampaign(allCampaigns[i]);
+            console.log("  -", campaign.name(), ":", allCampaigns[i]);
+        }
+        
+        console.log("\nTest tokens:");
+        console.log("  - USDC:", address(usdc));
+        console.log("  - WETH:", address(weth));
+        console.log("  - DAI:", address(dai));
+        console.log("  - USDT:", address(usdt));
+        console.log("  - BNB:", address(bnb));
     }
     
     function _writeDeploymentInfo() private {
-        console.log("\n[Step 8] Generating deployment info file...");
+        console.log("\n[Step 8] Writing deployment info...");
         
+        // Generate projects JSON
         string memory projectsJson = "";
         for (uint256 i = 0; i < allProjects.length; i++) {
-            IProject project = IProject(allProjects[i]);
-            string memory projectJson = string(abi.encodePacked(
-                '"', _toLowerCase(project.symbol()), '": "', _addressToString(allProjects[i]), '"'
-            ));
+            if (i > 0) projectsJson = string(abi.encodePacked(projectsJson, ',\n    '));
             
-            if (i > 0) {
-                projectsJson = string(abi.encodePacked(projectsJson, ",\n    "));
-            }
-            projectsJson = string(abi.encodePacked(projectsJson, projectJson));
+            IProject project = IProject(allProjects[i]);
+            string memory projectName = project.name();
+            string memory symbol = project.symbol();
+            
+            projectsJson = string(abi.encodePacked(
+                projectsJson,
+                '"', _toLowerCase(symbol), '": {\n',
+                '      "name": "', projectName, '",\n',
+                '      "symbol": "', symbol, '",\n',
+                '      "address": "', _addressToString(allProjects[i]), '"\n',
+                '    }'
+            ));
         }
         
+        // Generate standard JSON format
         string memory deploymentInfo = string(abi.encodePacked(
             '{\n',
             '  "network": "localhost",\n',
             '  "timestamp": "', _uint2str(block.timestamp), '",\n',
             '  "platform": "', _addressToString(address(platform)), '",\n',
-            '  "crtToken": "', _addressToString(platform.crtToken()), '",\n',
             '  "priceOracle": "', _addressToString(address(priceOracle)), '",\n',
-            '  "projectFactory": "', _addressToString(address(factory)), '",\n',
+            '  "projectFactory": "', _addressToString(address(projectFactory)), '",\n',
+            '  "campaignFactory": "', _addressToString(address(campaignFactory)), '",\n',
             '  "projectImplementation": "', _addressToString(address(projectImpl)), '",\n',
+            '  "campaignImplementation": "', _addressToString(address(campaignImpl)), '",\n',
             '  "tokens": {\n',
             '    "usdc": "', _addressToString(address(usdc)), '",\n',
             '    "weth": "', _addressToString(address(weth)), '",\n',
@@ -447,44 +432,46 @@ contract DeployScript is Script {
         console.log("+ Deployment info written to deployments.json");
     }
     
-    // Helper functions
-    function _addressToString(address addr) internal pure returns (string memory) {
-        bytes memory data = abi.encodePacked(addr);
+    function _addressToString(address _addr) private pure returns (string memory) {
+        bytes32 value = bytes32(uint256(uint160(_addr)));
         bytes memory alphabet = "0123456789abcdef";
         bytes memory str = new bytes(42);
         str[0] = '0';
         str[1] = 'x';
         for (uint256 i = 0; i < 20; i++) {
-            str[2+i*2] = alphabet[uint8(data[i] >> 4)];
-            str[3+i*2] = alphabet[uint8(data[i] & 0x0f)];
+            str[2+i*2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[3+i*2] = alphabet[uint8(value[i + 12] & 0x0f)];
         }
         return string(str);
     }
     
-    function _uint2str(uint256 _i) internal pure returns (string memory str) {
+    function _uint2str(uint256 _i) private pure returns (string memory) {
         if (_i == 0) {
             return "0";
         }
         uint256 j = _i;
-        uint256 length;
+        uint256 len;
         while (j != 0) {
-            length++;
+            len++;
             j /= 10;
         }
-        bytes memory bstr = new bytes(length);
-        uint256 k = length;
-        j = _i;
-        while (j != 0) {
-            bstr[--k] = bytes1(uint8(48 + j % 10));
-            j /= 10;
+        bytes memory bstr = new bytes(len);
+        uint256 k = len;
+        while (_i != 0) {
+            k = k - 1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
         }
-        str = string(bstr);
+        return string(bstr);
     }
     
-    function _toLowerCase(string memory str) internal pure returns (string memory) {
+    function _toLowerCase(string memory str) private pure returns (string memory) {
         bytes memory bStr = bytes(str);
         bytes memory bLower = new bytes(bStr.length);
-        for (uint i = 0; i < bStr.length; i++) {
+        for (uint256 i = 0; i < bStr.length; i++) {
+            // 如果是大写字母 (A-Z)，转换为小写
             if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
                 bLower[i] = bytes1(uint8(bStr[i]) + 32);
             } else {

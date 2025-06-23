@@ -470,13 +470,7 @@ frontend/
 │   └── chains.ts              # 区块链配置
 ├── utils/
 │   └── contract-helpers.ts    # 合约工具函数
-└── public/
-    ├── abi-json/              # 合约ABI文件
-    │   ├── CoinRealPlatform.json
-    │   ├── Project.json
-    │   ├── CRTToken.json
-    │   └── *.json
-    └── deployments.json       # 合约部署信息
+└── public/                    # 待补充
 ```
 
 ### 修改文件 🔄

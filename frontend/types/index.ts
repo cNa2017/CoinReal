@@ -94,21 +94,6 @@ export interface UserActivity {
   description: string
 }
 
-// 合约项目详细数据类型（对应合约ProjectDetailedData）
-export interface ContractProjectData {
-  projectAddress: string
-  name: string
-  symbol: string
-  description: string
-  totalParticipants: number
-  totalComments: number
-  totalLikes: number
-  poolValueUSD: number // 8位小数精度
-  nextDrawTime: number
-  category: string
-  isActive: boolean
-}
-
 // 合约评论数据类型（对应合约Comment结构）
 export interface ContractComment {
   id: number
@@ -226,4 +211,59 @@ export enum UserSortBy {
   COMMENTS = 1,
   LIKES = 2,
   REWARDS = 3
+}
+
+// Campaign相关类型（新增）
+export interface Campaign {
+  address: string // Campaign合约地址
+  projectAddress: string // 关联的项目地址
+  sponsor: string // 赞助者地址
+  sponsorName: string // 赞助者名称
+  startTime: number // 开始时间戳
+  endTime: number // 结束时间戳
+  isActive: boolean // 是否活跃
+  rewardsDistributed: boolean // 奖励是否已分配
+  rewardToken: string // 奖励代币地址
+  totalRewardPool: number // 总奖池金额（wei格式）
+  totalComments: number // 活动期间评论数
+  totalLikes: number // 活动期间点赞数
+  totalParticipants: number // 参与者数量
+  
+  // ERC20代币信息
+  name: string // CRT代币名称，如"Bitcoin-Campaign1"
+  symbol: string // CRT代币符号，固定为"CRT"
+  totalSupply: number // 总CRT发行量
+  
+  // 前端展示字段
+  remainingTime?: number // 剩余时间（秒）
+  poolValueUSD?: number // 奖池USD价值
+  tokenIcon?: string // 奖励代币图标
+}
+
+// 用户在Campaign中的CRT详情
+export interface UserCampaignCRT {
+  campaignAddress: string // Campaign地址
+  commentCRT: number // 评论获得的CRT
+  likeCRT: number // 点赞获得的CRT
+  totalCRT: number // 总CRT
+  pendingReward: number // 待领取奖励（wei格式）
+  crtBalance: number // CRT代币余额
+}
+
+// Campaign统计信息
+export interface CampaignStats {
+  totalParticipants: number
+  totalComments: number
+  totalLikes: number
+  totalCRT: number
+  remainingTime: number
+}
+
+// Campaign创建参数
+export interface CreateCampaignParams {
+  projectAddress: string
+  sponsorName: string
+  duration: number // 天数
+  rewardToken: string
+  rewardAmount: string // wei格式字符串
 } 

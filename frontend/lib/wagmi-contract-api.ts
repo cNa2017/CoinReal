@@ -1,4 +1,4 @@
-import { Comment, ContractComment, ContractProjectData, Project, User } from '@/types'
+import { Campaign, Comment, ContractComment, CreateCampaignParams, Project, User, UserCampaignCRT } from '@/types'
 import { Address, formatUnits, parseUnits } from 'viem'
 import { readContract, writeContract } from 'wagmi/actions'
 import { contractConfig } from './wagmi'
@@ -6,7 +6,23 @@ import { contractConfig } from './wagmi'
 // 动态导入JSON文件
 const loadJSON = async (path: string) => {
   try {
-    const response = await fetch(path)
+    // 在客户端和服务端使用不同的URL处理方式
+    let url: string
+    
+    if (typeof window !== 'undefined') {
+      // 客户端环境：使用相对路径
+      url = path
+    } else {
+      // 服务端环境：使用完整URL
+      url = `http://localhost:3000${path}`
+    }
+    
+    console.log(`Loading JSON from: ${url} (${typeof window !== 'undefined' ? 'client' : 'server'} side)`)
+    
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     return await response.json()
   } catch (error) {
     console.error(`Error loading JSON file from ${path}:`, error)
@@ -20,6 +36,8 @@ let CoinRealPlatformABI: any = null
 let ProjectABI: any = null
 let ERC20ABI: any = null
 let CRTTokenABI: any = null
+let CampaignABI: any = null
+let CampaignFactoryABI: any = null
 
 // 初始化状态跟踪
 let initPromise: Promise<void> | null = null
@@ -45,12 +63,15 @@ const initContractData = async () => {
     
     ProjectABI = await loadJSON('/abi-json/Project.json')
     ERC20ABI = await loadJSON('/abi-json/MockERC20.json')
-    CRTTokenABI = await loadJSON('/abi-json/CRTToken.json')
+    // CRTTokenABI = await loadJSON('/abi-json/CRTToken.json')
+    CampaignABI = await loadJSON('/abi-json/Campaign.json')
+    CampaignFactoryABI = await loadJSON('/abi-json/CampaignFactory.json')
     
     isInitialized = true
     initError = null
     console.log('合约数据初始化成功:', {
       platform: deploymentsInfo.platform,
+      campaignFactory: deploymentsInfo.campaignFactory,
       abiLoaded: !!CoinRealPlatformABI
     })
   } catch (error) {
@@ -81,6 +102,12 @@ const initContractData = async () => {
 
 // 确保初始化完成的函数
 const ensureInitialized = async (): Promise<void> => {
+  // 只在客户端环境执行初始化
+  if (typeof window === 'undefined') {
+    console.log('服务端环境，跳过合约初始化')
+    return
+  }
+  
   // 如果已经初始化成功，直接返回
   if (isInitialized) {
     console.log('合约数据已初始化，直接使用')
@@ -121,40 +148,6 @@ const ensureInitialized = async (): Promise<void> => {
     }
     
     throw error
-  }
-}
-
-// 数据转换函数
-const convertContractProjectToFrontend = (contractData: ContractProjectData): Project => {
-  // 安全地将 BigInt 转换为 number
-  const safeToNumber = (value: any): number => {
-    if (typeof value === 'bigint') {
-      return Number(value)
-    }
-    if (typeof value === 'string') {
-      return parseInt(value, 10) || 0
-    }
-    return Number(value) || 0
-  }
-
-  return {
-    projectAddress: contractData.projectAddress,
-    name: contractData.name,
-    symbol: contractData.symbol,
-    description: contractData.description,
-    category: contractData.category,
-    poolValueUSD: Math.floor(safeToNumber(contractData.poolValueUSD) / 1000000), // 从8位小数转为美分
-    nextDrawTime: safeToNumber(contractData.nextDrawTime),
-    totalParticipants: safeToNumber(contractData.totalParticipants),
-    totalComments: safeToNumber(contractData.totalComments),
-    totalLikes: safeToNumber(contractData.totalLikes),
-    lastActivityTime: Math.floor(Date.now() / 1000), // 临时使用当前时间
-    isActive: contractData.isActive,
-    creator: '', // 需要单独查询
-    website: '',
-    whitepaper: '',
-    colorIndex: Math.floor(Math.random() * 10),
-    status: contractData.isActive ? "Active" : "Paused"
   }
 }
 
@@ -215,6 +208,12 @@ export class WagmiContractAPI {
   }
 
   private startInitialization() {
+    // 只在客户端环境启动初始化
+    if (typeof window === 'undefined') {
+      console.log('服务端环境，延迟合约初始化')
+      return
+    }
+    
     if (!initPromise && !isInitialized) {
       console.log('启动合约数据初始化...')
       initPromise = initContractData()
@@ -284,19 +283,131 @@ export class WagmiContractAPI {
         return []
       }
 
-      // 批量获取项目详细数据
-      const projectAddresses = projectInfos.map((info: any) => info.projectAddress)
-      const detailedData = await readContract(contractConfig, {
-        address: deploymentsInfo.platform as Address,
-        abi: CoinRealPlatformABI,
-        functionName: 'batchGetProjectsData',
-        args: [projectAddresses]
-      }) as ContractProjectData[]
+      // 确保ProjectABI已加载
+      if (!ProjectABI) {
+        console.error('Project ABI not available')
+        throw new Error('Project ABI not loaded')
+      }
 
-      // 转换数据格式
-      const projects = detailedData.map(convertContractProjectToFrontend)
-      console.log('Successfully converted projects:', projects.length)
+      // 为每个项目获取详细数据
+      const projects: Project[] = []
       
+      for (const projectInfo of projectInfos) {
+        try {
+          // 获取项目的详细信息
+          const projectAddress = projectInfo.projectAddress
+
+          // 并行获取项目的详细数据
+          const [description, category, totalComments, totalLikes, projectStats, poolValueUSD, nextDrawTime] = await Promise.all([
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'description',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'category',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'totalComments',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'totalLikes',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'getProjectStats',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'getPoolValueUSD',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'nextDrawTime',
+              args: []
+            })
+          ])
+
+          // 安全地将 BigInt 转换为 number
+          const safeToNumber = (value: any): number => {
+            if (typeof value === 'bigint') {
+              return Number(value)
+            }
+            if (typeof value === 'string') {
+              return parseInt(value, 10) || 0
+            }
+            return Number(value) || 0
+          }
+
+          // 从projectStats中提取数据 [totalParticipants, totalLikes, lastActivityTime, currentPoolUSD]
+          const statsArray = Array.isArray(projectStats) ? projectStats : []
+          const totalParticipants = statsArray[0] ? safeToNumber(statsArray[0]) : 0
+          const lastActivityTime = statsArray[2] ? safeToNumber(statsArray[2]) : Math.floor(Date.now() / 1000)
+
+          // 构造项目对象
+          const project: Project = {
+            projectAddress: projectInfo.projectAddress,
+            name: projectInfo.name,
+            symbol: projectInfo.symbol,
+            description: description as string,
+            category: category as string,
+            poolValueUSD: Math.floor(safeToNumber(poolValueUSD) / 1000000), // 从8位小数转为美分
+            nextDrawTime: safeToNumber(nextDrawTime),
+            totalParticipants,
+            totalComments: safeToNumber(totalComments),
+            totalLikes: safeToNumber(totalLikes),
+            lastActivityTime,
+            isActive: projectInfo.isActive,
+            creator: projectInfo.creator,
+            website: '',
+            whitepaper: '',
+            colorIndex: Math.floor(Math.random() * 10),
+            status: projectInfo.isActive ? "Active" : "Paused"
+          }
+
+          projects.push(project)
+        } catch (error) {
+          console.error(`Failed to get details for project ${projectInfo.projectAddress}:`, error)
+          // 如果获取详细信息失败，创建一个基本的项目对象
+          const basicProject: Project = {
+            projectAddress: projectInfo.projectAddress,
+            name: projectInfo.name,
+            symbol: projectInfo.symbol,
+            description: 'Description not available',
+            category: 'Unknown',
+            poolValueUSD: 0,
+            nextDrawTime: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60),
+            totalParticipants: 0,
+            totalComments: 0,
+            totalLikes: 0,
+            lastActivityTime: Math.floor(Date.now() / 1000),
+            isActive: projectInfo.isActive,
+            creator: projectInfo.creator,
+            website: '',
+            whitepaper: '',
+            colorIndex: Math.floor(Math.random() * 10),
+            status: projectInfo.isActive ? "Active" : "Paused"
+          }
+          projects.push(basicProject)
+        }
+      }
+
+      console.log('Successfully converted projects:', projects.length)
       return projects
     } catch (error) {
       console.error('Failed to get projects:', error)
@@ -746,15 +857,133 @@ export class WagmiContractAPI {
         return []
       }
 
-      // 批量获取项目详细数据
-      const detailedData = await readContract(contractConfig, {
-        address: deploymentsInfo.platform as Address,
-        abi: CoinRealPlatformABI,
-        functionName: 'batchGetProjectsData',
-        args: [projectAddresses]
-      }) as ContractProjectData[]
+      // 确保ProjectABI已加载
+      if (!ProjectABI) {
+        throw new Error('Project ABI not loaded')
+      }
 
-      return detailedData.map(convertContractProjectToFrontend)
+      // 为每个项目地址获取详细数据
+      const projects: Project[] = []
+      
+      for (let i = 0; i < projectAddresses.length; i++) {
+        try {
+          const projectAddress = projectAddresses[i]
+          
+          // 并行获取项目的基本信息和详细数据
+          const [name, symbol, description, category, creator, isActive, totalComments, totalLikes, projectStats, poolValueUSD, nextDrawTime] = await Promise.all([
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'name',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'symbol',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'description',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'category',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'creator',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'isActive',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'totalComments',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'totalLikes',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'getProjectStats',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'getPoolValueUSD',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: projectAddress as Address,
+              abi: ProjectABI,
+              functionName: 'nextDrawTime',
+              args: []
+            })
+          ])
+
+          // 安全地将 BigInt 转换为 number
+          const safeToNumber = (value: any): number => {
+            if (typeof value === 'bigint') {
+              return Number(value)
+            }
+            if (typeof value === 'string') {
+              return parseInt(value, 10) || 0
+            }
+            return Number(value) || 0
+          }
+
+          // 从projectStats中提取数据
+          const statsArray = Array.isArray(projectStats) ? projectStats : []
+          const totalParticipants = statsArray[0] ? safeToNumber(statsArray[0]) : 0
+          const lastActivityTime = statsArray[2] ? safeToNumber(statsArray[2]) : Math.floor(Date.now() / 1000)
+
+          // 构造项目对象
+          const project: Project = {
+            projectAddress,
+            name: name as string,
+            symbol: symbol as string,
+            description: description as string,
+            category: category as string,
+            poolValueUSD: Math.floor(safeToNumber(poolValueUSD) / 1000000),
+            nextDrawTime: safeToNumber(nextDrawTime),
+            totalParticipants,
+            totalComments: safeToNumber(totalComments),
+            totalLikes: safeToNumber(totalLikes),
+            lastActivityTime,
+            isActive: isActive as boolean,
+            creator: creator as string,
+            website: '',
+            whitepaper: '',
+            colorIndex: Math.floor(Math.random() * 10),
+            status: (isActive as boolean) ? "Active" : "Paused"
+          }
+
+          projects.push(project)
+        } catch (error) {
+          console.error(`Failed to get details for project ${projectAddresses[i]}:`, error)
+          // 跳过获取失败的项目
+        }
+      }
+
+      return projects
     } catch (error) {
       console.error('Failed to get leaderboard:', error)
       return []
@@ -795,10 +1024,7 @@ export class WagmiContractAPI {
           projectData.symbol,
           projectData.description,
           projectData.category,
-          projectData.website,
-          projectData.whitepaper,
-          projectData.logoUrl,
-          BigInt(projectData.drawPeriodDays * 24 * 60 * 60) // 转换为秒
+          projectData.drawPeriodDays // 直接传递天数，合约期望uint16类型
         ]
       })
       
@@ -846,6 +1072,342 @@ export class WagmiContractAPI {
       console.log('赞助项目交易哈希:', sponsorTx)
     } catch (error) {
       console.error('Failed to sponsor project:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 创建Campaign
+   */
+  async createCampaign(params: CreateCampaignParams): Promise<string> {
+    try {
+      await ensureInitialized()
+      
+      if (!this.address) {
+        throw new Error('No connected wallet')
+      }
+
+      if (!deploymentsInfo?.campaignFactory || !CampaignFactoryABI || !ERC20ABI) {
+        throw new Error('Campaign factory contract data not loaded')
+      }
+
+      const { projectAddress, sponsorName, duration, rewardToken, rewardAmount } = params
+
+      // 首先授权代币转移给CampaignFactory
+      const approveTx = await writeContract(contractConfig, {
+        address: rewardToken as Address,
+        abi: ERC20ABI,
+        functionName: 'approve',
+        args: [deploymentsInfo.campaignFactory as Address, parseUnits(rewardAmount, 18)]
+      })
+
+      console.log('代币授权交易哈希:', approveTx)
+
+      // 调用CampaignFactory创建Campaign
+      const createTx = await writeContract(contractConfig, {
+        address: deploymentsInfo.campaignFactory as Address,
+        abi: CampaignFactoryABI,
+        functionName: 'createCampaign',
+        args: [
+          projectAddress as Address,
+          sponsorName,
+          BigInt(duration),
+          rewardToken as Address,
+          parseUnits(rewardAmount, 18)
+        ]
+      })
+
+      console.log('Campaign创建交易哈希:', createTx)
+      return createTx
+    } catch (error) {
+      console.error('Failed to create campaign:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 获取项目的所有Campaign
+   */
+  async getProjectCampaigns(projectAddress: string): Promise<Campaign[]> {
+    try {
+      await ensureInitialized()
+      
+      if (!deploymentsInfo?.campaignFactory || !CampaignFactoryABI) {
+        throw new Error('Campaign factory contract data not loaded')
+      }
+
+      // 获取项目的Campaign地址列表
+      const campaignAddresses = await readContract(contractConfig, {
+        address: deploymentsInfo.campaignFactory as Address,
+        abi: CampaignFactoryABI,
+        functionName: 'getProjectCampaigns',
+        args: [projectAddress as Address]
+      }) as Address[]
+
+      if (!campaignAddresses || campaignAddresses.length === 0) {
+        return []
+      }
+
+      // 批量获取Campaign详情
+      const campaigns: Campaign[] = []
+      for (const campaignAddress of campaignAddresses) {
+        try {
+          const campaign = await this.getCampaignDetails(campaignAddress)
+          if (campaign) {
+            campaigns.push(campaign)
+          }
+        } catch (error) {
+          console.error(`Failed to get campaign details for ${campaignAddress}:`, error)
+        }
+      }
+
+      return campaigns
+    } catch (error) {
+      console.error('Failed to get project campaigns:', error)
+      return []
+    }
+  }
+
+  /**
+   * 获取Campaign详情
+   */
+  async getCampaignDetails(campaignAddress: string): Promise<Campaign | null> {
+    try {
+      await ensureInitialized()
+      
+      if (!CampaignABI) {
+        throw new Error('Campaign ABI not loaded')
+      }
+
+      // 并行获取Campaign的所有基本信息
+      const [
+        projectAddress, sponsor, sponsorName, startTime, endTime, 
+        isActive, rewardsDistributed, rewardToken, totalRewardPool,
+        totalComments, totalLikes, name, symbol, totalSupply
+      ] = await Promise.all([
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'projectAddress',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'sponsor',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'sponsorName',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'startTime',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'endTime',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'isActive',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'rewardsDistributed',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'rewardToken',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'totalRewardPool',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'totalComments',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'totalLikes',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'name',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'symbol',
+          args: []
+        }),
+        readContract(contractConfig, {
+          address: campaignAddress as Address,
+          abi: CampaignABI,
+          functionName: 'totalSupply',
+          args: []
+        })
+      ])
+
+      // 获取参与者数量
+      const campaignStats = await readContract(contractConfig, {
+        address: campaignAddress as Address,
+        abi: CampaignABI,
+        functionName: 'getCampaignStats',
+        args: []
+      }) as [bigint, bigint, bigint, bigint, bigint]
+
+      const [totalParticipants, , , , remainingTime] = campaignStats
+
+      // 安全地将 BigInt 转换为 number
+      const safeToNumber = (value: any): number => {
+        if (typeof value === 'bigint') {
+          return Number(value)
+        }
+        if (typeof value === 'string') {
+          return parseInt(value, 10) || 0
+        }
+        return Number(value) || 0
+      }
+
+      const campaign: Campaign = {
+        address: campaignAddress,
+        projectAddress: projectAddress as string,
+        sponsor: sponsor as string,
+        sponsorName: sponsorName as string,
+        startTime: safeToNumber(startTime),
+        endTime: safeToNumber(endTime),
+        isActive: isActive as boolean,
+        rewardsDistributed: rewardsDistributed as boolean,
+        rewardToken: rewardToken as string,
+        totalRewardPool: safeToNumber(totalRewardPool),
+        totalComments: safeToNumber(totalComments),
+        totalLikes: safeToNumber(totalLikes),
+        totalParticipants: safeToNumber(totalParticipants),
+        name: name as string,
+        symbol: symbol as string,
+        totalSupply: safeToNumber(totalSupply),
+        remainingTime: safeToNumber(remainingTime)
+      }
+
+      return campaign
+    } catch (error) {
+      console.error('Failed to get campaign details:', error)
+      return null
+    }
+  }
+
+  /**
+   * 获取用户在项目所有Campaign中的CRT详情
+   */
+  async getUserCampaignCRTDetails(projectAddress: string, userAddress?: string): Promise<UserCampaignCRT[]> {
+    try {
+      await ensureInitialized()
+      
+      const address = userAddress || this.address
+      if (!address) {
+        throw new Error('User address required')
+      }
+
+      if (!ProjectABI) {
+        throw new Error('Project ABI not loaded')
+      }
+
+      // 调用Project合约的getUserCampaignCRTDetails方法
+      const result = await readContract(contractConfig, {
+        address: projectAddress as Address,
+        abi: ProjectABI,
+        functionName: 'getUserCampaignCRTDetails',
+        args: [address as Address]
+      }) as [Address[], bigint[], bigint[], bigint[], bigint[]]
+
+      const [campaignAddresses, commentCRTs, likeCRTs, totalCRTs, pendingRewards] = result
+
+      // 转换数据格式
+      const userCampaignCRTs: UserCampaignCRT[] = []
+      for (let i = 0; i < campaignAddresses.length; i++) {
+        const campaignAddress = campaignAddresses[i]
+        
+        // 获取用户在该Campaign中的CRT代币余额
+        let crtBalance = BigInt(0)
+        try {
+          if (CampaignABI) {
+            crtBalance = await readContract(contractConfig, {
+              address: campaignAddress,
+              abi: CampaignABI,
+              functionName: 'balanceOf',
+              args: [address as Address]
+            }) as bigint
+          }
+        } catch (error) {
+          console.error(`Failed to get CRT balance for ${campaignAddress}:`, error)
+        }
+
+        userCampaignCRTs.push({
+          campaignAddress: campaignAddress,
+          commentCRT: Number(commentCRTs[i]),
+          likeCRT: Number(likeCRTs[i]),
+          totalCRT: Number(totalCRTs[i]),
+          pendingReward: Number(pendingRewards[i]),
+          crtBalance: Number(crtBalance)
+        })
+      }
+
+      return userCampaignCRTs
+    } catch (error) {
+      console.error('Failed to get user campaign CRT details:', error)
+      return []
+    }
+  }
+
+  /**
+   * 用户领取Campaign奖励
+   */
+  async claimCampaignReward(campaignAddress: string): Promise<string> {
+    try {
+      await ensureInitialized()
+      
+      if (!this.address) {
+        throw new Error('No connected wallet')
+      }
+
+      if (!CampaignABI) {
+        throw new Error('Campaign ABI not loaded')
+      }
+
+      const txHash = await writeContract(contractConfig, {
+        address: campaignAddress as Address,
+        abi: CampaignABI,
+        functionName: 'claimRewards',
+        args: []
+      })
+
+      console.log('领取奖励交易哈希:', txHash)
+      return txHash
+    } catch (error) {
+      console.error('Failed to claim campaign reward:', error)
       throw error
     }
   }

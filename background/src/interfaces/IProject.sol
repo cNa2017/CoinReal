@@ -3,20 +3,19 @@ pragma solidity ^0.8.19;
 
 /**
  * @title IProject
- * @dev CoinReal 项目合约接口
- * @notice 管理单个项目的评论、点赞和奖池系统
+ * @dev CoinReal 项目合约接口 - 重构版本
+ * @notice 管理单个项目的评论和点赞系统，Campaign独立管理奖池
  * 
  * 核心功能：
- * - 评论系统：用户发表评论获得CRT奖励
- * - 点赞系统：点赞他人评论获得CRT，被点赞者获得额外奖励
- * - 奖池系统：接受多种代币赞助，按CRT占比分配奖励
- * - 精英评论：点赞数前10的评论获得额外奖励
- * - 开奖机制：定期分配奖池资金给参与者
+ * - 评论系统：用户发表评论和点赞
+ * - Campaign管理：与多个Campaign合约交互
+ * - 统计功能：项目参与度统计
  * 
- * CRT奖励机制：
- * - 发表评论：5 CRT
- * - 点赞评论：1 CRT (点赞者) + 1 CRT (被点赞者)
- * - 精英评论：额外15%奖池奖励
+ * 重构变化：
+ * - 移除奖池管理（由Campaign合约负责）
+ * - 移除CRT代币管理（由Campaign合约负责）
+ * - 专注于评论和点赞的核心功能
+ * - 通过Campaign获取CRT和奖励信息
  */
 interface IProject {
     
@@ -46,20 +45,10 @@ interface IProject {
     event CommentLiked(uint256 indexed commentId, address indexed liker);
     
     /**
-     * @dev 赞助添加事件
-     * @param sponsor 赞助者地址
-     * @param token 赞助代币地址
-     * @param amount 赞助数量
+     * @dev Campaign添加事件
+     * @param campaign Campaign合约地址
      */
-    event SponsorshipAdded(address indexed sponsor, address token, uint256 amount);
-    
-    /**
-     * @dev 奖励分配事件
-     * @param timestamp 分配时间戳
-     * @param totalComments 总评论数
-     * @param totalLikes 总点赞数
-     */
-    event RewardsDistributed(uint256 timestamp, uint256 totalComments, uint256 totalLikes);
+    event CampaignAdded(address indexed campaign);
     
     // ==================== 数据结构定义 ====================
     
@@ -67,10 +56,10 @@ interface IProject {
      * @dev 评论数据结构
      * @param id 评论唯一ID（自增，保证时间顺序）
      * @param author 评论作者地址
-     * @param content 评论内容（10-1000字符）
+     * @param content 评论内容（1-1000字符）
      * @param likes 点赞数量
-     * @param crtReward 该评论累计获得的CRT奖励
-     * @param isElite 是否为精英评论（点赞数前10）
+     * @param crtReward 兼容性字段，保留但不使用
+     * @param isElite 是否为精英评论（由Campaign决定）
      * @param timestamp 发布时间戳
      */
     struct Comment {
@@ -78,17 +67,13 @@ interface IProject {
         address author;
         string content;
         uint256 likes;
-        uint256 crtReward;
+        uint256 crtReward; // 兼容性保留
         bool isElite;
         uint32 timestamp;
     }
     
     /**
-     * @dev 赞助记录结构
-     * @param token 赞助代币地址
-     * @param amount 赞助数量
-     * @param sponsor 赞助者地址
-     * @param timestamp 赞助时间戳
+     * @dev 赞助记录结构 - 兼容性保留
      */
     struct Sponsorship {
         address token;
@@ -98,11 +83,7 @@ interface IProject {
     }
     
     /**
-     * @dev 用户统计数据结构
-     * @param totalComments 用户总评论数
-     * @param totalLikes 用户总点赞数
-     * @param totalCRT 用户总CRT数量
-     * @param claimedRewards 用户已领取的奖励价值
+     * @dev 用户统计数据结构 - 兼容性保留
      */
     struct UserStats {
         uint256 totalComments;
@@ -117,19 +98,13 @@ interface IProject {
      * @notice 初始化项目合约（仅能调用一次）
      * @dev 由ProjectFactory在克隆后调用，设置项目基本信息
      * 
-     * 初始化流程：
-     * 1. 设置项目基本信息
-     * 2. 设置开奖周期和下次开奖时间
-     * 3. 激活项目状态
-     * 4. 记录创建时间
-     * 
      * @param _name 项目名称（如：Bitcoin）
      * @param _symbol 项目符号（如：BTC）
      * @param _description 项目描述
      * @param _category 项目分类（Layer1/DeFi/NFT等）
-     * @param _drawPeriod 开奖周期（天数，1-30天）
+     * @param _drawPeriod 兼容性参数，保留但不使用
      * @param _creator 创建者地址
-     * @param _priceOracle 价格预言机地址
+     * @param _priceOracle 价格预言机地址（空实现）
      * @param _platform 平台合约地址
      */
     function initialize(
@@ -143,26 +118,17 @@ interface IProject {
         address _platform
     ) external;
     
-    /**
-     * @notice 设置CRT代币地址
-     * @dev 仅在初始化过程中调用，用于配置CRT代币铸造
-     * 
-     * @param _crtToken CRT代币合约地址
-     */
-    function setCRTToken(address _crtToken) external;
-    
     // ==================== 用户交互接口 ====================
     
     /**
      * @notice 发表评论
-     * @dev 用户发表评论获得5个CRT奖励
+     * @dev 用户发表评论，同时通知所有活跃的Campaign
      * 
      * 业务规则：
-     * - 评论内容长度限制：10-1000字符
-     * - 自动获得5个CRT基础奖励
+     * - 评论内容长度限制：1-1000字符
      * - 评论ID自增，保证时间顺序
-     * - 更新用户统计数据
-     * - 首次参与的用户会被记录到参与者列表
+     * - 更新项目统计数据
+     * - 通知所有活跃Campaign铸造CRT
      * 
      * @param content 评论内容
      * @return commentId 新创建的评论ID
@@ -171,185 +137,84 @@ interface IProject {
     
     /**
      * @notice 点赞评论
-     * @dev 点赞者和被点赞者都获得1个CRT奖励
+     * @dev 点赞评论，同时通知所有活跃的Campaign
      * 
      * 业务规则：
      * - 每个用户只能对同一评论点赞一次
-     * - 点赞者获得1个CRT奖励
-     * - 被点赞者获得1个CRT奖励
-     * - 更新评论的点赞数和CRT奖励
-     * - 可能更新精英评论排名
+     * - 更新评论的点赞数
+     * - 通知所有活跃Campaign铸造CRT
      * 
      * @param commentId 要点赞的评论ID
      */
     function likeComment(uint256 commentId) external;
     
+    // ==================== Campaign管理接口 ====================
+    
     /**
-     * @notice 赞助项目奖池
-     * @dev 向项目奖池添加代币，最低100 USD等值
+     * @notice 添加Campaign到项目
+     * @dev 只有平台可以调用，用于关联Campaign合约
      * 
-     * 业务规则：
-     * - 最低赞助金额100 USD（通过预言机验证）
-     * - 支持任何ERC20代币
-     * - 代币转移到项目合约
-     * - 记录赞助历史
-     * - 更新奖池代币余额
-     * 
-     * @param token 赞助代币地址
-     * @param amount 赞助数量
+     * @param campaign Campaign合约地址
      */
-    function sponsor(address token, uint256 amount) external;
+    function addCampaign(address campaign) external;
     
     /**
-     * @notice 触发开奖并分配奖励
-     * @dev 按照预设规则分配奖池资金
-     * 
-     * 分配规则：
-     * - 60%：按CRT占比分配给所有参与者
-     * - 25%：按点赞数占比分配给点赞者
-     * - 15%：平均分配给精英评论者（点赞数前10）
-     * 
-     * 触发条件：
-     * - 达到开奖周期时间
-     * - 至少有1条评论
-     * - 至少有1个参与者
-     * 
-     * 执行流程：
-     * 1. 计算总CRT和精英评论CRT
-     * 2. 标记精英评论
-     * 3. 为每种代币按比例分配奖励
-     * 4. 更新用户待领取奖励
-     * 5. 重置周期数据
+     * @notice 获取项目的所有Campaign
+     * @return campaigns Campaign地址数组
      */
-    function distributeRewards() external;
+    function getCampaigns() external view returns (address[] memory campaigns);
     
     /**
-     * @notice 用户领取奖励
-     * @dev 用户领取分配给自己的奖励代币
-     * 
-     * @param tokens 要领取的代币地址数组
+     * @notice 获取用户在所有Campaign中的CRT总数
+     * @param user 用户地址
+     * @return totalCRT 总CRT数量
      */
-    function claimRewards(address[] calldata tokens) external;
-    
-    // ==================== 基础查询接口 ====================
+    function getUserTotalCRT(address user) external view returns (uint256 totalCRT);
     
     /**
-     * @notice 项目名称
+     * @notice 获取用户在所有Campaign中的详细CRT信息
+     * @param user 用户地址
+     * @return campaignAddresses Campaign地址数组
+     * @return commentCRTs 各Campaign中的评论CRT
+     * @return likeCRTs 各Campaign中的点赞CRT
+     * @return totalCRTs 各Campaign中的总CRT
+     * @return pendingRewards 各Campaign中的待领取奖励
      */
-    function name() external view returns (string memory);
+    function getUserCampaignCRTDetails(address user) external view returns (
+        address[] memory campaignAddresses,
+        uint256[] memory commentCRTs,
+        uint256[] memory likeCRTs,
+        uint256[] memory totalCRTs,
+        uint256[] memory pendingRewards
+    );
+    
+    // ==================== 查询接口 ====================
     
     /**
-     * @notice 项目符号
-     */
-    function symbol() external view returns (string memory);
-    
-    /**
-     * @notice 项目描述
-     */
-    function description() external view returns (string memory);
-    
-    /**
-     * @notice 项目分类
-     */
-    function category() external view returns (string memory);
-    
-    /**
-     * @notice 项目创建者
-     */
-    function creator() external view returns (address);
-    
-    /**
-     * @notice 项目是否激活
-     */
-    function isActive() external view returns (bool);
-    
-    /**
-     * @notice 总评论数
-     */
-    function totalComments() external view returns (uint256);
-    
-    /**
-     * @notice 下次开奖时间
-     */
-    function nextDrawTime() external view returns (uint256);
-    
-    // ==================== 详细查询接口 ====================
-    
-    /**
-     * @notice 获取单条评论详情
+     * @notice 获取单个评论详情
      * @param commentId 评论ID
-     * @return comment 评论完整信息
+     * @return comment 评论结构体
      */
     function getComment(uint256 commentId) external view returns (Comment memory comment);
     
     /**
      * @notice 分页获取评论列表
-     * @dev 支持分页查询，按时间顺序排列
-     * 
-     * @param offset 起始位置
-     * @param limit 返回数量限制
-     * @return comments 评论数组
+     * @param offset 偏移量
+     * @param limit 每页数量
+     * @return commentList 评论数组
      * @return total 总评论数
      */
     function getComments(uint256 offset, uint256 limit) external view returns (
-        Comment[] memory comments, 
+        Comment[] memory commentList,
         uint256 total
     );
     
     /**
-     * @notice 获取精英评论列表
-     * @dev 返回点赞数最多的前10条评论
-     * 
-     * 排序规则：
-     * - 按点赞数降序
-     * - 点赞数相同时，按评论ID升序（早发布的优先）
-     * 
-     * @return eliteComments 精英评论数组
-     */
-    function getEliteComments() external view returns (Comment[] memory eliteComments);
-    
-    /**
-     * @notice 获取用户统计数据
-     * @param user 用户地址
-     * @return stats 用户在该项目的统计信息
-     */
-    function getUserStats(address user) external view returns (UserStats memory stats);
-    
-    /**
-     * @notice 获取奖池信息
-     * @return sponsorships 所有赞助记录
-     * @return totalUSDValue 奖池总USD价值（8位小数）
-     */
-    function getPoolInfo() external view returns (
-        Sponsorship[] memory sponsorships,
-        uint256 totalUSDValue
-    );
-    
-    /**
-     * @notice 获取用户待领取奖励
-     * @param user 用户地址
-     * @return tokens 可领取的代币地址数组
-     * @return amounts 对应的可领取数量数组
-     */
-    function getPendingRewards(address user) external view returns (
-        address[] memory tokens,
-        uint256[] memory amounts
-    );
-    
-    /**
-     * @notice 检查用户是否已点赞某评论
-     * @param user 用户地址
-     * @param commentId 评论ID
-     * @return hasLiked 是否已点赞
-     */
-    function hasUserLikedComment(address user, uint256 commentId) external view returns (bool hasLiked);
-    
-    /**
-     * @notice 获取项目统计数据
-     * @return totalParticipants 总参与人数
+     * @notice 获取项目统计信息
+     * @return totalParticipants 总参与者数
      * @return totalLikes 总点赞数
      * @return lastActivityTime 最后活动时间
-     * @return currentPoolUSD 当前奖池USD价值
+     * @return currentPoolUSD 兼容性字段，返回0
      */
     function getProjectStats() external view returns (
         uint256 totalParticipants,
@@ -359,61 +224,115 @@ interface IProject {
     );
     
     /**
-     * @notice 获取用户活动历史
-     * @dev 获取用户在该项目的所有活动记录
-     * 
+     * @notice 获取总参与者数量
+     * @return 参与者总数
+     */
+    function getTotalParticipants() external view returns (uint256);
+    
+    /**
+     * @notice 检查用户是否点赞了指定评论
      * @param user 用户地址
-     * @param offset 起始位置
-     * @param limit 返回数量限制
-     * @return commentIds 用户发表的评论ID数组
+     * @param commentId 评论ID
+     * @return 是否已点赞
+     */
+    function hasUserLikedComment(address user, uint256 commentId) external view returns (bool);
+    
+    /**
+     * @notice 获取用户活动记录
+     * @param user 用户地址
+     * @param offset 偏移量
+     * @param limit 每页数量
+     * @return commentIds 用户评论ID数组
      * @return likedCommentIds 用户点赞的评论ID数组
      */
     function getUserActivity(address user, uint256 offset, uint256 limit) external view returns (
         uint256[] memory commentIds,
         uint256[] memory likedCommentIds
     );
-
+    
+    // ==================== 兼容性接口 ====================
+    
     /**
-     * @notice 获取用户CRT来源分组统计
-     * @dev 返回用户从评论和点赞分别获得的CRT数量
-     * 
-     * @param user 用户地址
-     * @return commentTokens 从评论获得的CRT数量
-     * @return likeTokens 从点赞获得的CRT数量
+     * @notice 兼容性函数 - 返回空的奖池信息
      */
-    function getUserCRTBreakdown(address user) external view returns (
+    function getPoolInfo() external pure returns (
+        Sponsorship[] memory sponsorships,
+        uint256 totalUSDValue
+    );
+    
+    /**
+     * @notice 兼容性函数 - 返回0
+     */
+    function getPoolValueUSD() external pure returns (uint256);
+    
+    /**
+     * @notice 兼容性函数 - 返回空的用户统计
+     */
+    function getUserStats(address user) external pure returns (UserStats memory stats);
+    
+    /**
+     * @notice 兼容性函数 - 返回空的CRT分解
+     */
+    function getUserCRTBreakdown(address user) external pure returns (
         uint256 commentTokens,
         uint256 likeTokens
     );
-
+    
     /**
-     * @notice 获取用户在该项目的详细活动历史
-     * @dev 返回用户的所有评论和点赞记录，支持分页
-     * 
-     * @param user 用户地址
-     * @param offset 起始位置
-     * @param limit 返回数量限制
-     * @return comments 用户发表的评论数组
-     * @return likedComments 用户点赞的评论数组
+     * @notice 兼容性函数 - 返回空的详细活动
      */
-    function getUserDetailedActivity(address user, uint256 offset, uint256 limit) external view returns (
+    function getUserDetailedActivity(address user, uint256 offset, uint256 limit) external pure returns (
         Comment[] memory comments,
         Comment[] memory likedComments
     );
-
+    
     /**
-     * @notice 获取项目奖池USD价值（兼容前端字段名）
-     * @dev 别名方法，返回与getProjectStats()相同的currentPoolUSD值
-     * 
-     * @return poolValueUSD 奖池USD价值（8位小数精度）
+     * @notice 兼容性函数 - 返回空的精英评论
      */
-    function getPoolValueUSD() external view returns (uint256 poolValueUSD);
-
+    function getEliteComments() external pure returns (Comment[] memory);
+    
     /**
-     * @notice 获取项目总参与人数（兼容前端API）
-     * @dev 别名方法，返回与getProjectStats()相同的totalParticipants值
-     * 
-     * @return totalParticipants 总参与人数
+     * @notice 兼容性函数 - 返回空的待领取奖励
      */
-    function getTotalParticipants() external view returns (uint256 totalParticipants);
+    function getPendingRewards(address user) external pure returns (
+        address[] memory tokens,
+        uint256[] memory amounts
+    );
+    
+    /**
+     * @notice 兼容性函数 - 空实现
+     */
+    function setCRTToken(address crtToken) external;
+    
+    /**
+     * @notice 兼容性函数 - 重定向到Campaign系统
+     */
+    function sponsor(address token, uint256 amount) external;
+    
+    /**
+     * @notice 兼容性函数 - 重定向到Campaign系统
+     */
+    function distributeRewards() external;
+    
+    /**
+     * @notice 兼容性函数 - 重定向到Campaign系统
+     */
+    function claimRewards(address[] calldata tokens) external;
+    
+    // ==================== 状态变量访问器 ====================
+    
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function description() external view returns (string memory);
+    function category() external view returns (string memory);
+    function creator() external view returns (address);
+    function isActive() external view returns (bool);
+    function platform() external view returns (address);
+    function priceOracle() external view returns (address);
+    function commentIdCounter() external view returns (uint256);
+    function totalComments() external view returns (uint256);
+    function totalLikes() external view returns (uint256);
+    function lastActivityTime() external view returns (uint256);
+    function drawPeriod() external view returns (uint16); // 兼容性
+    function nextDrawTime() external view returns (uint256); // 兼容性
 } 
