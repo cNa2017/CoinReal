@@ -5,6 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import "./interfaces/IProject.sol";
 import "./interfaces/ICampaign.sol";
 import "./interfaces/ICoinRealPlatform.sol";
+import "./interfaces/IPriceOracle.sol";
 
 interface AutoTagInterface {
     // getgetCommentFlag就是我们在project里面调用的函数
@@ -423,15 +424,30 @@ contract Project is IProject, Initializable {
      * @dev 兼容性函数 - 返回所有Campaign的奖池总额
      */
     function getPoolValueUSD() external view returns (uint256) {
-        uint256 totalPoolValue = 0;
+        if (campaigns.length == 0) return 0;
+        
+        address[] memory tokens = new address[](campaigns.length);
+        uint256[] memory amounts = new uint256[](campaigns.length);
+        
         for (uint256 i = 0; i < campaigns.length; i++) {
-            try ICampaign(campaigns[i]).totalRewardPool() returns (uint256 rewardPool) {
-                totalPoolValue += rewardPool;
+            try ICampaign(campaigns[i]).rewardToken() returns (address token) {
+                tokens[i] = token;
+                try ICampaign(campaigns[i]).totalRewardPool() returns (uint256 amount) {
+                    amounts[i] = amount;
+                } catch {
+                    amounts[i] = 0;
+                }
             } catch {
-                // 忽略错误，继续下一个Campaign
+                tokens[i] = address(0);
+                amounts[i] = 0;
             }
         }
-        return totalPoolValue;
+        
+        try IPriceOracle(priceOracle).getBatchUSDValue(tokens, amounts) returns (uint256 totalValue) {
+            return totalValue;
+        } catch {
+            return 0;
+        }
     }
     
     /**

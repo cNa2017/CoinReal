@@ -93,6 +93,7 @@ contract MockPriceOracle is IPriceOracle {
         // Price has 8 decimals, token amount has tokenDecimals
         // Result should have 8 decimals
         usdValue = (amount * price) / (10**tokenDecimals);
+        usdValue = usdValue * 10**6; // usd 6 decimals
     }
     
     function getBatchUSDValue(
@@ -115,6 +116,7 @@ contract MockPriceOracle is IPriceOracle {
                 totalUSDValue += (amounts[i] * price) / (10**tokenDecimals);
             }
         }
+        totalUSDValue = totalUSDValue * 10**6; // usd 6 decimals
     }
     
     // Additional required interface functions
