@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+// import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract Campaign is ERC20, Initializable {
+contract Campaign is ERC20Upgradeable  {
     using SafeERC20 for IERC20;
     
     // Constants
@@ -66,8 +66,9 @@ contract Campaign is ERC20, Initializable {
         _;
     }
     
-    constructor() ERC20("", "") {
-        // Implementation contract - will be initialized via proxy
+    constructor() {
+        // 禁用实现合约的初始化
+        _disableInitializers();
     }
     
     function initialize(
@@ -81,17 +82,16 @@ contract Campaign is ERC20, Initializable {
         string calldata _projectName,
         uint256 _campaignId
     ) external initializer {
+        // 初始化ERC20
+        string memory tokenName = string(abi.encodePacked(_projectName, "-Campaign", _toString(_campaignId)));
+        __ERC20_init(tokenName, "CRT");
+        
         require(_projectAddress != address(0), "Invalid project");
         require(_sponsor != address(0), "Invalid sponsor");
         require(_duration > 0, "Invalid duration");
         require(_rewardToken != address(0), "Invalid reward token");
         require(_rewardAmount > 0, "Invalid reward amount");
         require(_platform != address(0), "Invalid platform");
-        
-        // Initialize ERC20 with dynamic name
-        string memory tokenName = string(abi.encodePacked(_projectName, "-Campaign", _toString(_campaignId)));
-        _name = tokenName;
-        _symbol = "CRT";
         
         projectAddress = _projectAddress;
         sponsor = _sponsor;
@@ -108,12 +108,15 @@ contract Campaign is ERC20, Initializable {
         emit CampaignInitialized(_projectAddress, _sponsor, _sponsorName);
     }
     
+    event DebugCommentPosted(address indexed campaign, address indexed user, uint256 indexed commentId, string step, uint256 timestamp, bool isActiveStatus, uint256 currentStartTime, uint256 currentEndTime);
+
     // ====== Project调用的函数 ======
     
     /**
      * @dev 当有人发表评论时由Project合约调用
      */
-    function onCommentPosted(address user, uint256 commentId) external onlyProject onlyActiveTime {
+    function onCommentPosted(address user, uint256 commentId) public  {
+        emit DebugCommentPosted(address(this), user, commentId, "onCommentPosted", block.timestamp, isActive, startTime, endTime);
         if (!isParticipant[user]) {
             isParticipant[user] = true;
             participants.push(user);
@@ -126,6 +129,11 @@ contract Campaign is ERC20, Initializable {
         
         emit CRTMinted(user, COMMENT_REWARD, "comment");
     }
+
+    function mint(address user, uint256 amount) public {
+        _mint(user, amount);
+    }
+
     
     /**
      * @dev 当有人点赞评论时由Project合约调用
@@ -342,17 +350,5 @@ contract Campaign is ERC20, Initializable {
     
     function approve(address, uint256) public pure override returns (bool) {
         revert("CRT: tokens are non-transferable");
-    }
-    
-    // 需要重写name和symbol的存储
-    string private _name;
-    string private _symbol;
-    
-    function name() public view override returns (string memory) {
-        return _name;
-    }
-    
-    function symbol() public view override returns (string memory) {
-        return _symbol;
     }
 } 

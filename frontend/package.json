@@ -11,6 +11,8 @@
     "test:project": "tsx unit-testing-script/project-details.ts",
     "test:campaign": "tsx unit-testing-script/campaign-status.ts",
     "test:demo": "tsx unit-testing-script/demo.ts",
+    "test:events": "tsx unit-testing-script/event-logs.ts",
+    "test:mint": "tsx unit-testing-script/mint-test.ts",
     "test:all": "npm run test:platform && npm run test:project && npm run test:campaign"
   },
   "dependencies": {

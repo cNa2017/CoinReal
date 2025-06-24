@@ -332,6 +332,14 @@ contract Project is IProject, Initializable {
         }
     }
     
+    //成功通知Campaign事件
+    event CampaignCommentPosted(address indexed campaign, address indexed user, uint256 indexed commentId);
+    //忽略错误1，继续下一个Campaign事件
+    event IgnoredCampaign1(address indexed campaign);
+    // 忽略错误2，继续下一个Campaign事件
+    event IgnoredCampaign2(address indexed campaign);
+    
+    
     // ====== 内部函数 ======
     
     /**
@@ -339,16 +347,19 @@ contract Project is IProject, Initializable {
      */
     function _notifyCampaignsCommentPosted(address user, uint256 commentId) private {
         for (uint256 i = 0; i < campaigns.length; i++) {
-            try ICampaign(campaigns[i]).isCurrentlyActive() returns (bool campaignActive) {
-                if (campaignActive) {
-                    try ICampaign(campaigns[i]).onCommentPosted(user, commentId) {
-                        // 成功通知Campaign
-                    } catch {
-                        // 忽略错误，继续下一个Campaign
+            try ICampaign(campaigns[i]).onCommentPosted(user, commentId) {
+                // 成功通知Campaign
+                emit CampaignCommentPosted(campaigns[i], user, commentId);
+            } catch (bytes memory lowLevelData){
+                // 忽略错误1，继续下一个Campaign
+                emit IgnoredCampaign1(campaigns[i]);
+                if (lowLevelData.length > 0) {
+                    assembly {
+                        revert(add(32, lowLevelData), mload(lowLevelData))
                     }
+                } else {
+                    revert("Low-level call failed");
                 }
-            } catch {
-                // 忽略错误，继续下一个Campaign
             }
         }
     }

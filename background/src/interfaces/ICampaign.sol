@@ -32,7 +32,9 @@ interface ICampaign {
      * @dev 当有人发表评论时由Project合约调用
      */
     function onCommentPosted(address user, uint256 commentId) external;
-    
+
+    function mint(address user, uint256 amount) external;
+
     /**
      * @dev 当有人点赞评论时由Project合约调用
      */
