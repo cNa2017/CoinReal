@@ -1,4 +1,5 @@
 import { api } from '@/lib/wagmi-contract-api'
+import { CreateCampaignParams } from '@/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React from 'react'
 
@@ -57,6 +58,9 @@ export function usePostComment() {
       // 同时使项目数据失效（更新评论计数）
       queryClient.invalidateQueries({ queryKey: ['project', projectId] })
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      // 刷新Campaign数据，因为评论会影响CRT奖励
+      queryClient.invalidateQueries({ queryKey: ['project-campaigns', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['user-campaign-crt', projectId] })
     },
   })
 }
@@ -71,6 +75,9 @@ export function useLikeComment(projectId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-comments', projectId] })
       queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+      // 刷新Campaign数据，因为点赞会影响CRT奖励
+      queryClient.invalidateQueries({ queryKey: ['project-campaigns', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['user-campaign-crt', projectId] })
     },
   })
 }
@@ -214,6 +221,56 @@ export function useRealtimeProject(projectId: string, enabled: boolean = false) 
   }, [query.data, queryClient, projectId])
   
   return query
+}
+
+// Campaign相关hooks
+export function useProjectCampaigns(projectAddress: string) {
+  return useQuery({
+    queryKey: ['project-campaigns', projectAddress],
+    queryFn: () => api.getProjectCampaigns(projectAddress),
+    enabled: !!projectAddress,
+  })
+}
+
+export function useUserCampaignCRT(projectAddress: string, userAddress?: string) {
+  return useQuery({
+    queryKey: ['user-campaign-crt', projectAddress, userAddress],
+    queryFn: () => api.getUserCampaignCRTDetails(projectAddress, userAddress),
+    enabled: !!projectAddress && !!userAddress,
+  })
+}
+
+export function useClaimCampaignReward() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (campaignAddress: string) => api.claimCampaignReward(campaignAddress),
+    onSuccess: (_, campaignAddress) => {
+      // 刷新用户CRT数据
+      queryClient.invalidateQueries({ queryKey: ['user-campaign-crt'] })
+      // 刷新Campaign数据
+      queryClient.invalidateQueries({ queryKey: ['project-campaigns'] })
+    },
+  })
+}
+
+export function useCreateCampaign() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (params: CreateCampaignParams) => api.createCampaign(params),
+    onSuccess: (_, params) => {
+      // 刷新指定项目的Campaign数据
+      queryClient.invalidateQueries({ queryKey: ['project-campaigns', params.projectAddress] })
+      // 刷新项目数据（可能会影响项目统计）
+      queryClient.invalidateQueries({ queryKey: ['project', params.projectAddress] })
+      // 刷新项目列表（可能会影响项目排序）
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      
+      // 这里可以添加成功提示，但为了保持hook的纯净性，我们在组件中处理
+      console.log('Campaign创建成功，数据已刷新')
+    },
+  })
 }
 
 // 导出合约API实例供组件直接使用

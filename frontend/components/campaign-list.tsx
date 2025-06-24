@@ -4,10 +4,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useContractApi } from "@/hooks/use-contract-api"
-import { Campaign, UserCampaignCRT } from "@/types"
+import { useClaimCampaignReward, useProjectCampaigns, useUserCampaignCRT } from "@/hooks/use-project"
+import { UserCampaignCRT } from "@/types"
 import { formatTimeLeft } from "@/utils/contract-helpers"
 import { Clock, Gift, Trophy, Users, Zap } from "lucide-react"
-import { useEffect, useState } from "react"
 
 interface CampaignListProps {
   projectAddress: string
@@ -15,47 +15,22 @@ interface CampaignListProps {
 }
 
 export function CampaignList({ projectAddress, projectName }: CampaignListProps) {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [userCRTDetails, setUserCRTDetails] = useState<UserCampaignCRT[]>([])
-  const [loading, setLoading] = useState(true)
   const api = useContractApi()
-
-  useEffect(() => {
-    loadCampaigns()
-  }, [projectAddress, api?.address])
-
-  const loadCampaigns = async () => {
-    if (!api?.contractApi) return
-
-    try {
-      setLoading(true)
-      
-      // 并行加载Campaign列表和用户CRT详情
-      const [campaignList, userCRT] = await Promise.all([
-        api.contractApi.getProjectCampaigns(projectAddress),
-        api.address ? api.contractApi.getUserCampaignCRTDetails(projectAddress, api.address) : Promise.resolve([])
-      ])
-      
-      setCampaigns(campaignList)
-      setUserCRTDetails(userCRT)
-    } catch (error) {
-      console.error('Failed to load campaigns:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  
+  // 使用React Query hooks获取数据
+  const { data: campaigns = [], isLoading: campaignsLoading } = useProjectCampaigns(projectAddress)
+  const { data: userCRTDetails = [] } = useUserCampaignCRT(projectAddress, api?.address)
+  const claimRewardMutation = useClaimCampaignReward()
 
   const handleClaimReward = async (campaignAddress: string) => {
-    if (!api?.contractApi || !api?.canWrite) {
+    if (!api?.canWrite) {
       alert('请先连接钱包')
       return
     }
 
     try {
-      await api.contractApi.claimCampaignReward(campaignAddress)
+      await claimRewardMutation.mutateAsync(campaignAddress)
       alert('奖励领取成功！')
-      // 重新加载数据
-      loadCampaigns()
     } catch (error) {
       console.error('Failed to claim reward:', error)
       alert('奖励领取失败: ' + (error as Error).message)
@@ -70,11 +45,14 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
     return (amount / 1e18).toFixed(2)
   }
 
-  const formatRewardAmount = (amount: number): string => {
-    return (amount / 1e18).toFixed(6)
+  const formatRewardAmount = (amount: number, tokenDecimals?: number, tokenSymbol?: string): string => {
+    const decimals = tokenDecimals || 18
+    const formatted = (amount / Math.pow(10, decimals)).toFixed(Math.min(decimals, 6))
+    const symbol = tokenSymbol || '代币'
+    return `${formatted} ${symbol}`
   }
 
-  if (loading) {
+  if (campaignsLoading) {
     return (
       <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
         <CardContent className="p-6 text-center">
@@ -119,7 +97,13 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
                     {campaign.name.split('-').pop()?.replace('Campaign', 'C')}
                   </div>
                   <div>
-                    <CardTitle className="text-white text-base">{campaign.name}</CardTitle>
+                    <div className="flex items-center gap-3">
+                      <CardTitle className="text-white text-base">{campaign.name}</CardTitle>
+                      {/* 奖池信息 - 显示在同一行 */}
+                      <span className="text-sm font-medium text-yellow-400">
+                        {formatRewardAmount(campaign.totalRewardPool, campaign.rewardTokenDecimals, campaign.rewardTokenSymbol)}
+                      </span>
+                    </div>
                     <p className="text-gray-400 text-sm">by {campaign.sponsorName}</p>
                   </div>
                 </div>
@@ -193,7 +177,7 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
                       <div className="text-gray-400">总CRT</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-yellow-400 font-bold">{formatRewardAmount(userCRT.pendingReward)}</div>
+                      <div className="text-yellow-400 font-bold">{formatRewardAmount(userCRT.pendingReward, userCRT.tokenDecimals, userCRT.tokenSymbol)}</div>
                       <div className="text-gray-400">待领取</div>
                     </div>
                   </div>
@@ -208,7 +192,7 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
                   disabled={!api?.canWrite}
                 >
                   <Gift className="w-4 h-4 mr-2" />
-                  领取奖励 ({formatRewardAmount(userCRT!.pendingReward)} 代币)
+                  领取奖励 ({formatRewardAmount(userCRT!.pendingReward, userCRT.tokenDecimals, userCRT.tokenSymbol)})
                 </Button>
               )}
 

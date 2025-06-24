@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useContractApi } from "@/hooks/use-contract-api"
+import { useCreateCampaign } from "@/hooks/use-project"
 import { AlertCircle, Trophy, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 
@@ -18,11 +19,12 @@ const TOKEN_INFO: Record<string, { name: string; icon: string }> = {
   bnb: { name: "BNB", icon: "🟡" },
 }
 
-interface TokenOption {
-  symbol: string
+interface Token {
   name: string
-  icon: string
+  symbol: string
   address: string
+  decimals: number
+  icon: string
 }
 
 const durationOptions = [
@@ -40,46 +42,57 @@ interface CampaignDialogProps {
 
 export function CampaignDialog({ projectName, projectAddress }: CampaignDialogProps) {
   const [open, setOpen] = useState(false)
-  const [selectedToken, setSelectedToken] = useState("")
-  const [amount, setAmount] = useState("")
-  const [duration, setDuration] = useState("")
-  const [sponsorName, setSponsorName] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState("")
-  const [supportedTokens, setSupportedTokens] = useState<TokenOption[]>([])
+  const [selectedToken, setSelectedToken] = useState<string>("")
+  const [amount, setAmount] = useState<string>("")
+  const [duration, setDuration] = useState<string>("")
+  const [sponsorName, setSponsorName] = useState<string>("")
+  const [error, setError] = useState<string>("")
+  const [supportedTokens, setSupportedTokens] = useState<Token[]>([])
   const [tokensLoading, setTokensLoading] = useState(true)
+  
   const api = useContractApi()
+  const createCampaignMutation = useCreateCampaign()
 
-  // 动态加载代币信息
   useEffect(() => {
-    const loadTokens = async () => {
-      try {
-        setTokensLoading(true)
-        const response = await fetch('/deployments.json')
-        const deployments = await response.json()
-        
-        if (deployments.tokens) {
-          const tokens: TokenOption[] = Object.entries(deployments.tokens).map(([key, address]) => {
-            const tokenInfo = TOKEN_INFO[key] || { name: key.toUpperCase(), icon: "🪙" }
-            return {
-              symbol: key.toUpperCase(),
-              name: tokenInfo.name,
-              icon: tokenInfo.icon,
-              address: address as string
-            }
-          })
-          setSupportedTokens(tokens)
-        }
-      } catch (error) {
-        console.error('Failed to load token information:', error)
-        setError('无法加载代币信息')
-      } finally {
-        setTokensLoading(false)
-      }
-    }
-
-    loadTokens()
+    loadSupportedTokens()
   }, [])
+
+  const loadSupportedTokens = async () => {
+    setTokensLoading(true)
+    try {
+      // 从部署信息中加载真实的代币地址
+      const response = await fetch('/deployments.json')
+      const deployments = await response.json()
+      
+      if (deployments.tokens) {
+        const tokens: Token[] = Object.entries(deployments.tokens).map(([key, address]) => {
+          // 使用TOKEN_INFO中的信息，如果没有则使用默认值
+          const tokenInfo = TOKEN_INFO[key] || { 
+            name: key.toUpperCase(), 
+            icon: "🪙" 
+          }
+          
+          return {
+            name: tokenInfo.name,
+            symbol: key.toUpperCase(),
+            address: address as string,
+            decimals: key === 'usdc' || key === 'usdt' ? 6 : 18, // USDC和USDT通常是6位小数
+            icon: tokenInfo.icon
+          }
+        })
+        
+        setSupportedTokens(tokens)
+        console.log('加载的代币列表:', tokens)
+      } else {
+        throw new Error('部署信息中没有找到代币配置')
+      }
+    } catch (error) {
+      console.error("Failed to load supported tokens:", error)
+      setError('无法加载代币信息，请刷新页面重试')
+    } finally {
+      setTokensLoading(false)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!selectedToken || !amount || !duration || !sponsorName || !api?.isConnected) {
@@ -93,16 +106,16 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
       return
     }
 
-    setIsSubmitting(true)
     setError("")
 
     try {
-      await api.contractApi.createCampaign({
+      await createCampaignMutation.mutateAsync({
         projectAddress,
         sponsorName,
         duration: parseInt(duration),
         rewardToken: tokenData.address,
-        rewardAmount: amount
+        rewardAmount: amount,
+        rewardTokenDecimals: tokenData.decimals
       })
       
       console.log("成功创建Campaign:", projectName, "奖池:", amount, selectedToken, "持续:", duration, "天")
@@ -114,12 +127,10 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
       setSponsorName("")
       setOpen(false)
       
-      // TODO: 显示成功提示
+      // 成功提示会通过mutation的成功回调处理
     } catch (error) {
       console.error("创建Campaign失败:", error)
       setError(`创建Campaign失败: ${(error as Error).message}`)
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -203,7 +214,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
                 placeholder="输入您的名称或机构名称"
                 value={sponsorName}
                 onChange={(e) => setSponsorName(e.target.value)}
-                disabled={isSubmitting}
+                disabled={createCampaignMutation.isPending}
                 className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
               />
             </div>
@@ -216,7 +227,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
                 <Select 
                   value={selectedToken} 
                   onValueChange={setSelectedToken} 
-                  disabled={isSubmitting || tokensLoading}
+                  disabled={createCampaignMutation.isPending || tokensLoading}
                 >
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                     <SelectValue placeholder={tokensLoading ? "加载代币中..." : "选择代币"} />
@@ -259,7 +270,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  disabled={isSubmitting}
+                  disabled={createCampaignMutation.isPending}
                   className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
                 />
               </div>
@@ -269,7 +280,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
               <Label htmlFor="duration" className="text-gray-300">
                 活动时长
               </Label>
-              <Select value={duration} onValueChange={setDuration} disabled={isSubmitting}>
+              <Select value={duration} onValueChange={setDuration} disabled={createCampaignMutation.isPending}>
                 <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                   <SelectValue placeholder="选择时长" />
                 </SelectTrigger>
@@ -315,17 +326,17 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
             <Button
               onClick={handleCancel}
               variant="outline"
-              disabled={isSubmitting}
+              disabled={createCampaignMutation.isPending}
               className="flex-1 border-slate-600 text-gray-300 hover:bg-slate-700"
             >
               取消
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!selectedToken || !amount || !duration || !sponsorName || !api?.isConnected || isSubmitting || tokensLoading}
+              disabled={!selectedToken || !amount || !duration || !sponsorName || !api?.isConnected || createCampaignMutation.isPending || tokensLoading}
               className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
             >
-              {isSubmitting ? "创建中..." : tokensLoading ? "加载中..." : "创建Campaign"}
+              {createCampaignMutation.isPending ? "创建中..." : tokensLoading ? "加载中..." : "创建Campaign"}
             </Button>
           </div>
         </div>

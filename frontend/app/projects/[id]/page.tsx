@@ -5,17 +5,12 @@ import { CommentSection } from "@/components/comment-section"
 import { ProjectInfo } from "@/components/project-info"
 import { ProjectLayout } from "@/components/project-layout"
 import { Badge } from "@/components/ui/badge"
-import { useContractApi } from "@/hooks/use-contract-api"
-import { Project } from "@/types"
+import { useProject } from "@/hooks/use-project"
 import { getProjectColor } from "@/utils/contract-helpers"
 import { useEffect, useState } from "react"
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const [project, setProject] = useState<Project | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string>("")
-  const api = useContractApi()
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -26,29 +21,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     initializeParams()
   }, [params])
 
-  useEffect(() => {
-    if (!projectId || !api) return
-    
-    const loadProject = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const projectData = await api.contractApi.getProject(projectId)
-        if (projectData) {
-          setProject(projectData)
-        } else {
-          setError("Project not found")
-        }
-      } catch (err) {
-        console.error("Failed to load project:", err)
-        setError("Failed to load project")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadProject()
-  }, [projectId, api])
+  // 使用React Query hook获取项目数据
+  const { data: project, isLoading: loading, error } = useProject(projectId)
 
   if (loading) {
     return (

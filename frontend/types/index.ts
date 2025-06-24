@@ -241,6 +241,11 @@ export interface Campaign {
   symbol: string // CRT代币符号，固定为"CRT"
   totalSupply: number // 总CRT发行量
   
+  // 奖励代币信息（新增）
+  rewardTokenName?: string // 奖励代币名称，如"USD Coin"
+  rewardTokenSymbol?: string // 奖励代币符号，如"USDC"
+  rewardTokenDecimals?: number // 奖励代币精度，如6
+  
   // 前端展示字段
   remainingTime?: number // 剩余时间（秒）
   poolValueUSD?: number // 奖池USD价值
@@ -255,6 +260,9 @@ export interface UserCampaignCRT {
   totalCRT: number // 总CRT
   pendingReward: number // 待领取奖励（wei格式）
   crtBalance: number // CRT代币余额
+  // 奖励代币信息（新增）
+  tokenSymbol?: string // 奖励代币符号，如"USDC"
+  tokenDecimals?: number // 奖励代币精度，如6
 }
 
 // Campaign统计信息
@@ -272,5 +280,6 @@ export interface CreateCampaignParams {
   sponsorName: string
   duration: number // 天数
   rewardToken: string
-  rewardAmount: string // wei格式字符串
+  rewardAmount: string // 用户输入的数量（如"100"）
+  rewardTokenDecimals: number // 代币小数位数
 } 

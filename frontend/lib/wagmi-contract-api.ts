@@ -1176,14 +1176,14 @@ export class WagmiContractAPI {
         throw new Error('Campaign工厂合约数据未加载')
       }
 
-      const { projectAddress, sponsorName, duration, rewardToken, rewardAmount } = params
+      const { projectAddress, sponsorName, duration, rewardToken, rewardAmount, rewardTokenDecimals } = params
 
       // 首先授权代币转移给CampaignFactory
       const approveTx = await writeContractWithRetry({
         address: rewardToken as Address,
         abi: ERC20ABI,
         functionName: 'approve',
-        args: [deploymentsInfo.campaignFactory as Address, parseUnits(rewardAmount, 18)]
+        args: [deploymentsInfo.campaignFactory as Address, parseUnits(rewardAmount, rewardTokenDecimals)]
       })
 
       console.log('代币授权交易哈希:', approveTx)
@@ -1198,7 +1198,7 @@ export class WagmiContractAPI {
           sponsorName,
           BigInt(duration),
           rewardToken as Address,
-          parseUnits(rewardAmount, 18)
+          parseUnits(rewardAmount, rewardTokenDecimals)
         ]
       })
 
@@ -1254,7 +1254,7 @@ export class WagmiContractAPI {
   }
 
   /**
-   * 获取Campaign详情
+   * 获取Campaign详细信息
    */
   async getCampaignDetails(campaignAddress: string): Promise<Campaign | null> {
     try {
@@ -1264,9 +1264,9 @@ export class WagmiContractAPI {
         throw new Error('Campaign ABI not loaded')
       }
 
-      // 并行获取Campaign的所有基本信息
+      // 获取Campaign基本信息
       const [
-        projectAddress, sponsor, sponsorName, startTime, endTime, 
+        projectAddress, sponsor, sponsorName, startTime, endTime,
         isActive, rewardsDistributed, rewardToken, totalRewardPool,
         totalComments, totalLikes, name, symbol, totalSupply
       ] = await Promise.all([
@@ -1303,7 +1303,7 @@ export class WagmiContractAPI {
         readContract(contractConfig, {
           address: campaignAddress as Address,
           abi: CampaignABI,
-          functionName: 'isActive',
+          functionName: 'isCurrentlyActive',
           args: []
         }),
         readContract(contractConfig, {
@@ -1356,6 +1356,43 @@ export class WagmiContractAPI {
         })
       ])
 
+      // 获取奖励代币信息（新增）
+      let rewardTokenName = ''
+      let rewardTokenSymbol = ''
+      let rewardTokenDecimals = 18
+      
+      try {
+        if (ERC20ABI && rewardToken !== '0x0000000000000000000000000000000000000000') {
+          const [tokenName, tokenSymbol, tokenDecimals] = await Promise.all([
+            readContract(contractConfig, {
+              address: rewardToken as Address,
+              abi: ERC20ABI,
+              functionName: 'name',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: rewardToken as Address,
+              abi: ERC20ABI,
+              functionName: 'symbol',
+              args: []
+            }),
+            readContract(contractConfig, {
+              address: rewardToken as Address,
+              abi: ERC20ABI,
+              functionName: 'decimals',
+              args: []
+            })
+          ])
+          
+          rewardTokenName = tokenName as string
+          rewardTokenSymbol = tokenSymbol as string  
+          rewardTokenDecimals = Number(tokenDecimals)
+        }
+      } catch (error) {
+        console.error('Failed to get reward token info:', error)
+        // 使用默认值，不影响主要功能
+      }
+
       // 获取参与者数量
       const campaignStats = await readContract(contractConfig, {
         address: campaignAddress as Address,
@@ -1394,7 +1431,11 @@ export class WagmiContractAPI {
         name: name as string,
         symbol: symbol as string,
         totalSupply: safeToNumber(totalSupply),
-        remainingTime: safeToNumber(remainingTime)
+        remainingTime: safeToNumber(remainingTime),
+        // 新增的奖励代币信息
+        rewardTokenName,
+        rewardTokenSymbol,
+        rewardTokenDecimals
       }
 
       return campaign
@@ -1450,13 +1491,54 @@ export class WagmiContractAPI {
           console.error(`Failed to get CRT balance for ${campaignAddress}:`, error)
         }
 
+        // 获取奖励代币信息（新增）
+        let tokenSymbol = ''
+        let tokenDecimals = 18
+        try {
+          if (CampaignABI && ERC20ABI) {
+            // 先获取奖励代币地址
+            const rewardToken = await readContract(contractConfig, {
+              address: campaignAddress,
+              abi: CampaignABI,
+              functionName: 'rewardToken',
+              args: []
+            }) as string
+
+            if (rewardToken !== '0x0000000000000000000000000000000000000000') {
+              // 获取代币符号和精度
+              const [symbol, decimals] = await Promise.all([
+                readContract(contractConfig, {
+                  address: rewardToken as Address,
+                  abi: ERC20ABI,
+                  functionName: 'symbol',
+                  args: []
+                }),
+                readContract(contractConfig, {
+                  address: rewardToken as Address,
+                  abi: ERC20ABI,
+                  functionName: 'decimals',
+                  args: []
+                })
+              ])
+              
+              tokenSymbol = symbol as string
+              tokenDecimals = Number(decimals)
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to get reward token info for ${campaignAddress}:`, error)
+        }
+
         userCampaignCRTs.push({
           campaignAddress: campaignAddress,
           commentCRT: Number(commentCRTs[i]),
           likeCRT: Number(likeCRTs[i]),
           totalCRT: Number(totalCRTs[i]),
           pendingReward: Number(pendingRewards[i]),
-          crtBalance: Number(crtBalance)
+          crtBalance: Number(crtBalance),
+          // 新增的奖励代币信息
+          tokenSymbol,
+          tokenDecimals
         })
       }
 
@@ -1549,5 +1631,21 @@ export const api = {
 
   async getLeaderboard(): Promise<Project[]> {
     return wagmiContractApi.getLeaderboard()
+  },
+
+  async getProjectCampaigns(projectAddress: string): Promise<Campaign[]> {
+    return wagmiContractApi.getProjectCampaigns(projectAddress)
+  },
+
+  async getUserCampaignCRTDetails(projectAddress: string, userAddress?: string): Promise<UserCampaignCRT[]> {
+    return wagmiContractApi.getUserCampaignCRTDetails(projectAddress, userAddress)
+  },
+
+  async claimCampaignReward(campaignAddress: string): Promise<string> {
+    return wagmiContractApi.claimCampaignReward(campaignAddress)
+  },
+
+  async createCampaign(params: CreateCampaignParams): Promise<string> {
+    return wagmiContractApi.createCampaign(params)
   }
 }
