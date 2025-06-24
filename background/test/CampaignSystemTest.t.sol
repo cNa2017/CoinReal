@@ -537,7 +537,9 @@ contract CampaignSystemTest is Test {
         assertEq(sponsorships.length, 0);
         assertEq(totalUSD, 0);
         
-        assertEq(btc.getPoolValueUSD(), 0);
+        // getPoolValueUSD现在应该返回所有Campaign的奖池总额
+        // Bitcoin项目有两个Campaign，每个1000 USDC，总共2000 USDC = 2000 * 10^6
+        assertEq(btc.getPoolValueUSD(), 2000 * 10**6);
         
         IProject.UserStats memory stats = btc.getUserStats(alice);
         assertEq(stats.totalComments, 0);

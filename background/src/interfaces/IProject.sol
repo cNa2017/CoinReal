@@ -263,7 +263,7 @@ interface IProject {
     /**
      * @notice 兼容性函数 - 返回0
      */
-    function getPoolValueUSD() external pure returns (uint256);
+    function getPoolValueUSD() external view returns (uint256);
     
     /**
      * @notice 兼容性函数 - 返回空的用户统计

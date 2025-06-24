@@ -260,12 +260,21 @@ contract Project is IProject, Initializable {
         uint256 totalParticipants,
         uint256 _totalLikes,
         uint256 _lastActivityTime,
-        uint256 currentPoolUSD // 兼容性保留，返回0
+        uint256 currentPoolUSD // 从所有Campaign中获取奖池总额
     ) {
         totalParticipants = participants.length;
         _totalLikes = totalLikes;
         _lastActivityTime = lastActivityTime;
-        currentPoolUSD = 0; // 不再有统一奖池
+        
+        // 计算所有Campaign的奖池总额
+        currentPoolUSD = 0;
+        for (uint256 i = 0; i < campaigns.length; i++) {
+            try ICampaign(campaigns[i]).totalRewardPool() returns (uint256 rewardPool) {
+                currentPoolUSD += rewardPool;
+            } catch {
+                // 忽略错误，继续下一个Campaign
+            }
+        }
     }
     
     /**
@@ -377,10 +386,18 @@ contract Project is IProject, Initializable {
     }
     
     /**
-     * @dev 兼容性函数 - 返回0
+     * @dev 兼容性函数 - 返回所有Campaign的奖池总额
      */
-    function getPoolValueUSD() external pure returns (uint256) {
-        return 0;
+    function getPoolValueUSD() external view returns (uint256) {
+        uint256 totalPoolValue = 0;
+        for (uint256 i = 0; i < campaigns.length; i++) {
+            try ICampaign(campaigns[i]).totalRewardPool() returns (uint256 rewardPool) {
+                totalPoolValue += rewardPool;
+            } catch {
+                // 忽略错误，继续下一个Campaign
+            }
+        }
+        return totalPoolValue;
     }
     
     /**
