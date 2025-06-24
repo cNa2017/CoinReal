@@ -205,7 +205,7 @@ contract CampaignSystemTest is Test {
         console.log("[PASS] Project creation test");
     }
     
-    function test_CampaignCreation() public {
+    function test_CampaignCreation() public { 
         // 验证Campaign创建
         assertTrue(campaignFactory.isValidCampaign(btcCampaign1));
         assertTrue(campaignFactory.isValidCampaign(btcCampaign2));

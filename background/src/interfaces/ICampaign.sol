@@ -28,12 +28,6 @@ interface ICampaign {
         uint256 _campaignId
     ) external;
 
-    /**
-     * @notice 修改评论标签
-     * @param commentId 评论ID
-     * @param flag 标签
-     */
-    function updateCommentFlag(uint256 commentId, uint256 flag) external;
 
     /**
      * @dev 当有人发表评论时由Project合约调用
