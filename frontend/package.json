@@ -6,7 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:platform": "tsx unit-testing-script/platform-stats.ts",
+    "test:project": "tsx unit-testing-script/project-details.ts",
+    "test:campaign": "tsx unit-testing-script/campaign-status.ts",
+    "test:demo": "tsx unit-testing-script/demo.ts",
+    "test:all": "npm run test:platform && npm run test:project && npm run test:campaign"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -37,6 +42,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
+    "tsx": "^4.0.0",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
   }

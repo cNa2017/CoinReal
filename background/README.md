@@ -136,7 +136,7 @@ export PRIVATE_KEY="your_private_key"
 export RPC_URL="https://sepolia.infura.io/v3/your_key"
 
 # 部署到 Sepolia
-forge script script/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast --verify
+forge script script/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
 ```
 
 ### 部署验证
