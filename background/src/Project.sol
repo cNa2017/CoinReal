@@ -118,8 +118,18 @@ contract Project is IProject, Initializable {
         
         // 通知所有活跃的Campaign
         _notifyCampaignsCommentPosted(msg.sender, commentId);
+
+        // 打标签
+        // xxx.getCommentFlag(commentId);
         
         emit CommentPosted(commentId, msg.sender, content);
+    }
+
+    // 修改评论标签
+    function updateCommentFlag(uint256 commentId, uint256 flag) external {
+        require(commentId < commentIdCounter, "Invalid comment ID");
+        require(flag == 1 || flag == 2 || flag == 3, "Invalid flag");
+        comments[commentId].flag = flag;
     }
     
     /**
@@ -345,22 +355,27 @@ contract Project is IProject, Initializable {
     /**
      * @dev 通知所有活跃Campaign有新评论
      */
+    // function _notifyCampaignsCommentPosted(address user, uint256 commentId) private {
+    //     for (uint256 i = 0; i < campaigns.length; i++) {
+    //         try ICampaign(campaigns[i]).onCommentPosted(user, commentId) {
+    //             // 成功通知Campaign
+    //             emit CampaignCommentPosted(campaigns[i], user, commentId);
+    //         } catch (bytes memory lowLevelData){
+    //             // 忽略错误1，继续下一个Campaign
+    //             emit IgnoredCampaign1(campaigns[i]);
+    //             if (lowLevelData.length > 0) {
+    //                 assembly {
+    //                     revert(add(32, lowLevelData), mload(lowLevelData))
+    //                 }
+    //             } else {
+    //                 revert("Low-level call failed");
+    //             }
+    //         }
+    //     }
+    // }
     function _notifyCampaignsCommentPosted(address user, uint256 commentId) private {
         for (uint256 i = 0; i < campaigns.length; i++) {
-            try ICampaign(campaigns[i]).onCommentPosted(user, commentId) {
-                // 成功通知Campaign
-                emit CampaignCommentPosted(campaigns[i], user, commentId);
-            } catch (bytes memory lowLevelData){
-                // 忽略错误1，继续下一个Campaign
-                emit IgnoredCampaign1(campaigns[i]);
-                if (lowLevelData.length > 0) {
-                    assembly {
-                        revert(add(32, lowLevelData), mload(lowLevelData))
-                    }
-                } else {
-                    revert("Low-level call failed");
-                }
-            }
+            ICampaign(campaigns[i]).onCommentPosted(user, commentId);
         }
     }
     
@@ -369,17 +384,7 @@ contract Project is IProject, Initializable {
      */
     function _notifyCampaignsCommentLiked(address liker, address author, uint256 commentId) private {
         for (uint256 i = 0; i < campaigns.length; i++) {
-            try ICampaign(campaigns[i]).isCurrentlyActive() returns (bool campaignActive) {
-                if (campaignActive) {
-                    try ICampaign(campaigns[i]).onCommentLiked(liker, author, commentId) {
-                        // 成功通知Campaign
-                    } catch {
-                        // 忽略错误，继续下一个Campaign
-                    }
-                }
-            } catch {
-                // 忽略错误，继续下一个Campaign
-            }
+            ICampaign(campaigns[i]).onCommentLiked(liker, author, commentId);
         }
     }
     

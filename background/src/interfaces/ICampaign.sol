@@ -27,7 +27,14 @@ interface ICampaign {
         string calldata _projectName,
         uint256 _campaignId
     ) external;
-    
+
+    /**
+     * @notice 修改评论标签
+     * @param commentId 评论ID
+     * @param flag 标签
+     */
+    function updateCommentFlag(uint256 commentId, uint256 flag) external;
+
     /**
      * @dev 当有人发表评论时由Project合约调用
      */
@@ -41,14 +48,20 @@ interface ICampaign {
     function onCommentLiked(address liker, address author, uint256 commentId) external;
     
     /**
-     * @dev 分配奖励 - 只有平台可以调用
+     * @dev 分配奖励 - 只分配普通评论和精英评论
      */
     function distributeRewards() external;
+
+    /**
+     * @dev 分配点赞抽奖，发送随机数请求
+     */
+    function rewardsLikeCRT(uint256[] memory VRFLikeIndexArray) external;
     
     /**
      * @dev 用户领取奖励
      */
     function claimRewards() external;
+
     
     /**
      * @dev 延长活动时间 - 只有平台可以调用

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract Campaign is ERC20Upgradeable  {
+contract Campaign is ERC20Upgradeable,ICampaign  {
     using SafeERC20 for IERC20;
     
     // Constants
@@ -43,7 +43,10 @@ contract Campaign is ERC20Upgradeable  {
     uint256 public totalLikes;             // 活动期间总点赞数
     address[] public participants;         // 参与者列表
     mapping(address => bool) public isParticipant; // 参与者映射
-    
+
+    uint256 public likeIndex; // 点赞数
+    mapping(uint256 => address) public likeIndexArray;// 点赞数索引
+
     // Events
     event CampaignInitialized(address indexed project, address indexed sponsor, string sponsorName);
     event CRTMinted(address indexed user, uint256 amount, string reason);
@@ -148,6 +151,10 @@ contract Campaign is ERC20Upgradeable  {
             isParticipant[author] = true;
             participants.push(author);
         }
+
+        // 更新点赞数索引
+        likeIndexArray[likeIndex] = liker;
+        likeIndex++;
         
         // 铸造点赞奖励CRT
         likeCRT[liker] += LIKE_REWARD;
@@ -163,7 +170,7 @@ contract Campaign is ERC20Upgradeable  {
     // ====== 奖励分配函数 ======
     
     /**
-     * @dev 分配奖励 - 只有平台可以调用
+     * @dev 分配奖励 - 只分配普通评论和精英评论
      */
     function distributeRewards() external onlyPlatform {
         require(block.timestamp >= endTime, "Campaign not ended");
@@ -205,14 +212,14 @@ contract Campaign is ERC20Upgradeable  {
                 reward += (commentPool * userCRT) / totalCRT;
                 
                 // 点赞奖励
-                uint256 userLikeCRT = likeCRT[user];
-                if (userLikeCRT > 0) {
-                    // TODO: 实现1%点赞数抽取逻辑，暂时按所有点赞CRT占比分配
-                    uint256 totalLikeCRT = _getTotalLikeCRT();
-                    if (totalLikeCRT > 0) {
-                        reward += (likePool * userLikeCRT) / totalLikeCRT;
-                    }
-                }
+                // uint256 userLikeCRT = likeCRT[user];
+                // if (userLikeCRT > 0) {
+                //     // TODO: 实现1%点赞数抽取逻辑，暂时按所有点赞CRT占比分配
+                //     uint256 totalLikeCRT = _getTotalLikeCRT();
+                //     if (totalLikeCRT > 0) {
+                //         reward += (likePool * userLikeCRT) / totalLikeCRT;
+                //     }
+                // }
                 
                 pendingRewards[user] += reward;
             }
@@ -228,8 +235,24 @@ contract Campaign is ERC20Upgradeable  {
                 // pendingRewards[commentAuthor] += eliteRewardPerUser;
             }
         }
+
+        // 分配点赞抽奖，发送随机数请求
+        // xxx.vrf(VRFLikeIndexArray);
         
         emit RewardsDistributed(block.timestamp, participants.length);
+    }
+
+    // autoMation
+    // 只分配点赞抽奖，不分配普通评论和精英评论
+    function rewardsLikeCRT(uint256[] memory VRFLikeIndexArray) external  {
+        // todo
+        uint256 likePool = (totalRewardPool * 25) / 100;
+        uint256 likePoolPerIndex = likePool / VRFLikeIndexArray.length;
+        for (uint256 i = 0; i < VRFLikeIndexArray.length; i++) {
+            address user = likeIndexArray[VRFLikeIndexArray[i]];
+            likeCRT[user] += likePoolPerIndex;
+            pendingRewards[user] += likePoolPerIndex;
+        }
     }
     
     /**

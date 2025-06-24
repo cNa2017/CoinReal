@@ -70,6 +70,7 @@ interface IProject {
         uint256 crtReward; // 兼容性保留
         bool isElite;
         uint32 timestamp;
+        uint flag; // 打标签 0：没有标签，1，积极的，2，消极的，3，中立的
     }
     
     /**
@@ -134,6 +135,13 @@ interface IProject {
      * @return commentId 新创建的评论ID
      */
     function postComment(string calldata content) external returns (uint256 commentId);
+
+    /**
+     * @notice 修改评论标签
+     * @param commentId 评论ID
+     * @param flag 标签
+     */
+    function updateCommentFlag(uint256 commentId, uint256 flag) external;
     
     /**
      * @notice 点赞评论
