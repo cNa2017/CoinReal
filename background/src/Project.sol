@@ -6,6 +6,15 @@ import "./interfaces/IProject.sol";
 import "./interfaces/ICampaign.sol";
 import "./interfaces/ICoinRealPlatform.sol";
 
+interface AutoTagInterface {
+    // getgetCommentFlag就是我们在project里面调用的函数
+    function getCommentFlag(uint commentId, string calldata comment) external returns (bytes32 requestId);
+    function tagToFlag(string memory tag) external pure returns (uint);
+    // 这个是我们project合约部署时候要更新给AutoTag的
+    function updateProjectContract(address _newProjectContract) external;
+    function updateSubscriptionId(uint64 _newSubscriptionId) external;
+}
+
 contract Project is IProject, Initializable {
     
     // ====== 基本信息字段 ======
@@ -38,6 +47,15 @@ contract Project is IProject, Initializable {
     // ====== 兼容性字段 (保留旧接口) ======
     uint16 public drawPeriod; // 兼容性保留
     uint256 public nextDrawTime; // 兼容性保留
+
+    // ====== AutoTagAI打标签部分 =======
+    address public autoTagContract = 0x4cf76ab799BDA2A205Bef7f3F40F2538C9169Fe9; //fuji已经部署
+    AutoTagInterface public autoTag = AutoTagInterface(autoTagContract);
+    // 只要不是换sepolia或者其他网络，不需要再运行了
+    function setAutoTagContract(address _autoTagContract) external {
+        autoTagContract = _autoTagContract;
+        autoTag = AutoTagInterface(autoTagContract);
+    }
     
     // 注意：事件在接口中已定义，这里不再重复定义
     
@@ -119,13 +137,13 @@ contract Project is IProject, Initializable {
         // 通知所有活跃的Campaign
         _notifyCampaignsCommentPosted(msg.sender, commentId);
 
-        // 打标签
-        // xxx.getCommentFlag(commentId);
+        // TAG打标签
+        antoTag.getCommentFlag(commentId, content);
         
         emit CommentPosted(commentId, msg.sender, content);
     }
 
-    // 修改评论标签
+    // TAG上面的tag打标签提交后，一分钟后automantion就回调用这个方法
     function updateCommentFlag(uint256 commentId, uint256 flag) external {
         require(commentId < commentIdCounter, "Invalid comment ID");
         require(flag == 1 || flag == 2 || flag == 3, "Invalid flag");

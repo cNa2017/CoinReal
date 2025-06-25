@@ -56,10 +56,9 @@ contract Campaign is ERC20Upgradeable  {
     // VRF抽奖相关
     uint256 public likeIndex; // 点赞数
     mapping(uint256 => address) public likeIndexArray;// 点赞数索引
-    address public autoVRFAddress = 0x7593F3782435ceab38e9cBA065AB6233244EDD9C; // 抽奖合约地址
-    AutoVRFInterface public autoVRF; // 抽奖合约实例
-
-    // VRF重新修改抽奖合约地址，可以在部署campaign合约时候指定一下
+    address public autoVRFAddress = 0x7593F3782435ceab38e9cBA065AB6233244EDD9C; // fuji已经部署
+    AutoVRFInterface public autoVRF = AutoVRFInterface(autoVRFAddress); 
+    // 只要不是要切换到sepolia或者其他网络，不用再运行了
     function setAutoVRFAddress(address _autoVRFAddress) external {
         autoVRFAddress = _autoVRFAddress;
         autoVRF = AutoVRFInterface(_autoVRFAddress);
