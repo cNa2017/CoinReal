@@ -290,9 +290,10 @@ contract Campaign is ERC20Upgradeable  {
         luckyLikeIndexArray = VRFLikeIndexArray;
         uint256 likePool = (totalRewardPool * 25) / 100;
         uint256 likePoolPerIndex = likePool / VRFLikeIndexArray.length;
+
         for (uint256 i = 0; i < VRFLikeIndexArray.length; i++) {
             // 因为随机数只是序号，要根据这个序号从likeIndexArray里找到对应的用户地址
-            address user = likeIndexArray[VRFLikeIndexArray[i]];
+            address user = likeIndexArray[VRFLikeIndexArray[i]-1];
             // 给他发奖励
             likeCRT[user] += likePoolPerIndex;
             pendingRewards[user] += likePoolPerIndex;

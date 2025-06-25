@@ -138,4 +138,7 @@ interface ICampaign {
     function pendingRewards(address user) external view returns (uint256);
     function totalComments() external view returns (uint256);
     function totalLikes() external view returns (uint256);
+
+    // 看幸运点赞者
+    function getLuckyLikeIndexArray() external view returns (uint256[] memory);
 } 

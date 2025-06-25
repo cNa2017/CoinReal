@@ -1,21 +1,64 @@
 {
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "new-york",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "",
-    "css": "app/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true,
-    "prefix": ""
+  "network": "avalanche_fuji",
+  "timestamp": "1750877683",
+  "platform": "0xc2ea0d59aee63df2df37298f92c97406ae2f6fd0",
+  "priceOracle": "0x36a7eb308790e760b249b66f0c93dceaf172d11d",
+  "projectFactory": "0x211e16f9d444dcac1127e1c0cbf17ad047d82696",
+  "campaignFactory": "0x86d21a17bcfc9c98584ae177e174fc9145b452dc",
+  "projectImplementation": "0x6232386d47fb51cc1f6b358df0cb07c09623d8ab",
+  "campaignImplementation": "0x06576fedf32a4a6c39ec04f8b1288935dbb6e314",
+  "tokens": {
+    "usdc": "0x266bb28e58c357b1e7e8d9cb97fe17f4c47eddb2",
+    "weth": "0xea61aaa2066cfc27f74410c80c09c80bcdc6d490",
+    "dai": "0xd25e15f5a73c822038ef5207e651838cde8765fc",
+    "usdt": "0x77d008b2718f0a820990e755428d490d04f6a118",
+    "bnb": "0xe621ab6247b6cd5f760b67c17522954b291131bb"
   },
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
-  },
-  "iconLibrary": "lucide"
+  "projects": {
+    "btc": {
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "address": "0x6dc5f958b0aacf00aa0f76ceeb172dd61be5ea45"
+    },
+    "eth": {
+      "name": "Ethereum",
+      "symbol": "ETH",
+      "address": "0x7ee65d6c2283d483ac5c5e8f6ffbe11c5f6fd607"
+    },
+    "sol": {
+      "name": "Solana",
+      "symbol": "SOL",
+      "address": "0xbb6d65a3c66b2831e9bca98ace60fc7c8a232bb0"
+    },
+    "matic": {
+      "name": "Polygon",
+      "symbol": "MATIC",
+      "address": "0xeacb49eb918f771a21db548ad876f8ebf33e477d"
+    },
+    "arb": {
+      "name": "Arbitrum",
+      "symbol": "ARB",
+      "address": "0x5d4a1f0a3aba7cd31029b2c0d299c63b96e956db"
+    },
+    "uni": {
+      "name": "Uniswap",
+      "symbol": "UNI",
+      "address": "0x39d4adfc3a7226c729cb2d2c3a39d2238c7a0aa3"
+    },
+    "aave": {
+      "name": "Aave",
+      "symbol": "AAVE",
+      "address": "0x09269072ba750f0e67a40b946f2f1261da4d59ba"
+    },
+    "os": {
+      "name": "OpenSea",
+      "symbol": "OS",
+      "address": "0x325355c13a60edcb25dd86f4a63bed6aa2dae084"
+    },
+    "axs": {
+      "name": "Axie Infinity",
+      "symbol": "AXS",
+      "address": "0x1fa0f3c94e464fbf87c1bdae942642fff6a33fb9"
+    }
+  }
 }
