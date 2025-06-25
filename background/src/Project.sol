@@ -50,13 +50,13 @@ contract Project is IProject, Initializable {
     uint256 public nextDrawTime; // 兼容性保留
 
     // ====== AutoTagAI打标签部分 =======
-    address public autoTagContract = 0x4cf76ab799BDA2A205Bef7f3F40F2538C9169Fe9; //fuji已经部署
-    AutoTagInterface public autoTag = AutoTagInterface(autoTagContract);
+    address public autoTagContract; //fuji已经部署
+    AutoTagInterface public autoTag;
     // 只要不是换sepolia或者其他网络，不需要再运行了
-    function setAutoTagContract(address _autoTagContract) external {
-        autoTagContract = _autoTagContract;
-        autoTag = AutoTagInterface(autoTagContract);
-    }
+    // function setAutoTagContract(address _autoTagContract) external {
+    //     autoTagContract = _autoTagContract;
+    //     autoTag = AutoTagInterface(autoTagContract);
+    // }
     
     // 注意：事件在接口中已定义，这里不再重复定义
     
@@ -96,7 +96,11 @@ contract Project is IProject, Initializable {
         
         isActive = true;
         lastActivityTime = block.timestamp;
-        
+
+        autoTagContract = 0x4cf76ab799BDA2A205Bef7f3F40F2538C9169Fe9;
+        autoTag = AutoTagInterface(autoTagContract);
+        autoTag.updateProjectContract(address(this));
+
         emit ProjectInitialized(_name, _symbol, _creator);
     }
     
@@ -136,10 +140,11 @@ contract Project is IProject, Initializable {
         try ICoinRealPlatform(platform).recordComment() {} catch {}
         
         // 通知所有活跃的Campaign
-        _notifyCampaignsCommentPosted(msg.sender, commentId);
+        _notifyCampaignsCommentPosted(msg.sender, commentId);  
 
-        // TAG打标签
-        autoTag.getCommentFlag(commentId, content);
+        // 更新campaignContract
+        autoTag.updateProjectContract(address(this));
+        autoTag.getCommentFlag(commentId, content);     
         
         emit CommentPosted(commentId, msg.sender, content);
     }
@@ -365,33 +370,16 @@ contract Project is IProject, Initializable {
     event CampaignCommentPosted(address indexed campaign, address indexed user, uint256 indexed commentId);
     //忽略错误1，继续下一个Campaign事件
     event IgnoredCampaign1(address indexed campaign);
-    // 忽略错误2，继续下一个Campaign事件
+    // 忽略错误2，继续下一个Campaign事件    
     event IgnoredCampaign2(address indexed campaign);
+
+    // TAG成功
+    event AutoTagRequestSent(bytes32 indexed requestId, uint256 indexed commentId);
+    // TAG错误
+    event AutoTagError(address indexed campaign, uint256 indexed commentId, string reason);
     
     
     // ====== 内部函数 ======
-    
-    /**
-     * @dev 通知所有活跃Campaign有新评论
-     */
-    // function _notifyCampaignsCommentPosted(address user, uint256 commentId) private {
-    //     for (uint256 i = 0; i < campaigns.length; i++) {
-    //         try ICampaign(campaigns[i]).onCommentPosted(user, commentId) {
-    //             // 成功通知Campaign
-    //             emit CampaignCommentPosted(campaigns[i], user, commentId);
-    //         } catch (bytes memory lowLevelData){
-    //             // 忽略错误1，继续下一个Campaign
-    //             emit IgnoredCampaign1(campaigns[i]);
-    //             if (lowLevelData.length > 0) {
-    //                 assembly {
-    //                     revert(add(32, lowLevelData), mload(lowLevelData))
-    //                 }
-    //             } else {
-    //                 revert("Low-level call failed");
-    //             }
-    //         }
-    //     }
-    // }
     function _notifyCampaignsCommentPosted(address user, uint256 commentId) private {
         for (uint256 i = 0; i < campaigns.length; i++) {
             ICampaign(campaigns[i]).onCommentPosted(user, commentId);
