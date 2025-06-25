@@ -8,6 +8,18 @@ interface ProjectInfo {
   address: string
 }
 
+// 标签映射函数
+function getTagLabel(flag: any): string {
+  const flagNum = Number(flag) || 0;
+  const tagMap = {
+    0: "无标签",
+    1: "积极", 
+    2: "消极",
+    3: "中立"
+  } as const;
+  return tagMap[flagNum as keyof typeof tagMap] || "无标签";
+}
+
 /**
  * 查看项目详情和评论
  */
@@ -122,6 +134,7 @@ async function viewProjectDetails(projectKey?: string) {
             console.log(`   作者: ${comment.author}`)
             console.log(`   内容: ${comment.content}`)
             console.log(`   点赞数: ${comment.likes}`)
+            console.log(`   标签: ${getTagLabel(comment.flag)}`)
             console.log(`   时间: ${new Date(Number(comment.timestamp) * 1000).toLocaleString()}`)
             console.log(`   精英状态: ${comment.isElite ? '是' : '否'}`)
             console.log('')
