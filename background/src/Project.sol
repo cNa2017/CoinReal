@@ -151,9 +151,13 @@ contract Project is IProject, Initializable {
 
     // TAG上面的tag打标签提交后，一分钟后automantion就回调用这个方法
     function updateCommentFlag(uint256 commentId, uint256 flag) external {
-        require(commentId < commentIdCounter, "Invalid comment ID");
         require(flag == 1 || flag == 2 || flag == 3, "Invalid flag");
         comments[commentId].flag = flag;
+    }
+
+    // 测试看一下是不是已经拿到了Flag
+    function getCommentFlag(uint256 commentId) external view returns (uint256 flag) {
+        return comments[commentId].flag;
     }
     
     /**
@@ -391,7 +395,9 @@ contract Project is IProject, Initializable {
      */
     function _notifyCampaignsCommentLiked(address liker, address author, uint256 commentId) private {
         for (uint256 i = 0; i < campaigns.length; i++) {
-            ICampaign(campaigns[i]).onCommentLiked(liker, author, commentId);
+            if(ICampaign(campaigns[i]).isCurrentlyActive()){
+                ICampaign(campaigns[i]).onCommentLiked(liker, author, commentId);
+            }
         }
     }
     

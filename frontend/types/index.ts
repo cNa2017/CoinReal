@@ -280,8 +280,8 @@ export interface CampaignStats {
 export interface CreateCampaignParams {
   projectAddress: string
   sponsorName: string
-  duration: number // 天数
+  duration: number // 分钟数
   rewardToken: string
   rewardAmount: string // 用户输入的数量（如"100"）
   rewardTokenDecimals: number // 代币小数位数
-} 
+}

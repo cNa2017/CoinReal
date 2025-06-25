@@ -344,4 +344,7 @@ interface IProject {
     function lastActivityTime() external view returns (uint256);
     function drawPeriod() external view returns (uint16); // 兼容性
     function nextDrawTime() external view returns (uint256); // 兼容性
+
+    // 测试
+    function getCommentFlag(uint256 commentId) external view returns (uint256 flag);
 }

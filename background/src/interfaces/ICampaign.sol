@@ -15,6 +15,7 @@ interface ICampaign {
     
     /**
      * @dev 初始化Campaign
+     * @param _duration 活动持续分钟数
      */
     function initialize(
         address _projectAddress,

@@ -48,7 +48,7 @@ contract CampaignFactory is Ownable {
      * @dev 创建Campaign
      * @param projectAddress 项目合约地址
      * @param sponsorName 赞助者名称
-     * @param duration 活动持续天数
+     * @param duration 活动持续分钟数
      * @param rewardToken 奖励代币地址
      * @param rewardAmount 奖励代币数量
      */

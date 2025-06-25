@@ -9,15 +9,18 @@ import { PROJECT_COLORS } from "@/types"
 export function formatTimeLeft(nextDrawTime: number): string {
   const now = Math.floor(Date.now() / 1000)
   const difference = nextDrawTime - now
-  
-  if (difference <= 0) return "Already drawn"
-  
+
+  if (difference <= 0) return "已结束"
+
   const days = Math.floor(difference / (24 * 60 * 60))
   const hours = Math.floor((difference % (24 * 60 * 60)) / (60 * 60))
-  
-  if (days > 0) return `${days} days`
-  if (hours > 0) return `${hours} hours`
-  return "Less than 1 hour"
+  const minutes = Math.floor((difference % (60 * 60)) / 60)
+  const seconds = difference % 60
+
+  if (days > 0) return `${days}天`
+  if (hours > 0) return `${hours}小时${minutes}分钟`
+  if (minutes > 0) return `${minutes}分钟${seconds}秒`
+  return `${seconds}秒`
 }
 
 // 时间格式转换：Unix时间戳转相对时间描述

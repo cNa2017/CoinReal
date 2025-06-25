@@ -28,11 +28,12 @@ interface Token {
 }
 
 const durationOptions = [
-  { value: "7", label: "7天" },
-  { value: "14", label: "14天" },
-  { value: "30", label: "30天" },
-  { value: "60", label: "60天" },
-  { value: "90", label: "90天" },
+  { value: "2", label: "2分钟（测试）" },
+  { value: "10080", label: "7天" },    // 7 * 24 * 60 = 10080分钟
+  { value: "20160", label: "14天" },   // 14 * 24 * 60 = 20160分钟
+  { value: "43200", label: "30天" },   // 30 * 24 * 60 = 43200分钟
+  { value: "86400", label: "60天" },   // 60 * 24 * 60 = 86400分钟
+  { value: "129600", label: "90天" },  // 90 * 24 * 60 = 129600分钟
 ]
 
 interface CampaignDialogProps {
@@ -118,7 +119,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
         rewardTokenDecimals: tokenData.decimals
       })
       
-      console.log("成功创建Campaign:", projectName, "奖池:", amount, selectedToken, "持续:", duration, "天")
+      console.log("成功创建Campaign:", projectName, "奖池:", amount, selectedToken, "持续:", duration, "分钟")
       
       // 重置表单并关闭对话框
       setSelectedToken("")

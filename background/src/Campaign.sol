@@ -64,6 +64,8 @@ contract Campaign is ERC20Upgradeable  {
         autoVRFAddress = _autoVRFAddress;
         autoVRF = AutoVRFInterface(_autoVRFAddress);
     }
+    // 测试用的记录
+    uint[] public luckyLikeIndexArray;
 
     // Events
     event CampaignInitialized(address indexed project, address indexed sponsor, string sponsorName);
@@ -106,19 +108,20 @@ contract Campaign is ERC20Upgradeable  {
         // 初始化ERC20
         string memory tokenName = string(abi.encodePacked(_projectName, "-Campaign", _toString(_campaignId)));
         __ERC20_init(tokenName, "CRT");
-        
+
         require(_projectAddress != address(0), "Invalid project");
         require(_sponsor != address(0), "Invalid sponsor");
         require(_duration > 0, "Invalid duration");
         require(_rewardToken != address(0), "Invalid reward token");
         require(_rewardAmount > 0, "Invalid reward amount");
         require(_platform != address(0), "Invalid platform");
-        
+
         projectAddress = _projectAddress;
         sponsor = _sponsor;
         sponsorName = _sponsorName;
         startTime = block.timestamp;
-        endTime = block.timestamp + (_duration * 1 days);
+        // 修改时间单位：从天改为分钟
+        endTime = block.timestamp + (_duration * 1 minutes);
         isActive = true;
         rewardToken = _rewardToken;
         totalRewardPool = _rewardAmount;
@@ -199,13 +202,13 @@ contract Campaign is ERC20Upgradeable  {
     /**
      * @dev 分配奖励 - 只分配普通评论和精英评论
      */
-    function distributeRewards() external onlyPlatform {
+    function distributeRewards() external {
         require(block.timestamp >= endTime, "Campaign not ended");
         require(!rewardsDistributed, "Rewards already distributed");
         
         // 如果没有参与者，延长活动时间
         if (participants.length == 0 || totalSupply() == 0) {
-            endTime += 7 days; // 延长7天
+            endTime += 7 * 24 * 60 minutes; // 延长7天（转换为分钟）
             emit CampaignExtended(endTime);
             return;
         }
@@ -263,8 +266,20 @@ contract Campaign is ERC20Upgradeable  {
             }
         }
 
-        // VRF获取幸运点赞者
+        
+        // 重新绑定
+        autoVRF.setCampaignAddr(address(this));
+        // 抽取1%的点赞数作为幸运点赞者
         uint256 luckyLikeCount = likeIndex / 100;
+        // VRF获取幸运点赞者
+        if (likeIndex == 0) {
+            return;
+        } else {
+            if (luckyLikeCount == 0) {
+                luckyLikeCount = 1;
+            }
+        }
+        
         autoVRF.getVRF(likeIndex, luckyLikeCount);
         
         emit RewardsDistributed(block.timestamp, participants.length);
@@ -272,6 +287,7 @@ contract Campaign is ERC20Upgradeable  {
 
     // VRF抽奖完了 + Automation发放奖励
     function rewardsLikeCRT(uint256[] memory VRFLikeIndexArray) external  {
+        luckyLikeIndexArray = VRFLikeIndexArray;
         uint256 likePool = (totalRewardPool * 25) / 100;
         uint256 likePoolPerIndex = likePool / VRFLikeIndexArray.length;
         for (uint256 i = 0; i < VRFLikeIndexArray.length; i++) {
@@ -281,6 +297,11 @@ contract Campaign is ERC20Upgradeable  {
             likeCRT[user] += likePoolPerIndex;
             pendingRewards[user] += likePoolPerIndex;
         }
+    }
+
+    // 测试看幸运点赞者徐浩
+    function getLuckyLikeIndexArray() external view returns (uint256[] memory) {
+        return luckyLikeIndexArray;
     }
     
     /**
@@ -298,10 +319,11 @@ contract Campaign is ERC20Upgradeable  {
     
     /**
      * @dev 延长活动时间 - 只有平台可以调用
+     * @param additionalMinutes 延长的分钟数
      */
-    function extendEndTime(uint256 additionalDays) external onlyPlatform {
-        require(additionalDays > 0, "Invalid additional days");
-        endTime += additionalDays * 1 days;
+    function extendEndTime(uint256 additionalMinutes) external onlyPlatform {
+        require(additionalMinutes > 0, "Invalid additional minutes");
+        endTime += additionalMinutes * 1 minutes;
         emit CampaignExtended(endTime);
     }
     
