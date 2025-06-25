@@ -7,7 +7,8 @@ import { useContractApi } from "@/hooks/use-contract-api"
 import { useClaimCampaignReward, useProjectCampaigns, useUserCampaignCRT } from "@/hooks/use-project"
 import { UserCampaignCRT } from "@/types"
 import { formatTimeLeft } from "@/utils/contract-helpers"
-import { Clock, Gift, Trophy, Users, Zap } from "lucide-react"
+import { Clock, Gift, Trophy, Users, Zap, Copy } from "lucide-react"
+import { useState } from "react"
 
 interface CampaignListProps {
   projectAddress: string
@@ -16,7 +17,8 @@ interface CampaignListProps {
 
 export function CampaignList({ projectAddress, projectName }: CampaignListProps) {
   const api = useContractApi()
-  
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
+
   // 使用React Query hooks获取数据
   const { data: campaigns = [], isLoading: campaignsLoading } = useProjectCampaigns(projectAddress)
   const { data: userCRTDetails = [] } = useUserCampaignCRT(projectAddress, api?.address)
@@ -50,6 +52,18 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
     const formatted = (amount / Math.pow(10, decimals)).toFixed(Math.min(decimals, 6))
     const symbol = tokenSymbol || '代币'
     return `${formatted} ${symbol}`
+  }
+
+  // 复制Campaign合约地址功能
+  const copyCampaignAddress = (address: string) => {
+    navigator.clipboard.writeText(address)
+    setCopiedAddress(address)
+    setTimeout(() => setCopiedAddress(null), 2000)
+  }
+
+  // 格式化地址显示
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
   if (campaignsLoading) {
@@ -142,6 +156,27 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
                 <div>
                   <div className="text-lg font-bold text-pink-400">{campaign.totalLikes}</div>
                   <div className="text-gray-400 text-xs">点赞数</div>
+                </div>
+              </div>
+
+              {/* Campaign合约地址 */}
+              <div className="p-2 rounded-lg bg-slate-700/30 border border-slate-600/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1">Campaign合约</div>
+                    <div className="text-white font-mono text-xs">{formatAddress(campaign.address)}</div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyCampaignAddress(campaign.address)}
+                    className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors h-8 px-2"
+                  >
+                    <Copy className="w-3 h-3 mr-1" />
+                    <span className="text-xs">
+                      {copiedAddress === campaign.address ? "已复制!" : "复制"}
+                    </span>
+                  </Button>
                 </div>
               </div>
 

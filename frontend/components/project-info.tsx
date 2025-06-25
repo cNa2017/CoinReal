@@ -5,13 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Project } from "@/types"
 import { formatPoolValue, formatTimeLeft } from "@/utils/contract-helpers"
-import { ExternalLink, Globe, Trophy, Zap } from "lucide-react"
+import { ExternalLink, Globe, Trophy, Zap, Copy } from "lucide-react"
+import { useState } from "react"
 
 interface ProjectInfoProps {
   project: Project
 }
 
 export function ProjectInfo({ project }: ProjectInfoProps) {
+  const [copied, setCopied] = useState(false)
+
+  // 复制合约地址功能
+  const copyContractAddress = () => {
+    navigator.clipboard.writeText(project.projectAddress)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // 格式化地址显示
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
+  }
+
   return (
     <div className="space-y-6">
       {/* 项目基本信息 */}
@@ -34,7 +49,26 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-gray-300 leading-relaxed">{project.description}</p>
-          
+
+          {/* 合约地址信息 */}
+          <div className="p-3 rounded-lg bg-slate-700/30 border border-slate-600/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-400 mb-1">合约地址</div>
+                <div className="text-white font-mono text-sm">{formatAddress(project.projectAddress)}</div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyContractAddress}
+                className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+              >
+                <Copy className="w-4 h-4 mr-1" />
+                {copied ? "已复制!" : "复制"}
+              </Button>
+            </div>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="border-slate-600 text-slate-300">
               {project.category}
