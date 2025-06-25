@@ -1558,7 +1558,7 @@ export class WagmiContractAPI {
   async claimCampaignReward(campaignAddress: string): Promise<string> {
     try {
       await ensureInitialized()
-      
+
       if (!this.address) {
         throw new Error('钱包未连接，请先连接钱包')
       }
@@ -1578,6 +1578,37 @@ export class WagmiContractAPI {
       return txHash
     } catch (error: any) {
       console.error('Failed to claim campaign reward:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Campaign开奖 - 分配奖励
+   * 使用通用重试机制避免连接器状态异常
+   */
+  async distributeCampaignRewards(campaignAddress: string): Promise<string> {
+    try {
+      await ensureInitialized()
+
+      if (!this.address) {
+        throw new Error('钱包未连接，请先连接钱包')
+      }
+
+      if (!CampaignABI) {
+        throw new Error('Campaign ABI未加载')
+      }
+
+      const txHash = await writeContractWithRetry({
+        address: campaignAddress as Address,
+        abi: CampaignABI,
+        functionName: 'distributeRewards',
+        args: []
+      })
+
+      console.log('Campaign开奖交易哈希:', txHash)
+      return txHash
+    } catch (error: any) {
+      console.error('Failed to distribute campaign rewards:', error)
       throw error
     }
   }
@@ -1645,6 +1676,10 @@ export const api = {
 
   async claimCampaignReward(campaignAddress: string): Promise<string> {
     return wagmiContractApi.claimCampaignReward(campaignAddress)
+  },
+
+  async distributeCampaignRewards(campaignAddress: string): Promise<string> {
+    return wagmiContractApi.distributeCampaignRewards(campaignAddress)
   },
 
   async createCampaign(params: CreateCampaignParams): Promise<string> {

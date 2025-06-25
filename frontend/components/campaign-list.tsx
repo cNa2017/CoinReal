@@ -4,10 +4,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useContractApi } from "@/hooks/use-contract-api"
-import { useClaimCampaignReward, useProjectCampaigns, useUserCampaignCRT } from "@/hooks/use-project"
+import { useClaimCampaignReward, useDistributeCampaignRewards, useProjectCampaigns, useUserCampaignCRT } from "@/hooks/use-project"
 import { UserCampaignCRT } from "@/types"
 import { formatTimeLeft } from "@/utils/contract-helpers"
-import { Clock, Gift, Trophy, Users, Zap, Copy } from "lucide-react"
+import { Clock, Gift, Trophy, Users, Zap, Copy, Sparkles } from "lucide-react"
 import { useState } from "react"
 
 interface CampaignListProps {
@@ -23,6 +23,7 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
   const { data: campaigns = [], isLoading: campaignsLoading } = useProjectCampaigns(projectAddress)
   const { data: userCRTDetails = [] } = useUserCampaignCRT(projectAddress, api?.address)
   const claimRewardMutation = useClaimCampaignReward()
+  const distributeRewardsMutation = useDistributeCampaignRewards()
 
   const handleClaimReward = async (campaignAddress: string) => {
     if (!api?.canWrite) {
@@ -36,6 +37,28 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
     } catch (error) {
       console.error('Failed to claim reward:', error)
       alert('奖励领取失败: ' + (error as Error).message)
+    }
+  }
+
+  // 处理Campaign开奖
+  const handleDistributeRewards = async (campaignAddress: string, campaignName: string) => {
+    if (!api?.canWrite) {
+      alert('请先连接钱包')
+      return
+    }
+
+    // 确认开奖操作
+    const confirmed = window.confirm(`确定要为 "${campaignName}" 进行开奖吗？\n\n开奖后将根据用户的CRT数量分配奖励，此操作不可撤销。`)
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      await distributeRewardsMutation.mutateAsync(campaignAddress)
+      alert('开奖成功！奖励已分配给所有参与者。')
+    } catch (error) {
+      console.error('Failed to distribute rewards:', error)
+      alert('开奖失败: ' + (error as Error).message)
     }
   }
 
@@ -217,6 +240,18 @@ export function CampaignList({ projectAddress, projectName }: CampaignListProps)
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* 开奖按钮 - 仅在待开奖状态显示 */}
+              {!isActive && !campaign.rewardsDistributed && (
+                <Button
+                  onClick={() => handleDistributeRewards(campaign.address, campaign.name)}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                  disabled={!api?.canWrite || distributeRewardsMutation.isPending}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {distributeRewardsMutation.isPending ? '开奖中...' : '开奖'}
+                </Button>
               )}
 
               {/* 领取奖励按钮 */}

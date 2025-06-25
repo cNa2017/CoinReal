@@ -242,7 +242,7 @@ export function useUserCampaignCRT(projectAddress: string, userAddress?: string)
 
 export function useClaimCampaignReward() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (campaignAddress: string) => api.claimCampaignReward(campaignAddress),
     onSuccess: (_, campaignAddress) => {
@@ -250,6 +250,20 @@ export function useClaimCampaignReward() {
       queryClient.invalidateQueries({ queryKey: ['user-campaign-crt'] })
       // 刷新Campaign数据
       queryClient.invalidateQueries({ queryKey: ['project-campaigns'] })
+    },
+  })
+}
+
+export function useDistributeCampaignRewards() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (campaignAddress: string) => api.distributeCampaignRewards(campaignAddress),
+    onSuccess: (_, campaignAddress) => {
+      // 刷新Campaign数据，因为开奖后状态会改变
+      queryClient.invalidateQueries({ queryKey: ['project-campaigns'] })
+      // 刷新用户CRT数据，因为奖励已分配
+      queryClient.invalidateQueries({ queryKey: ['user-campaign-crt'] })
     },
   })
 }

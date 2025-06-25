@@ -29,7 +29,7 @@ export function Navigation() {
     <div className="relative flex flex-col h-full bg-slate-900/50 backdrop-blur-sm">
       {/* Logo */}
       <div className="p-6 border-b border-slate-700/50">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 flex items-center justify-center">
             <Coins className="w-5 h-5 text-white" />
           </div>
@@ -37,10 +37,13 @@ export function Navigation() {
             CoinReal
           </span>
         </Link>
+
+        {/* 钱包状态组件 - 移动到标题下方 */}
+        <WalletStatus />
       </div>
 
       {/* Main Navigation */}
-      <div className="flex-1 p-4 space-y-2 overflow-y-auto pb-48">
+      <div className="flex-1 p-4 space-y-2 overflow-y-auto">
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Navigation</div>
 
         {navigationItems.map((item) => {
@@ -83,17 +86,15 @@ export function Navigation() {
             </Link>
           ))}
         </div>
-      </div>
 
-      {/* Fixed Bottom Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50 space-y-3 bg-slate-900/50 backdrop-blur-sm">
-        <div className="bg-gradient-to-r from-slate-800/50 to-purple-800/50 rounded-lg p-3 text-center">
-          <div className="text-sm font-medium text-white mb-1">Your Balance</div>
-          <div className="text-lg font-bold text-cyan-400">$1,572.30</div>
-          <div className="text-xs text-gray-400">USDC Equivalent</div>
+        {/* 余额显示 - 移动到导航区域内 */}
+        <div className="pt-6">
+          <div className="bg-gradient-to-r from-slate-800/50 to-purple-800/50 rounded-lg p-3 text-center">
+            <div className="text-sm font-medium text-white mb-1">Your Balance</div>
+            <div className="text-lg font-bold text-cyan-400">$1,572.30</div>
+            <div className="text-xs text-gray-400">USDC Equivalent</div>
+          </div>
         </div>
-
-        <WalletStatus />
       </div>
     </div>
   )
