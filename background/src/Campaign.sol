@@ -7,6 +7,14 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/ICampaign.sol";
 // import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+// 用来抽奖的合约
+interface AutoVRFInterface {
+    function getVRF(uint256 range, uint256 n) external returns (uint256 requestId);
+    function getCampaignLuckers(uint256 likeIndex, uint256 luckyLikeCount) external returns (uint256 requestId);
+    function setSubscriptionId(uint256 _subscriptionId) external;
+    function setCampaignAddr(address _campaignAddr) external;
+}
+
 contract Campaign is ERC20Upgradeable  {
     using SafeERC20 for IERC20;
     
@@ -45,8 +53,17 @@ contract Campaign is ERC20Upgradeable  {
     address[] public participants;         // 参与者列表
     mapping(address => bool) public isParticipant; // 参与者映射
 
+    // VRF抽奖相关
     uint256 public likeIndex; // 点赞数
     mapping(uint256 => address) public likeIndexArray;// 点赞数索引
+    address public autoVRFAddress = 0x7593F3782435ceab38e9cBA065AB6233244EDD9C; // 抽奖合约地址
+    AutoVRFInterface public autoVRF; // 抽奖合约实例
+
+    // VRF重新修改抽奖合约地址，可以在部署campaign合约时候指定一下
+    function setAutoVRFAddress(address _autoVRFAddress) external {
+        autoVRFAddress = _autoVRFAddress;
+        autoVRF = AutoVRFInterface(_autoVRFAddress);
+    }
 
     // Events
     event CampaignInitialized(address indexed project, address indexed sponsor, string sponsorName);
@@ -124,6 +141,12 @@ contract Campaign is ERC20Upgradeable  {
         if (!isParticipant[user]) {
             isParticipant[user] = true;
             participants.push(user);
+        }
+
+        // 如果eliteComment.length < 10
+        if (eliteCommentIds.length < 10) {
+            eliteCommentIds.push(commentId);
+            isEliteComment[commentId] = true;
         }
         
         // 铸造评论奖励CRT
@@ -232,25 +255,26 @@ contract Campaign is ERC20Upgradeable  {
             for (uint256 i = 0; i < eliteCommentIds.length; i++) {
                 // 需要从Project合约获取评论作者
                 // 这里简化处理，实际需要调用Project合约的getComment函数
-                // address commentAuthor = IProject(projectAddress).getComment(eliteCommentIds[i]).author;
-                // pendingRewards[commentAuthor] += eliteRewardPerUser;
+                address commentAuthor = IProject(projectAddress).getComment(eliteCommentIds[i]).author;
+                pendingRewards[commentAuthor] += eliteRewardPerUser;
             }
         }
 
-        // 分配点赞抽奖，发送随机数请求
-        // xxx.vrf(VRFLikeIndexArray);
+        // VRF获取幸运点赞者
+        uint256 luckyLikeCount = likeIndex / 100;
+        autoVRF.getVRF(likeIndex, luckyLikeCount);
         
         emit RewardsDistributed(block.timestamp, participants.length);
     }
 
-    // autoMation
-    // 只分配点赞抽奖，不分配普通评论和精英评论
+    // VRF抽奖完了 + Automation发放奖励
     function rewardsLikeCRT(uint256[] memory VRFLikeIndexArray) external  {
-        // todo
         uint256 likePool = (totalRewardPool * 25) / 100;
         uint256 likePoolPerIndex = likePool / VRFLikeIndexArray.length;
         for (uint256 i = 0; i < VRFLikeIndexArray.length; i++) {
+            // 因为随机数只是序号，要根据这个序号从likeIndexArray里找到对应的用户地址
             address user = likeIndexArray[VRFLikeIndexArray[i]];
+            // 给他发奖励
             likeCRT[user] += likePoolPerIndex;
             pendingRewards[user] += likePoolPerIndex;
         }
