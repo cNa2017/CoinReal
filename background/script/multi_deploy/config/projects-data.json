@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Bitcoin",
+    "symbol": "BTC",
+    "description": "Bitcoin is the world's first decentralized digital currency, enabling peer-to-peer transactions. As the pioneer of blockchain technology, Bitcoin features scarcity, decentralization and censorship resistance.",
+    "category": "Layer1",
+    "drawPeriod": 7
+  },
+  {
+    "name": "Ethereum",
+    "symbol": "ETH",
+    "description": "Ethereum is a decentralized, open-source blockchain platform that supports smart contract functionality. It serves as the foundation for the Web3 ecosystem, providing powerful infrastructure for DeFi, NFTs and dApps.",
+    "category": "Layer1",
+    "drawPeriod": 7
+  },
+  {
+    "name": "Solana",
+    "symbol": "SOL",
+    "description": "Solana is a high-performance blockchain supporting builders around the world. Known for its ultra-fast transaction speeds and low costs, it's a popular choice for building DeFi and Web3 applications.",
+    "category": "Layer1",
+    "drawPeriod": 14
+  },
+  {
+    "name": "Polygon",
+    "symbol": "MATIC",
+    "description": "Polygon is Ethereum's scaling solution, providing faster and lower-cost transactions. Through sidechain technology, it brings users better DeFi and Gaming experiences.",
+    "category": "Layer2",
+    "drawPeriod": 10
+  },
+  {
+    "name": "Arbitrum",
+    "symbol": "ARB",
+    "description": "Arbitrum is Ethereum's Layer 2 scaling solution using Optimistic Rollup technology. It provides developers with a fully Ethereum-compatible environment while significantly reducing transaction costs.",
+    "category": "Layer2",
+    "drawPeriod": 7
+  },
+  {
+    "name": "Uniswap",
+    "symbol": "UNI",
+    "description": "Uniswap is the leading decentralized trading protocol, allowing users to swap ERC-20 tokens without intermediaries. It revolutionized DeFi trading through its Automated Market Maker (AMM) model.",
+    "category": "DeFi",
+    "drawPeriod": 5
+  },
+  {
+    "name": "Aave",
+    "symbol": "AAVE",
+    "description": "Aave is an open-source decentralized lending protocol where users can deposit assets to earn interest or borrow assets with over-collateralization. It supports innovative features like flash loans.",
+    "category": "DeFi",
+    "drawPeriod": 7
+  },
+  {
+    "name": "OpenSea",
+    "symbol": "OS",
+    "description": "OpenSea is the world's largest NFT marketplace where users can buy, sell and discover exclusive digital items. It provides a complete NFT ecosystem for creators and collectors.",
+    "category": "NFT",
+    "drawPeriod": 3
+  },
+  {
+    "name": "Axie Infinity",
+    "symbol": "AXS",
+    "description": "Axie Infinity is a blockchain-based game where players can collect, breed and battle digital pets called Axies. It pioneered the Play-to-Earn gaming model.",
+    "category": "GameFi",
+    "drawPeriod": 14
+  }
+] 

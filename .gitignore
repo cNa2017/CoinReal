@@ -141,3 +141,8 @@ node_modules/
 *.pid
 *.seed
 *.pid.lock 
+
+deployments.json
+deployments-anvil.json
+deployments-sepolia.json
+deployments-avalanche_fuji.json

@@ -4,7 +4,7 @@ import { anvil, sepolia } from 'wagmi/chains'
  * 合约部署网络配置
  * 当前使用 anvil 本地网络，将来可能切换到 sepolia 测试网
  */
-export const CONTRACT_NETWORK = anvil // 可切换为 sepolia
+export const CONTRACT_NETWORK = sepolia // 可切换为 sepolia
 
 /**
  * 支持的合约网络列表
