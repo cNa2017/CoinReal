@@ -61,6 +61,7 @@ interface IProject {
      * @param crtReward 兼容性字段，保留但不使用
      * @param isElite 是否为精英评论（由Campaign决定）
      * @param timestamp 发布时间戳
+     * @param flag 打标签 0：没有标签，1，积极的，2，消极的，3，中立的
      */
     struct Comment {
         uint256 id;

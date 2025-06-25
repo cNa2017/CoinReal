@@ -214,6 +214,7 @@ export function convertContractCommentToFrontend(contractComment: any): any {
     timestamp: contractComment.timestamp,
     crtReward: Math.floor(contractComment.crtReward / Math.pow(10, 18)),
     isElite: contractComment.isElite,
+    flag: contractComment.flag || 0, // 评论标签：0无标签，1积极，2消极，3中立
     
     // 前端特有字段
     avatar: generateDefaultAvatar(contractComment.author),

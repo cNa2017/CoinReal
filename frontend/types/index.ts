@@ -53,6 +53,7 @@ export interface Comment {
   timestamp: number // 对应合约 Comment.timestamp (Unix时间戳)
   crtReward: number // 对应合约 Comment.crtReward (已转换为整数)
   isElite: boolean // 对应合约 Comment.isElite
+  flag: number // 对应合约 Comment.flag 标签：0无标签，1积极，2消极，3中立
   
   // 前端展示用字段（非链上数据）
   avatar?: string // 前端生成默认头像
@@ -110,6 +111,7 @@ export interface ContractComment {
   crtReward: number // 原始wei值
   isElite: boolean
   timestamp: number
+  flag: number // 对应合约 Comment.flag 标签：0无标签，1积极，2消极，3中立
 }
 
 // 合约用户统计数据类型

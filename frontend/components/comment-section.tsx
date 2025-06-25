@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { CommentTag } from "@/components/ui/comment-tag"
 import { Textarea } from "@/components/ui/textarea"
 import { useContractApi } from "@/hooks/use-contract-api"
 import { useLikeComment, usePostComment, useProjectComments } from "@/hooks/use-project"
@@ -135,6 +136,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
                           Elite
                         </Badge>
                       )}
+                      <CommentTag flag={comment.flag} />
                       <span className="text-gray-400 text-sm">{formatTimestamp(comment.timestamp)}</span>
                     </div>
 

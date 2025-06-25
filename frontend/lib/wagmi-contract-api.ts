@@ -187,6 +187,7 @@ const convertContractCommentToFrontend = (contractComment: ContractComment): Com
     timestamp: safeToNumber(contractComment.timestamp),
     crtReward: convertCRTReward(contractComment.crtReward),
     isElite: contractComment.isElite,
+    flag: safeToNumber(contractComment.flag) || 0, // 评论标签：0无标签，1积极，2消极，3中立
     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${contractComment.author}`,
     verified: false,
     dislikes: 0
@@ -699,6 +700,7 @@ export class WagmiContractAPI {
         timestamp: Math.floor(Date.now() / 1000),
         crtReward: 0,
         isElite: false,
+        flag: 0, // 新评论默认无标签
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${this.address}`,
         verified: false,
         dislikes: 0

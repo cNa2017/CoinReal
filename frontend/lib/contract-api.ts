@@ -154,6 +154,7 @@ export class ContractAPI {
         timestamp: Math.floor(Date.now() / 1000),
         crtReward: 5,
         isElite: false,
+        flag: 0, // 新评论默认无标签
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${this.address}`,
         verified: false,
         dislikes: 0,
