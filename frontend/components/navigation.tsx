@@ -26,7 +26,7 @@ export function Navigation() {
   const pathname = usePathname()
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50 backdrop-blur-sm">
+    <div className="relative flex flex-col h-full bg-slate-900/50 backdrop-blur-sm">
       {/* Logo */}
       <div className="p-6 border-b border-slate-700/50">
         <Link href="/" className="flex items-center gap-2">
@@ -40,7 +40,7 @@ export function Navigation() {
       </div>
 
       {/* Main Navigation */}
-      <div className="flex-1 p-4 space-y-2">
+      <div className="flex-1 p-4 space-y-2 overflow-y-auto pb-48">
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Navigation</div>
 
         {navigationItems.map((item) => {
@@ -85,8 +85,8 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="p-4 border-t border-slate-700/50 space-y-3">
+      {/* Fixed Bottom Section */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50 space-y-3 bg-slate-900/50 backdrop-blur-sm">
         <div className="bg-gradient-to-r from-slate-800/50 to-purple-800/50 rounded-lg p-3 text-center">
           <div className="text-sm font-medium text-white mb-1">Your Balance</div>
           <div className="text-lg font-bold text-cyan-400">$1,572.30</div>

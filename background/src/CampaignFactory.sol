@@ -61,7 +61,6 @@ contract CampaignFactory is Ownable {
     ) external returns (address campaign) {
         require(projectAddress != address(0), "Invalid project address");
         require(bytes(sponsorName).length > 0, "Sponsor name required");
-        require(duration > 0 && duration <= 365, "Invalid duration");
         require(rewardToken != address(0), "Invalid reward token");
         require(rewardAmount > 0, "Invalid reward amount");
         require(platform != address(0), "Platform not set");
