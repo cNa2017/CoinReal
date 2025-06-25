@@ -139,7 +139,7 @@ contract Project is IProject, Initializable {
         _notifyCampaignsCommentPosted(msg.sender, commentId);
 
         // TAG打标签
-        antoTag.getCommentFlag(commentId, content);
+        autoTag.getCommentFlag(commentId, content);
         
         emit CommentPosted(commentId, msg.sender, content);
     }

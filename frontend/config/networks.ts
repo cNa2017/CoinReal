@@ -1,17 +1,18 @@
-import { anvil, sepolia } from 'wagmi/chains'
+import { anvil, avalancheFuji, sepolia } from 'wagmi/chains'
 
 /**
  * 合约部署网络配置
  * 当前使用 anvil 本地网络，将来可能切换到 sepolia 测试网
  */
-export const CONTRACT_NETWORK = sepolia // 可切换为 sepolia
+export const CONTRACT_NETWORK = avalancheFuji // 可切换为 sepolia
 
 /**
  * 支持的合约网络列表
  */
 export const SUPPORTED_CONTRACT_NETWORKS = {
   anvil,
-  sepolia
+  sepolia,
+  avalancheFuji
 } as const
 
 /**
@@ -19,7 +20,8 @@ export const SUPPORTED_CONTRACT_NETWORKS = {
  */
 export const NETWORK_NAMES = {
   [anvil.id]: 'Anvil Local',
-  [sepolia.id]: 'Sepolia Testnet'
+  [sepolia.id]: 'Sepolia Testnet',
+  [avalancheFuji.id]: 'Avalanche Fuji Testnet'
 } as const
 
 /**

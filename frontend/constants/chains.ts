@@ -1,4 +1,4 @@
-import { anvil, arbitrum, bsc, mainnet, polygon, sepolia } from 'wagmi/chains'
+import { anvil, arbitrum, avalancheFuji, bsc, mainnet, polygon, sepolia } from 'wagmi/chains'
 
 export type SupportedChain = {
   id: number
@@ -29,6 +29,13 @@ export const SUPPORTED_CHAINS: SupportedChain[] = [
     symbol: "ETH",
     color: "bg-blue-400",
     chain: sepolia,
+  },
+  {
+    id: avalancheFuji.id,
+    name: "Avalanche Fuji 测试网",
+    symbol: "AVAX",
+    color: "bg-red-500",
+    chain: avalancheFuji,
   },
   {
     id: polygon.id,

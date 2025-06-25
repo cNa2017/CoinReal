@@ -78,6 +78,7 @@ background/lib/
 background/broadcast/
 !background/broadcast/
 background/broadcast/*/31337/
+background/broadcast/*/43113/
 background/broadcast/**/dry-run/
 
 # 文档

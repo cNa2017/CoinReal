@@ -1,6 +1,6 @@
 import { CONTRACT_NETWORK } from '@/config/networks'
 import { createConfig, http } from 'wagmi'
-import { anvil, mainnet, sepolia } from 'wagmi/chains'
+import { anvil, avalancheFuji, mainnet, sepolia } from 'wagmi/chains'
 import { injected } from 'wagmi/connectors'
 
 /**
@@ -22,7 +22,7 @@ export const contractConfig = createConfig({
  * 支持多网络，跟随用户钱包网络，用于获取用户余额等信息
  */
 export const userConfig = createConfig({
-  chains: [mainnet, sepolia, anvil],
+  chains: [mainnet, sepolia, anvil, avalancheFuji],
   connectors: [
     injected(),
   ],
@@ -30,6 +30,7 @@ export const userConfig = createConfig({
     [mainnet.id]: http(),
     [sepolia.id]: http(),
     [anvil.id]: http(),
+    [avalancheFuji.id]: http(),
   },
 })
 
