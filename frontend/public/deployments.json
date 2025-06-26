@@ -1,64 +1,64 @@
 {
   "network": "avalanche_fuji",
-  "timestamp": "1750877921",
-  "platform": "0x14f70fa570c24c961cbaf582a1d05b2abe24a53d",
-  "priceOracle": "0x8903bc96eec662a4aaddd32a393054e21a96ea1b",
-  "projectFactory": "0xd83673a73a63f6865b6d7c0604c82bbb77efaa22",
-  "campaignFactory": "0x6e8015d652866bd2c65f156c77afcb95b3e34672",
-  "projectImplementation": "0xad3babc90d5ae7eadfd91fb3e3271b75646559f5",
-  "campaignImplementation": "0x25230a427d465e7aa07021339dae087cb1001f96",
+  "timestamp": "1750922154",
+  "platform": "0x56fa80e88fb4b30731c25e4afbd54f830953b12c",
+  "priceOracle": "0x99ef0d20f8c197e768fc15bdfab04d54496d62ee",
+  "projectFactory": "0x9bfe3127049a5e38e17696444a230a2cdcd4f844",
+  "campaignFactory": "0x580d72b3d5aff6701b31ebd1f212400a9e84080e",
+  "projectImplementation": "0x53026eafb194389cc7b6e677bfd96b059c9532fa",
+  "campaignImplementation": "0x75d8cce335a2f6a83d947d59339030e897d30ee7",
   "tokens": {
-    "usdc": "0x1b7a71f354d8d34646b20391b134c3776af4d876",
-    "weth": "0xa970a2c034688291c27806c4b01c5ed13c35bc3b",
-    "dai": "0x7ed05dcb91563f5c2158e818e880d6bc5ae6b898",
-    "usdt": "0x7bc81e52e94df822af7c8f967385d4cf69fee0b9",
-    "bnb": "0x462064cc1f38e5fef9a1303d1f12288cb85525ee"
+    "usdc": "0xb1bdba0c8c198e0a7ec6a824022813a73e043aaa",
+    "weth": "0x8fedb84c4ad147def02214f91983d075d7437c15",
+    "dai": "0x5808fa0a64c0dbed545ea106722e8bfe59f35be6",
+    "usdt": "0xe169dfda42e2fb276644dd9b599cc05c023eb31e",
+    "bnb": "0xeb949e8803dfa6a1ceeacc8a072e7893e00fbdff"
   },
   "projects": {
     "btc": {
       "name": "Bitcoin",
       "symbol": "BTC",
-      "address": "0x164e59d0582b6565a48ffdc268ac3840bcc3e874"
+      "address": "0x2732692d8e47db6bfcc9fad86f5d19ed5156aab5"
     },
     "eth": {
       "name": "Ethereum",
       "symbol": "ETH",
-      "address": "0x5a223e72197077fedc242f45e2ae3c449e0e3546"
+      "address": "0x83f28265f98f86d90c01be8e0fb7e5a1a94d78e5"
     },
     "sol": {
       "name": "Solana",
       "symbol": "SOL",
-      "address": "0x1e462259b91a36de99d0e1c8908bf75b9bd6609d"
+      "address": "0x56d3e9f9a81ebd9305acc61aa9252786ccd3fec7"
     },
     "matic": {
       "name": "Polygon",
       "symbol": "MATIC",
-      "address": "0x22a11f56e67ac1ade0a3f327ade479a794dc9ee9"
+      "address": "0x37b6364d2b75675847ce989327f3460d1d75ea3d"
     },
     "arb": {
       "name": "Arbitrum",
       "symbol": "ARB",
-      "address": "0x32c7bfc8b1e53603fa92d6297605291deaf9c1b0"
+      "address": "0x8e1b821f63ffcb96a21531f09ab884625f688e7c"
     },
     "uni": {
       "name": "Uniswap",
       "symbol": "UNI",
-      "address": "0xfb05d9d9146fbb717608ba5821da090215cb1b4f"
+      "address": "0x715a1905263f5486da78df3cc29a84b6b0241799"
     },
     "aave": {
       "name": "Aave",
       "symbol": "AAVE",
-      "address": "0xfd99dd1243222c8bc9eab53ce8797bcb13f5b597"
+      "address": "0x873cf44d0a6e6bc0e2a1c531a04f256296a3f052"
     },
     "os": {
       "name": "OpenSea",
       "symbol": "OS",
-      "address": "0x3a6574e00bb3f1dba8e9f495fc93b24c989affb1"
+      "address": "0x31ce936b5184a6f14ab31b892661919ac032de38"
     },
     "axs": {
       "name": "Axie Infinity",
       "symbol": "AXS",
-      "address": "0x665b7b6205aec56ec288b8ecfc4527be3e2b772f"
+      "address": "0xbbb37d3fc2d55e80ed5fcf147b55df373ec8365b"
     }
   }
 }

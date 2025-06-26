@@ -23,6 +23,36 @@ export function formatTimeLeft(nextDrawTime: number): string {
   return `${seconds}秒`
 }
 
+// 调试用：详细的时间信息显示
+export function formatTimeLeftDetailed(nextDrawTime: number, label: string = ""): string {
+  const now = Math.floor(Date.now() / 1000)
+  const difference = nextDrawTime - now
+  
+  const debugInfo = {
+    label,
+    currentTime: now,
+    targetTime: nextDrawTime,
+    difference,
+    currentDate: new Date(now * 1000).toLocaleString('zh-CN'),
+    targetDate: new Date(nextDrawTime * 1000).toLocaleString('zh-CN'),
+    isExpired: difference <= 0
+  }
+  
+  console.log('⏰ 时间计算详情:', debugInfo)
+  
+  if (difference <= 0) return "已结束"
+
+  const days = Math.floor(difference / (24 * 60 * 60))
+  const hours = Math.floor((difference % (24 * 60 * 60)) / (60 * 60))
+  const minutes = Math.floor((difference % (60 * 60)) / 60)
+  const seconds = difference % 60
+
+  if (days > 0) return `${days}天`
+  if (hours > 0) return `${hours}小时${minutes}分钟`
+  if (minutes > 0) return `${minutes}分钟${seconds}秒`
+  return `${seconds}秒`
+}
+
 // 时间格式转换：Unix时间戳转相对时间描述
 export function formatTimestamp(timestamp: number): string {
   const now = Math.floor(Date.now() / 1000)

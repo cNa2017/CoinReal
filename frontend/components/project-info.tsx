@@ -3,10 +3,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { useProjectCampaigns } from "@/hooks/use-project"
 import { Project } from "@/types"
 import { formatPoolValue, formatTimeLeft } from "@/utils/contract-helpers"
-import { ExternalLink, Globe, Trophy, Zap, Copy } from "lucide-react"
-import { useState } from "react"
+import { Copy, ExternalLink, Globe, Trophy, Zap } from "lucide-react"
+import { useMemo, useState } from "react"
 
 interface ProjectInfoProps {
   project: Project
@@ -14,6 +15,42 @@ interface ProjectInfoProps {
 
 export function ProjectInfo({ project }: ProjectInfoProps) {
   const [copied, setCopied] = useState(false)
+  
+  // 获取项目的Campaign数据
+  const { data: campaigns = [] } = useProjectCampaigns(project.projectAddress)
+
+  // 计算活跃Campaign的相关信息
+  const campaignInfo = useMemo(() => {
+    const activeCampaigns = campaigns.filter(campaign => 
+      campaign.isActive && Date.now() / 1000 < campaign.endTime
+    )
+    
+    if (activeCampaigns.length === 0) {
+      return {
+        totalPoolUSD: 0,
+        timeLeft: "暂无活跃Campaign",
+        hasActiveCampaign: false,
+        nextEndTime: 0
+      }
+    }
+    
+    // 计算总奖池价值（简化处理，实际应该根据代币价格计算USD价值）
+    const totalPoolUSD = activeCampaigns.reduce((sum, campaign) => {
+      // 这里简化处理，假设都是USDC（6位小数）
+      const decimals = campaign.rewardTokenDecimals || 6
+      return sum + (campaign.totalRewardPool / Math.pow(10, decimals))
+    }, 0)
+    
+    // 找到最近结束的Campaign时间
+    const nextEndTime = Math.min(...activeCampaigns.map(c => c.endTime))
+    
+    return {
+      totalPoolUSD: totalPoolUSD * 100000000, // 转换为8位小数格式以兼容formatPoolValue
+      timeLeft: formatTimeLeft(nextEndTime),
+      hasActiveCampaign: true,
+      nextEndTime
+    }
+  }, [campaigns])
 
   // 复制合约地址功能
   const copyContractAddress = () => {
@@ -97,14 +134,16 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-400 mb-1">{formatPoolValue(project.poolValueUSD)}</div>
+            <div className="text-3xl font-bold text-yellow-400 mb-1">
+              {campaignInfo.hasActiveCampaign ? formatPoolValue(project.poolValueUSD) : "$0"}
+            </div>
             <div className="text-gray-400 text-sm">活跃Campaign总奖池</div>
           </div>
 
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">剩余时间</span>
-              <span className="text-white font-medium">{formatTimeLeft(project.nextDrawTime)}</span>
+              <span className="text-white font-medium">{campaignInfo.timeLeft}</span>
             </div>
 
             {/* 基于时间剩余的进度条 */}

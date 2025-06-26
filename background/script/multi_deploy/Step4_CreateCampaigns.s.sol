@@ -98,7 +98,7 @@ contract Step4_CreateCampaigns is BaseMultiDeploy {
             address campaign = campaignFactory.createCampaign(
                 projectAddresses[i],
                 string(abi.encodePacked(projectName, " Community")),
-                30, // 30天
+                43200, // 30天
                 address(usdc),
                 1000 * 10**6 // 1000 USDC
             );
@@ -116,7 +116,7 @@ contract Step4_CreateCampaigns is BaseMultiDeploy {
             address campaign = campaignFactory.createCampaign(
                 projectAddresses[i],
                 "Crypto Foundation",
-                60, // 60天
+                86400, // 60天
                 address(weth),
                 1 * 10**18 // 1 WETH
             );
