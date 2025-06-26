@@ -2,7 +2,6 @@
 
 import { CampaignList } from "@/components/campaign-list"
 import { CommentSection } from "@/components/comment-section"
-import { ProjectInfo } from "@/components/project-info"
 import { ProjectLayout } from "@/components/project-layout"
 import { Badge } from "@/components/ui/badge"
 import { useProject } from "@/hooks/use-project"
@@ -51,8 +50,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   return (
     <ProjectLayout>
       <div className="grid grid-cols-5 gap-6 h-full">
-        {/* Main Content - Comments (3/5) */}
-        <div className="col-span-3">
+        {/* Left Side - Project Title + Comments (3/5) */}
+        <div className="col-span-3 space-y-6">
+          {/* 项目标题 */}
           <div className="mb-6">
             <div className="flex items-center gap-4 mb-4">
               <div
@@ -81,12 +81,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
+          {/* 评论区域 */}
           <CommentSection projectId={project.projectAddress} />
         </div>
 
-        {/* Right Sidebar - Project Info & Campaigns (2/5) */}
+        {/* Right Sidebar - Campaign Overview & List (2/5) */}
         <div className="col-span-2 space-y-6">
-          <ProjectInfo project={project} />
           <CampaignList projectAddress={project.projectAddress} projectName={project.name} />
         </div>
       </div>
