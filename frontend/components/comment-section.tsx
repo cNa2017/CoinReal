@@ -121,15 +121,18 @@ export function CommentSection({ projectId }: CommentSectionProps) {
         </CardContent>
       </Card>
 
-      {/* Sentiment PK Bar */}
-      <SentimentPKBar comments={comments} />
+      {/* Sticky Container for PK Bar and Filter */}
+      <div className="sticky top-0 z-20 from-slate-900 via-purple-900 to-slate-900 backdrop-blur-sm border-b border-slate-700/50 pb-4 pt-2 -mx-6 px-6 space-y-4">
+        {/* Sentiment PK Bar */}
+        <SentimentPKBar comments={comments} />
 
-      {/* Comment Filter */}
-      <CommentFilter 
-        selectedFilter={selectedFilter}
-        onFilterChange={setSelectedFilter}
-        commentCounts={commentCounts}
-      />
+        {/* Comment Filter */}
+        <CommentFilter 
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          commentCounts={commentCounts}
+        />
+      </div>
 
       {/* Comments List */}
       <div className="space-y-4">
@@ -151,33 +154,34 @@ export function CommentSection({ projectId }: CommentSectionProps) {
         ) : (
           filteredComments.map((comment) => (
             <Card key={comment.id} className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <Avatar className="w-10 h-10 border border-slate-600">
-                    <AvatarImage src={comment.avatar} />
-                    <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-sm">
-                      {shortenAddress(comment.author).slice(0, 2)}
+              <CardContent className="p-4">
+                <div className="flex gap-3">
+                  <Avatar className="w-10 h-10 flex-shrink-0">
+                    <AvatarImage src={comment.avatar} alt={`${comment.author} avatar`} />
+                    <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white">
+                      {comment.author.slice(2, 4).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-white">{shortenAddress(comment.author)}</span>
-                      {comment.verified && (
-                        <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                          Verified
-                        </Badge>
-                      )}
-                      {comment.isElite && (
-                        <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                          Elite
-                        </Badge>
-                      )}
-                      <CommentTag flag={comment.flag} />
-                      <span className="text-gray-400 text-sm">{formatTimestamp(comment.timestamp)}</span>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">
+                          {shortenAddress(comment.author)}
+                        </span>
+                        {comment.verified && (
+                          <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            Verified
+                          </Badge>
+                        )}
+                        <CommentTag flag={comment.flag} />
+                      </div>
+                      <span className="text-gray-400 text-sm">
+                        {formatTimestamp(comment.timestamp)}
+                      </span>
                     </div>
 
-                    <p className="text-gray-300 leading-relaxed mb-4">{comment.content}</p>
+                    <p className="text-gray-300 leading-relaxed">{comment.content}</p>
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

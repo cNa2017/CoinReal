@@ -26,9 +26,9 @@ export function Navigation() {
   const pathname = usePathname()
 
   return (
-    <div className="relative flex flex-col h-full bg-slate-900/50 backdrop-blur-sm">
+    <div className="flex flex-col h-screen bg-slate-900/50 backdrop-blur-sm">
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700/50">
+      <div className="flex-shrink-0 p-6 border-b border-slate-700/50">
         <Link href="/" className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 flex items-center justify-center">
             <Coins className="w-5 h-5 text-white" />
@@ -42,7 +42,7 @@ export function Navigation() {
         <WalletStatus />
       </div>
 
-      {/* Main Navigation */}
+      {/* Main Navigation - Scrollable content */}
       <div className="flex-1 p-4 space-y-2 overflow-y-auto">
         <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Navigation</div>
 
