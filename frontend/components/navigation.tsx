@@ -86,14 +86,14 @@ export function Navigation() {
             </Link>
           ))}
         </div>
+      </div>
 
-        {/* 余额显示 - 移动到导航区域内 */}
-        <div className="pt-6">
-          <div className="bg-gradient-to-r from-slate-800/50 to-purple-800/50 rounded-lg p-3 text-center">
-            <div className="text-sm font-medium text-white mb-1">Your Balance</div>
-            <div className="text-lg font-bold text-cyan-400">$1,572.30</div>
-            <div className="text-xs text-gray-400">USDC Equivalent</div>
-          </div>
+      {/* Your Balance - 固定到底部 */}
+      <div className="flex-shrink-0 p-4 border-t border-slate-700/50">
+        <div className="bg-gradient-to-r from-slate-800/50 to-purple-800/50 rounded-lg p-3 text-center">
+          <div className="text-sm font-medium text-white mb-1">Your Balance</div>
+          <div className="text-lg font-bold text-cyan-400">$1,572.30</div>
+          <div className="text-xs text-gray-400">USDC Equivalent</div>
         </div>
       </div>
     </div>
