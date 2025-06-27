@@ -11,28 +11,28 @@ export type SupportedChain = {
 export const SUPPORTED_CHAINS: SupportedChain[] = [
   {
     id: anvil.id,
-    name: "Anvil 本地网络",
+    name: "Anvil Local Network",
     symbol: "ETH",
     color: "bg-orange-500",
     chain: anvil,
   },
   {
     id: mainnet.id,
-    name: "以太坊主网",
+    name: "Ethereum Mainnet",
     symbol: "ETH",
     color: "bg-blue-500",
     chain: mainnet,
   },
   {
     id: sepolia.id,
-    name: "Sepolia 测试网",
+    name: "Sepolia Testnet",
     symbol: "ETH",
     color: "bg-blue-400",
     chain: sepolia,
   },
   {
     id: avalancheFuji.id,
-    name: "Avalanche Fuji 测试网",
+    name: "Avalanche Fuji Testnet",
     symbol: "AVAX",
     color: "bg-red-500",
     chain: avalancheFuji,

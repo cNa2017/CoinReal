@@ -6,12 +6,12 @@ interface CommentTagProps {
   className?: string
 }
 
-// 标签配置
+// Tag configuration
 const TAG_CONFIG = {
-  0: { label: "无标签", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", show: true }, // 无标签 - 现在也显示
-  1: { label: "积极", color: "bg-green-500/20 text-green-400 border-green-500/30", show: true }, // 积极
-  2: { label: "消极", color: "bg-red-500/20 text-red-400 border-red-500/30", show: true }, // 消极
-  3: { label: "中立", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", show: true }, // 中立
+  0: { label: "No Tag", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", show: true }, // No tag - now also displayed
+  1: { label: "Positive", color: "bg-green-500/20 text-green-400 border-green-500/30", show: true }, // Positive
+  2: { label: "Negative", color: "bg-red-500/20 text-red-400 border-red-500/30", show: true }, // Negative
+  3: { label: "Neutral", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", show: true }, // Neutral
 } as const
 
 export function CommentTag({ flag, className }: CommentTagProps) {

@@ -40,7 +40,7 @@ export function WalletStatus() {
     }
   }
 
-  // 避免 hydration 错误
+  // Avoid hydration errors
   if (!mounted) {
     return (
       <Button
@@ -49,7 +49,7 @@ export function WalletStatus() {
         size="sm"
       >
         <Wallet className="w-4 h-4 mr-2" />
-        连接钱包
+        Connect Wallet
       </Button>
     )
   }
@@ -63,14 +63,14 @@ export function WalletStatus() {
         size="sm"
       >
         <Wallet className="w-4 h-4 mr-2" />
-        {isConnecting ? "连接中..." : "连接钱包"}
+        {isConnecting ? "Connecting..." : "Connect Wallet"}
       </Button>
     )
   }
 
   return (
     <div className="flex flex-col gap-2">
-      {/* 网络选择器 */}
+      {/* Network Selector */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -104,7 +104,7 @@ export function WalletStatus() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* 钱包信息和操作 */}
+      {/* Wallet Information and Actions */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -125,14 +125,14 @@ export function WalletStatus() {
             className="text-gray-300 hover:bg-slate-700 focus:bg-slate-700"
           >
             <Copy className="w-4 h-4 mr-2" />
-            {copied ? "已复制!" : "复制地址"}
+            {copied ? "Copied!" : "Copy Address"}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={disconnectWallet}
             className="text-red-400 hover:bg-slate-700 focus:bg-slate-700"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            断开连接
+            Disconnect
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

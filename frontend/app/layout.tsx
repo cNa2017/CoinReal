@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CoinReal - 币圈大众点评",
-  description: "首个让用户通过评论与点赞即可赚取加密货币奖励的去中心化内容社区",
+  title: "CoinReal - Crypto Community Reviews",
+  description: "The first decentralized content community where users earn cryptocurrency rewards through comments and likes",
 };
 
 export default function RootLayout({

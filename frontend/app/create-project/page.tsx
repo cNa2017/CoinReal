@@ -50,10 +50,10 @@ export default function CreateProjectPage() {
   ]
 
   const drawPeriods = [
-    { value: "7", label: "7天" },
-    { value: "14", label: "14天" },
-    { value: "21", label: "21天" },
-    { value: "30", label: "30天" }
+    { value: "7", label: "7 days" },
+    { value: "14", label: "14 days" },
+    { value: "21", label: "21 days" },
+    { value: "30", label: "30 days" }
   ]
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -66,29 +66,29 @@ export default function CreateProjectPage() {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {}
     
-    if (!formData.name.trim()) errors.name = "项目名称不能为空"
-    if (!formData.symbol.trim()) errors.symbol = "代币符号不能为空"
-    if (!formData.description.trim()) errors.description = "项目描述不能为空"
-    if (!formData.category) errors.category = "请选择项目分类"
-    if (!formData.website.trim()) errors.website = "官网地址不能为空"
-    if (!formData.contractAddress.trim()) errors.contractAddress = "合约地址不能为空"
+    if (!formData.name.trim()) errors.name = "Project name cannot be empty"
+    if (!formData.symbol.trim()) errors.symbol = "Token symbol cannot be empty"
+    if (!formData.description.trim()) errors.description = "Project description cannot be empty"
+    if (!formData.category) errors.category = "Please select project category"
+    if (!formData.website.trim()) errors.website = "Website address cannot be empty"
+    if (!formData.contractAddress.trim()) errors.contractAddress = "Contract address cannot be empty"
     if (!formData.initialPool || parseFloat(formData.initialPool) <= 0) {
-      errors.initialPool = "初始奖池金额必须大于0"
+      errors.initialPool = "Initial pool amount must be greater than 0"
     }
-    
-    // 简单的网址验证
+
+    // Simple URL validation
     const urlPattern = /^https?:\/\/.+/
     if (formData.website && !urlPattern.test(formData.website)) {
-      errors.website = "请输入有效的网址（以http://或https://开头）"
+      errors.website = "Please enter a valid URL (starting with http:// or https://)"
     }
     if (formData.whitepaper && !urlPattern.test(formData.whitepaper)) {
-      errors.whitepaper = "请输入有效的白皮书链接"
+      errors.whitepaper = "Please enter a valid whitepaper link"
     }
-    
-    // 简单的合约地址验证（以太坊地址格式）
+
+    // Simple contract address validation (Ethereum address format)
     const addressPattern = /^0x[a-fA-F0-9]{40}$/
     if (formData.contractAddress && !addressPattern.test(formData.contractAddress)) {
-      errors.contractAddress = "请输入有效的合约地址（42位十六进制）"
+      errors.contractAddress = "Please enter a valid contract address (42-character hexadecimal)"
     }
 
     setValidationErrors(errors)
@@ -100,7 +100,7 @@ export default function CreateProjectPage() {
     
     if (!validateForm()) return
     if (!api?.isConnected) {
-      setValidationErrors({ general: "请先连接钱包" })
+      setValidationErrors({ general: "Please connect wallet first" })
       return
     }
 
@@ -120,7 +120,7 @@ export default function CreateProjectPage() {
 
       await api.contractApi.createProject(projectData)
       
-      console.log("提交的项目数据:", projectData)
+      console.log("Submitted project data:", projectData)
       setIsSuccess(true)
       
       // 3秒后重置表单
@@ -141,8 +141,8 @@ export default function CreateProjectPage() {
       }, 3000)
       
     } catch (error) {
-      console.error("提交失败:", error)
-      setValidationErrors({ general: "提交失败，请重试" })
+      console.error("Submission failed:", error)
+      setValidationErrors({ general: "Submission failed, please try again" })
     } finally {
       setIsSubmitting(false)
     }
@@ -155,10 +155,10 @@ export default function CreateProjectPage() {
           <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm max-w-md w-full">
             <CardContent className="p-8 text-center">
               <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">提交成功！</h2>
-              <p className="text-gray-400 mb-4">您的项目已成功创建并提交到区块链。</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Submission Successful!</h2>
+              <p className="text-gray-400 mb-4">Your project has been successfully created and submitted to the blockchain.</p>
               <div className="text-sm text-gray-500">
-                页面将自动刷新...
+                Page will refresh automatically...
               </div>
             </CardContent>
           </Card>
@@ -172,9 +172,9 @@ export default function CreateProjectPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">
-            创建新项目
+            Create New Project
           </h1>
-          <p className="text-gray-400 text-lg">提交您的加密货币项目，创建专属讨论社区</p>
+          <p className="text-gray-400 text-lg">Submit your cryptocurrency project and create a dedicated discussion community</p>
         </div>
 
         {validationErrors.general && (
@@ -192,21 +192,21 @@ export default function CreateProjectPage() {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Coins className="w-5 h-5" />
-              项目基本信息
+              Basic Project Information
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* 基本信息 */}
+              {/* Basic Information */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-gray-300">项目名称 *</Label>
+                  <Label htmlFor="name" className="text-gray-300">Project Name *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className="bg-slate-700/50 border-slate-600 text-white"
-                    placeholder="例: Bitcoin"
+                    placeholder="e.g. Bitcoin"
                   />
                   {validationErrors.name && (
                     <p className="text-red-400 text-sm flex items-center gap-1">
@@ -217,13 +217,13 @@ export default function CreateProjectPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="symbol" className="text-gray-300">代币符号 *</Label>
+                  <Label htmlFor="symbol" className="text-gray-300">Token Symbol *</Label>
                   <Input
                     id="symbol"
                     value={formData.symbol}
                     onChange={(e) => handleInputChange("symbol", e.target.value.toUpperCase())}
                     className="bg-slate-700/50 border-slate-600 text-white"
-                    placeholder="例: BTC"
+                    placeholder="e.g. BTC"
                     maxLength={10}
                   />
                   {validationErrors.symbol && (
@@ -236,13 +236,13 @@ export default function CreateProjectPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-gray-300">项目描述 *</Label>
+                <Label htmlFor="description" className="text-gray-300">Project Description *</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => handleInputChange("description", e.target.value)}
                   className="bg-slate-700/50 border-slate-600 text-white min-h-[100px] resize-none"
-                  placeholder="详细描述您的项目特点、用途和价值主张..."
+                  placeholder="Describe your project features, use cases and value proposition in detail..."
                   maxLength={500}
                 />
                 <div className="flex justify-between items-center">
@@ -258,13 +258,13 @@ export default function CreateProjectPage() {
                 </div>
               </div>
 
-              {/* 分类和链接 */}
+              {/* Category and Links */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-gray-300">项目分类 *</Label>
+                  <Label className="text-gray-300">Project Category *</Label>
                   <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                     <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                      <SelectValue placeholder="选择项目分类" />
+                      <SelectValue placeholder="Select project category" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-700 border-slate-600">
                       {projectCategories.map((category) => (
@@ -283,7 +283,7 @@ export default function CreateProjectPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="drawPeriod" className="text-gray-300">开奖周期</Label>
+                  <Label htmlFor="drawPeriod" className="text-gray-300">Lottery Cycle</Label>
                   <Select value={formData.drawPeriod} onValueChange={(value) => handleInputChange("drawPeriod", value)}>
                     <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                       <SelectValue />
@@ -303,7 +303,7 @@ export default function CreateProjectPage() {
                 <div className="space-y-2">
                   <Label htmlFor="website" className="text-gray-300 flex items-center gap-1">
                     <Globe className="w-4 h-4" />
-                    官网地址 *
+                    Website URL *
                   </Label>
                   <Input
                     id="website"
@@ -324,7 +324,7 @@ export default function CreateProjectPage() {
                 <div className="space-y-2">
                   <Label htmlFor="whitepaper" className="text-gray-300 flex items-center gap-1">
                     <FileText className="w-4 h-4" />
-                    白皮书链接
+                    Whitepaper Link
                   </Label>
                   <Input
                     id="whitepaper"
@@ -343,11 +343,11 @@ export default function CreateProjectPage() {
                 </div>
               </div>
 
-              {/* 技术信息 */}
+              {/* Technical Information */}
               <div className="space-y-2">
                 <Label htmlFor="contractAddress" className="text-gray-300 flex items-center gap-1">
                   <Wallet className="w-4 h-4" />
-                  合约地址 *
+                  Contract Address *
                 </Label>
                 <Input
                   id="contractAddress"
@@ -364,9 +364,9 @@ export default function CreateProjectPage() {
                 )}
               </div>
 
-              {/* 奖池设置 */}
+              {/* Pool Settings */}
               <div className="space-y-2">
-                <Label htmlFor="initialPool" className="text-gray-300">初始奖池金额 (USDC) *</Label>
+                <Label htmlFor="initialPool" className="text-gray-300">Initial Pool Amount (USDC) *</Label>
                 <Input
                   id="initialPool"
                   type="number"
@@ -384,36 +384,36 @@ export default function CreateProjectPage() {
                   </p>
                 )}
                 <p className="text-gray-500 text-sm">
-                  建议初始奖池金额: $500 - $10,000，金额越高越容易吸引用户参与
+                  Recommended initial pool amount: $500 - $10,000, higher amounts attract more user participation
                 </p>
               </div>
 
-              {/* 奖池分配说明 */}
+              {/* Pool Distribution Description */}
               <div className="bg-slate-700/30 rounded-lg p-4 space-y-3">
-                <h3 className="text-white font-medium">奖池分配机制</h3>
+                <h3 className="text-white font-medium">Pool Distribution Mechanism</h3>
                 <div className="grid md:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
                       60%
                     </Badge>
-                    <span className="text-gray-300">评论者奖励</span>
+                    <span className="text-gray-300">Commenter Rewards</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                       25%
                     </Badge>
-                    <span className="text-gray-300">点赞者奖励</span>
+                    <span className="text-gray-300">Liker Rewards</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                       15%
                     </Badge>
-                    <span className="text-gray-300">精英奖励</span>
+                    <span className="text-gray-300">Elite Rewards</span>
                   </div>
                 </div>
               </div>
 
-              {/* 提交按钮 */}
+              {/* Submit Button */}
               <div className="flex justify-end gap-4 pt-6">
                 <Button
                   type="button"
@@ -421,7 +421,7 @@ export default function CreateProjectPage() {
                   className="border-slate-600 text-gray-300 hover:bg-slate-700"
                   onClick={() => window.history.back()}
                 >
-                  取消
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
@@ -431,10 +431,10 @@ export default function CreateProjectPage() {
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      提交中...
+                      Submitting...
                     </>
                   ) : (
-                    "提交项目申请"
+                    "Submit Project Application"
                   )}
                 </Button>
               </div>

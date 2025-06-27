@@ -1,119 +1,119 @@
 import { PROJECT_COLORS } from "@/types"
 
 /**
- * 合约数据转换工具函数
- * 用于在前端展示字段和合约字段之间进行转换
+ * Contract data conversion utility functions
+ * Used for conversion between frontend display fields and contract fields
  */
 
-// 时间格式转换：Unix时间戳转相对时间
+// Time format conversion: Unix timestamp to relative time
 export function formatTimeLeft(nextDrawTime: number): string {
   const now = Math.floor(Date.now() / 1000)
   const difference = nextDrawTime - now
 
-  if (difference <= 0) return "已结束"
+  if (difference <= 0) return "Ended"
 
   const days = Math.floor(difference / (24 * 60 * 60))
   const hours = Math.floor((difference % (24 * 60 * 60)) / (60 * 60))
   const minutes = Math.floor((difference % (60 * 60)) / 60)
   const seconds = difference % 60
 
-  if (days > 0) return `${days}天`
-  if (hours > 0) return `${hours}小时${minutes}分钟`
-  if (minutes > 0) return `${minutes}分钟${seconds}秒`
-  return `${seconds}秒`
+  if (days > 0) return `${days}d`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  if (minutes > 0) return `${minutes}m ${seconds}s`
+  return `${seconds}s`
 }
 
-// 调试用：详细的时间信息显示
+// Debug: Detailed time information display
 export function formatTimeLeftDetailed(nextDrawTime: number, label: string = ""): string {
   const now = Math.floor(Date.now() / 1000)
   const difference = nextDrawTime - now
-  
+
   const debugInfo = {
     label,
     currentTime: now,
     targetTime: nextDrawTime,
     difference,
-    currentDate: new Date(now * 1000).toLocaleString('zh-CN'),
-    targetDate: new Date(nextDrawTime * 1000).toLocaleString('zh-CN'),
+    currentDate: new Date(now * 1000).toLocaleString('en-US'),
+    targetDate: new Date(nextDrawTime * 1000).toLocaleString('en-US'),
     isExpired: difference <= 0
   }
-  
-  console.log('⏰ 时间计算详情:', debugInfo)
-  
-  if (difference <= 0) return "已结束"
+
+  console.log('⏰ Time calculation details:', debugInfo)
+
+  if (difference <= 0) return "Ended"
 
   const days = Math.floor(difference / (24 * 60 * 60))
   const hours = Math.floor((difference % (24 * 60 * 60)) / (60 * 60))
   const minutes = Math.floor((difference % (60 * 60)) / 60)
   const seconds = difference % 60
 
-  if (days > 0) return `${days}天`
-  if (hours > 0) return `${hours}小时${minutes}分钟`
-  if (minutes > 0) return `${minutes}分钟${seconds}秒`
-  return `${seconds}秒`
+  if (days > 0) return `${days}d`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  if (minutes > 0) return `${minutes}m ${seconds}s`
+  return `${seconds}s`
 }
 
-// 时间格式转换：Unix时间戳转相对时间描述
+// Time format conversion: Unix timestamp to relative time description
 export function formatTimestamp(timestamp: number): string {
   const now = Math.floor(Date.now() / 1000)
   const difference = now - timestamp
-  
+
   if (difference < 60) return "just now"
   if (difference < 3600) return `${Math.floor(difference / 60)} minutes ago`
   if (difference < 86400) return `${Math.floor(difference / 3600)} hours ago`
   if (difference < 604800) return `${Math.floor(difference / 86400)} days ago`
-  
+
   return new Date(timestamp * 1000).toLocaleDateString()
 }
 
-// 金额格式转换：8位小数USD转美元显示
+// Amount format conversion: 8-decimal USD to dollar display
 export function formatPoolValue(poolValueUSD: number): string {
-  // 合约返回8位小数精度的USD值，需要除以10^8转换为标准美元
+  // Contract returns 8-decimal precision USD value, need to divide by 10^8 to convert to standard dollars
   const dollars = poolValueUSD / 100000000
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(dollars)
 }
 
-// 根据项目地址生成颜色索引
+// Generate color index based on project address
 export function getProjectColorIndex(projectAddress: string): number {
-  // 使用地址的最后几位字符生成颜色索引
+  // Use the last few characters of the address to generate color index
   const hash = projectAddress.slice(-8)
   const num = parseInt(hash, 16)
   return num % PROJECT_COLORS.length
 }
 
-// 获取项目颜色类
+// Get project color class
 export function getProjectColor(projectAddress: string): string {
   const index = getProjectColorIndex(projectAddress)
   return PROJECT_COLORS[index]
 }
 
-// 生成默认头像URL
+// Generate default avatar URL
 export function generateDefaultAvatar(address: string): string {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${address}`
 }
 
-// 缩短钱包地址显示
+// Shorten wallet address display
 export function shortenAddress(address: string): string {
   if (!address) return ""
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-// 判断用户是否为精英用户（前端辅助函数）
+// Determine if user is an elite user (frontend helper function)
 export function checkIsEliteUser(userStats: {totalComments: number, totalLikes: number, totalCRT: number}): boolean {
-  // 简单的精英用户判断逻辑，实际应该从合约的 getEliteComments 获取
+  // Simple elite user judgment logic, should actually get from contract's getEliteComments
   return userStats.totalCRT > 1000 || userStats.totalComments > 50
 }
 
-// CRT Token 格式化显示（处理18位小数精度）
+// CRT Token format display (handle 18-decimal precision)
 export function formatCRTAmount(amount: number): string {
-  // CRT Token使用18位小数精度，需要除以10^18
+  // CRT Token uses 18-decimal precision, need to divide by 10^18
   const crtAmount = amount / Math.pow(10, 18)
-  
+
   if (crtAmount >= 1000000) {
     return `${(crtAmount / 1000000).toFixed(1)}M CRT`
   }
@@ -123,22 +123,22 @@ export function formatCRTAmount(amount: number): string {
   return `${crtAmount.toFixed(0)} CRT`
 }
 
-// 项目状态计算（基于合约数据）
+// Project status calculation (based on contract data)
 export function calculateProjectStatus(isActive: boolean, nextDrawTime: number): "Active" | "New" | "Paused" | "Ended" {
   const now = Math.floor(Date.now() / 1000)
-  
+
   if (!isActive) return "Paused"
   if (nextDrawTime <= now) return "Ended"
-  
-  // 如果是新创建的项目（距离开奖时间很长），标记为New
+
+  // If it's a newly created project (long time until lottery), mark as New
   const timeLeft = nextDrawTime - now
   const sevenDays = 7 * 24 * 60 * 60
-  
-  if (timeLeft > sevenDays) return "New" 
+
+  if (timeLeft > sevenDays) return "New"
   return "Active"
 }
 
-// 验证合约地址格式
+// Validate contract address format
 export function isValidContractAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address)
 }
@@ -247,9 +247,9 @@ export function convertContractCommentToFrontend(contractComment: any): any {
     timestamp: contractComment.timestamp,
     crtReward: Math.floor(contractComment.crtReward / Math.pow(10, 18)),
     isElite: contractComment.isElite,
-    flag: contractComment.flag || 0, // 评论标签：0无标签，1积极，2消极，3中立
-    
-    // 前端特有字段
+    flag: contractComment.flag || 0, // Comment tags: 0=no tag, 1=positive, 2=negative, 3=neutral
+
+    // Frontend-specific fields
     avatar: generateDefaultAvatar(contractComment.author),
     verified: false,
     dislikes: 0,

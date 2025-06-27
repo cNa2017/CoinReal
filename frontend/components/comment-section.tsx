@@ -24,26 +24,26 @@ export function CommentSection({ projectId }: CommentSectionProps) {
   const [newComment, setNewComment] = useState("")
   const [selectedFilter, setSelectedFilter] = useState<number | null>(null)
   
-  // 使用hooks获取数据和操作
-  useContractApi() // 自动连接钱包和合约
+  // Use hooks to get data and operations
+  useContractApi() // Automatically connect wallet and contracts
   const { data: commentsData, isLoading: loading } = useProjectComments(projectId)
   const postCommentMutation = usePostComment()
   const likeCommentMutation = useLikeComment(projectId)
-  
+
   const comments = commentsData?.comments || []
 
-  // 计算各类评论数量
+  // Calculate comment counts by type
   const commentCounts = useMemo(() => {
     const total = comments.length
     const positive = comments.filter(c => c.flag === 1).length
     const negative = comments.filter(c => c.flag === 2).length
     const neutral = comments.filter(c => c.flag === 3).length
     const untagged = comments.filter(c => c.flag === 0).length
-    
+
     return { total, positive, negative, neutral, untagged }
   }, [comments])
 
-  // 筛选评论
+  // Filter comments
   const filteredComments = useMemo(() => {
     if (selectedFilter === null) {
       return comments
@@ -72,7 +72,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
   }
 
   const handleDislike = (commentId: number) => {
-    // 功能开发中，暂不可用
+    // Feature under development, not available yet
     console.log('Dislike feature is under development:', commentId)
   }
 
@@ -141,11 +141,11 @@ export function CommentSection({ projectId }: CommentSectionProps) {
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-12 h-12 text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">
-                {selectedFilter !== null ? "没有找到相关评论" : "No comments yet"}
+                {selectedFilter !== null ? "No relevant comments found" : "No comments yet"}
               </h3>
               <p className="text-gray-400">
-                {selectedFilter !== null 
-                  ? "尝试切换其他筛选条件或清除筛选查看所有评论" 
+                {selectedFilter !== null
+                  ? "Try switching to other filter conditions or clear filters to view all comments"
                   : "Be the first to share your thoughts and earn CRT tokens!"
                 }
               </p>
@@ -201,7 +201,7 @@ export function CommentSection({ projectId }: CommentSectionProps) {
                           onClick={() => handleDislike(comment.id)}
                           disabled
                           className="text-gray-500 cursor-not-allowed gap-2"
-                          title="功能开发中"
+                          title="Feature under development"
                         >
                           <ThumbsDown className="w-4 h-4" />
                           {comment.dislikes || 0}

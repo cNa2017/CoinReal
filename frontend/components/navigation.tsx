@@ -38,7 +38,7 @@ export function Navigation() {
           </span>
         </Link>
 
-        {/* 钱包状态组件 - 移动到标题下方 */}
+        {/* Wallet status component - moved below title */}
         <WalletStatus />
       </div>
 
@@ -88,7 +88,7 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Your Balance - 固定到底部 */}
+      {/* Your Balance - Fixed to bottom */}
       <div className="flex-shrink-0 p-4 border-t border-slate-700/50">
         <div className="bg-gradient-to-r from-slate-800/50 to-purple-800/50 rounded-lg p-3 text-center">
           <div className="text-sm font-medium text-white mb-1">Your Balance</div>

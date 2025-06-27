@@ -1,5 +1,5 @@
 /**
- * 格式化钱包地址
+ * Format wallet address
  */
 export function formatAddress(
   address?: string,
@@ -8,25 +8,25 @@ export function formatAddress(
 ): string {
   if (!address) return ''
   if (address.length <= startLength + endLength) return address
-  
+
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`
 }
 
 /**
- * 格式化数字，添加千分位分隔符
+ * Format number with thousand separators
  */
 export function formatNumber(num: number | string): string {
   if (typeof num === 'string') {
     num = parseFloat(num)
   }
-  
+
   if (isNaN(num)) return '0'
-  
-  return new Intl.NumberFormat('zh-CN').format(num)
+
+  return new Intl.NumberFormat('en-US').format(num)
 }
 
 /**
- * 格式化货币金额
+ * Format currency amount
  */
 export function formatCurrency(
   amount: number | string,
@@ -36,44 +36,44 @@ export function formatCurrency(
   if (typeof amount === 'string') {
     amount = parseFloat(amount)
   }
-  
-  if (isNaN(amount)) return `0 ${currency}`
-  
+
+  if (isNaN(amount)) return `0.00 ${currency}`
+
   return `${amount.toFixed(decimals)} ${currency}`
 }
 
 /**
- * 格式化时间差
+ * Format time difference
  */
 export function formatTimeAgo(date: Date | string): string {
   const now = new Date()
   const target = typeof date === 'string' ? new Date(date) : date
   const diffInSeconds = Math.floor((now.getTime() - target.getTime()) / 1000)
-  
+
   if (diffInSeconds < 60) {
-    return '刚刚'
+    return 'just now'
   }
-  
+
   const diffInMinutes = Math.floor(diffInSeconds / 60)
   if (diffInMinutes < 60) {
-    return `${diffInMinutes}分钟前`
+    return `${diffInMinutes} minutes ago`
   }
-  
+
   const diffInHours = Math.floor(diffInMinutes / 60)
   if (diffInHours < 24) {
-    return `${diffInHours}小时前`
+    return `${diffInHours} hours ago`
   }
-  
+
   const diffInDays = Math.floor(diffInHours / 24)
   if (diffInDays < 30) {
-    return `${diffInDays}天前`
+    return `${diffInDays} days ago`
   }
-  
-  return target.toLocaleDateString('zh-CN')
+
+  return target.toLocaleDateString('en-US')
 }
 
 /**
- * 截断文本并添加省略号
+ * Truncate text and add ellipsis
  */
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text

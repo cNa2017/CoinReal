@@ -10,7 +10,7 @@ import { useCreateCampaign } from "@/hooks/use-project"
 import { AlertCircle, Trophy, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 
-// 代币静态信息映射
+// Token static information mapping
 const TOKEN_INFO: Record<string, { name: string; icon: string }> = {
   usdc: { name: "USD Coin", icon: "💵" },
   usdt: { name: "Tether", icon: "₮" },
@@ -28,12 +28,12 @@ interface Token {
 }
 
 const durationOptions = [
-  { value: "2", label: "2分钟（测试）" },
-  { value: "10080", label: "7天" },    // 7 * 24 * 60 = 10080分钟
-  { value: "20160", label: "14天" },   // 14 * 24 * 60 = 20160分钟
-  { value: "43200", label: "30天" },   // 30 * 24 * 60 = 43200分钟
-  { value: "86400", label: "60天" },   // 60 * 24 * 60 = 86400分钟
-  { value: "129600", label: "90天" },  // 90 * 24 * 60 = 129600分钟
+  { value: "2", label: "2 minutes (test)" },
+  { value: "10080", label: "7 days" },    // 7 * 24 * 60 = 10080 minutes
+  { value: "20160", label: "14 days" },   // 14 * 24 * 60 = 20160 minutes
+  { value: "43200", label: "30 days" },   // 30 * 24 * 60 = 43200 minutes
+  { value: "86400", label: "60 days" },   // 60 * 24 * 60 = 86400 minutes
+  { value: "129600", label: "90 days" },  // 90 * 24 * 60 = 129600 minutes
 ]
 
 interface CampaignDialogProps {
@@ -97,13 +97,13 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
 
   const handleSubmit = async () => {
     if (!selectedToken || !amount || !duration || !sponsorName || !api?.isConnected) {
-      setError("请连接钱包并填写所有字段")
+      setError("Please connect wallet and fill in all fields")
       return
     }
 
     const tokenData = supportedTokens.find(t => t.symbol === selectedToken)
     if (!tokenData) {
-      setError("无效的代币选择")
+      setError("Invalid token selection")
       return
     }
 
@@ -148,6 +148,20 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
     return supportedTokens.find(t => t.symbol === selectedToken)
   }
 
+  // Format duration for display
+  const formatDurationDisplay = (durationMinutes: string): string => {
+    const minutes = parseInt(durationMinutes)
+    if (minutes < 60) {
+      return `${minutes} minutes`
+    } else if (minutes < 1440) { // Less than 24 hours
+      const hours = Math.floor(minutes / 60)
+      return `${hours} hours`
+    } else {
+      const days = Math.floor(minutes / 1440)
+      return `${days} days`
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -156,13 +170,13 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
           className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
         >
           <Trophy className="w-4 h-4 mr-1" />
-          创建Campaign
+          Create Campaign
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-            为 {projectName} 创建Campaign
+            Create Campaign for {projectName}
           </DialogTitle>
         </DialogHeader>
 
@@ -170,10 +184,10 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
           <div className="text-center p-4 rounded-lg bg-gradient-to-r from-slate-700/50 to-purple-700/50 border border-slate-600/50">
             <Zap className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
             <p className="text-gray-300 text-sm">
-              创建奖励活动，激励用户参与 {projectName} 社区讨论
+              Create reward campaigns to incentivize users to participate in {projectName} community discussions
             </p>
             <p className="text-gray-400 text-xs mt-1">
-              评论即获得CRT代币，活动结束后瓜分奖池
+              Earn CRT tokens for comments, share the pool when campaign ends
             </p>
           </div>
 
@@ -190,7 +204,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
             <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <div className="flex items-center gap-2 text-yellow-400">
                 <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">无法加载代币信息，请刷新页面重试</span>
+                <span className="text-sm">Unable to load token information, please refresh and try again</span>
               </div>
             </div>
           )}
@@ -199,7 +213,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
             <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
               <div className="flex items-center gap-2 text-yellow-400">
                 <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">请连接钱包以创建Campaign</span>
+                <span className="text-sm">Please connect wallet to create campaign</span>
               </div>
             </div>
           )}
@@ -207,12 +221,12 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="sponsorName" className="text-gray-300">
-                赞助者名称
+                Sponsor Name
               </Label>
               <Input
                 id="sponsorName"
                 type="text"
-                placeholder="输入您的名称或机构名称"
+                placeholder="Enter your name or organization name"
                 value={sponsorName}
                 onChange={(e) => setSponsorName(e.target.value)}
                 disabled={createCampaignMutation.isPending}
@@ -223,7 +237,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="token" className="text-gray-300">
-                  奖励代币
+                  Reward Token
                 </Label>
                 <Select 
                   value={selectedToken} 
@@ -231,16 +245,16 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
                   disabled={createCampaignMutation.isPending || tokensLoading}
                 >
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                    <SelectValue placeholder={tokensLoading ? "加载代币中..." : "选择代币"} />
+                    <SelectValue placeholder={tokensLoading ? "Loading tokens..." : "Select token"} />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-700 border-slate-600">
                     {tokensLoading ? (
                       <SelectItem value="loading" disabled className="text-gray-400">
-                        正在加载代币信息...
+                        Loading token information...
                       </SelectItem>
                     ) : supportedTokens.length === 0 ? (
                       <SelectItem value="no-tokens" disabled className="text-gray-400">
-                        暂无可用代币
+                        No available tokens
                       </SelectItem>
                     ) : (
                       supportedTokens.map((token) => (
@@ -263,7 +277,7 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
 
               <div className="space-y-2">
                 <Label htmlFor="amount" className="text-gray-300">
-                  奖池数量
+                  Pool Amount
                 </Label>
                 <Input
                   id="amount"
@@ -279,11 +293,11 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
 
             <div className="space-y-2">
               <Label htmlFor="duration" className="text-gray-300">
-                活动时长
+                Campaign Duration
               </Label>
               <Select value={duration} onValueChange={setDuration} disabled={createCampaignMutation.isPending}>
                 <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                  <SelectValue placeholder="选择时长" />
+                  <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-700 border-slate-600">
                   {durationOptions.map((option) => (
@@ -304,19 +318,19 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
             <div className="p-3 rounded-lg bg-slate-700/50 border border-slate-600/50">
               <div className="text-sm text-gray-300 space-y-1">
                 <div className="flex justify-between">
-                  <span>Campaign创建者:</span>
+                  <span>Campaign Creator:</span>
                   <span className="font-medium text-white">{sponsorName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>奖池金额:</span>
+                  <span>Pool Amount:</span>
                   <span className="font-medium text-white">{amount} {selectedToken}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>活动时长:</span>
-                  <span className="font-medium text-white">{duration} 天</span>
+                  <span>Duration:</span>
+                  <span className="font-medium text-white">{formatDurationDisplay(duration)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>代币类型:</span>
+                  <span>Token Type:</span>
                   <span className="font-medium text-white">{getSelectedTokenData()?.name}</span>
                 </div>
               </div>
@@ -330,14 +344,14 @@ export function CampaignDialog({ projectName, projectAddress }: CampaignDialogPr
               disabled={createCampaignMutation.isPending}
               className="flex-1 border-slate-600 text-gray-300 hover:bg-slate-700"
             >
-              取消
+              Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={!selectedToken || !amount || !duration || !sponsorName || !api?.isConnected || createCampaignMutation.isPending || tokensLoading}
               className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
             >
-              {createCampaignMutation.isPending ? "创建中..." : tokensLoading ? "加载中..." : "创建Campaign"}
+              {createCampaignMutation.isPending ? "Creating..." : tokensLoading ? "Loading..." : "Create Campaign"}
             </Button>
           </div>
         </div>

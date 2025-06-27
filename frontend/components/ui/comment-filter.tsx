@@ -16,35 +16,35 @@ interface CommentFilterProps {
   className?: string
 }
 
-// 筛选选项配置
+// Filter options configuration
 const FILTER_OPTIONS = [
-  { 
-    value: null, 
-    label: "全部", 
+  {
+    value: null,
+    label: "All",
     color: "bg-gray-500/20 text-gray-300 border-gray-500/30 hover:bg-gray-500/30",
     countKey: "total" as const
   },
-  { 
-    value: 1, 
-    label: "积极", 
+  {
+    value: 1,
+    label: "Positive",
     color: "bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30",
     countKey: "positive" as const
   },
-  { 
-    value: 2, 
-    label: "消极", 
+  {
+    value: 2,
+    label: "Negative",
     color: "bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30",
     countKey: "negative" as const
   },
-  { 
-    value: 3, 
-    label: "中立", 
+  {
+    value: 3,
+    label: "Neutral",
     color: "bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30",
     countKey: "neutral" as const
   },
-  { 
-    value: 0, 
-    label: "无标签", 
+  {
+    value: 0,
+    label: "No Tag",
     color: "bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-gray-500/30",
     countKey: "untagged" as const
   }
@@ -56,7 +56,7 @@ export function CommentFilter({ selectedFilter, onFilterChange, commentCounts, c
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-medium text-white">筛选评论</span>
+          <span className="text-sm font-medium text-white">Filter Comments</span>
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
@@ -97,17 +97,17 @@ export function CommentFilter({ selectedFilter, onFilterChange, commentCounts, c
             size="sm"
             onClick={() => onFilterChange(null)}
             className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-slate-700/50"
-            title="清除筛选"
+            title="Clear Filter"
           >
             <X className="w-4 h-4" />
           </Button>
         )}
       </div>
 
-      {/* 筛选结果提示 */}
+      {/* Filter result hint */}
       {selectedFilter !== null && (
         <div className="mt-2 text-xs text-gray-400">
-          显示 {commentCounts[FILTER_OPTIONS.find(opt => opt.value === selectedFilter)?.countKey || 'total']} 条{FILTER_OPTIONS.find(opt => opt.value === selectedFilter)?.label}评论
+          Showing {commentCounts[FILTER_OPTIONS.find(opt => opt.value === selectedFilter)?.countKey || 'total']} {FILTER_OPTIONS.find(opt => opt.value === selectedFilter)?.label} comments
         </div>
       )}
     </div>

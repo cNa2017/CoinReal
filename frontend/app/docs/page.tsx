@@ -43,50 +43,50 @@ export default function DocsPage() {
   const faqData: FAQItem[] = [
     {
       id: "1",
-      question: "如何开始使用CoinReal？",
-      answer: "首先连接您的Web3钱包，然后浏览项目页面。持有相应代币即可参与评论，钱包资产达到$100 USDC即可点赞。每次评论自动获得5个评论Token，点赞获得点赞Token。",
+      question: "How to start using CoinReal?",
+      answer: "First connect your Web3 wallet, then browse project pages. Hold corresponding tokens to participate in comments, wallet assets worth ≥$100 USDC to like. Each comment automatically earns 5 comment tokens, likes earn like tokens.",
       category: "getting-started"
     },
     {
       id: "2",
-      question: "评论和点赞有什么要求？",
-      answer: "评论要求：需要持有对应项目的代币（如BTC项目需要持有BTC）。点赞要求：钱包总资产等值≥$100 USDC。评论字数限制在10-500字符之间。",
+      question: "What are the requirements for commenting and liking?",
+      answer: "Comment requirements: Need to hold corresponding project tokens (e.g., BTC project requires holding BTC). Like requirements: Total wallet assets equivalent ≥$100 USDC. Comment length limited to 10-500 characters.",
       category: "participation"
     },
     {
       id: "3",
-      question: "Token奖励是如何分配的？",
-      answer: "奖池按60%评论者奖励、25%点赞者奖励、15%精英奖励分配。每7-30天开奖一次，根据您持有的Token数量按比例分配奖励。早期参与者享有时间加权优势。",
+      question: "How are token rewards distributed?",
+      answer: "Pool distributed as 60% commenter rewards, 25% liker rewards, 15% elite rewards. Lottery every 7-30 days, rewards distributed proportionally based on your token holdings. Early participants enjoy time-weighted advantages.",
       category: "rewards"
     },
     {
       id: "4",
-      question: "什么是精英奖励？",
-      answer: "精英奖励专门奖励获得高赞的优质评论。系统会根据评论质量、点赞数、参与时间等因素筛选出精英评论，这些评论的作者可以获得额外的精英奖励。",
+      question: "What are elite rewards?",
+      answer: "Elite rewards specifically reward high-quality comments that receive many likes. The system filters elite comments based on comment quality, like count, participation time and other factors, and their authors receive additional elite rewards.",
       category: "rewards"
     },
     {
       id: "5",
-      question: "支持哪些区块链网络？",
-      answer: "目前支持以太坊主网、Polygon、BSC、Arbitrum等主流网络。您可以在钱包连接后切换网络，不同网络的项目和奖池相互独立。",
+      question: "Which blockchain networks are supported?",
+      answer: "Currently supports Ethereum mainnet, Polygon, BSC, Arbitrum and other mainstream networks. You can switch networks after wallet connection, projects and pools on different networks are independent.",
       category: "technical"
     },
     {
       id: "6",
-      question: "如何防止刷票和机器人？",
-      answer: "我们使用多重防护：1）钱包资产门槛验证，2）Chainlink预言机实时验证持币状态，3）AI内容质量检测，4）链上行为分析，5）声誉系统积累。",
+      question: "How to prevent vote manipulation and bots?",
+      answer: "We use multiple protections: 1) Wallet asset threshold verification, 2) Chainlink oracle real-time token holding verification, 3) AI content quality detection, 4) On-chain behavior analysis, 5) Reputation system accumulation.",
       category: "security"
     },
     {
       id: "7",
-      question: "项目方如何创建新的项目栏目？",
-      answer: "访问'创建项目'页面，填写项目信息（名称、代币符号、描述、官网等），提交合约地址验证，设置初始奖池金额，选择开奖周期。审核通过后即可上线。",
+      question: "How do project teams create new project sections?",
+      answer: "Visit the 'Create Project' page, fill in project information (name, token symbol, description, website, etc.), submit contract address verification, set initial pool amount, choose lottery cycle. Goes live after approval.",
       category: "project-creation"
     },
     {
       id: "8",
-      question: "奖励什么时候发放？",
-      answer: "每个项目都有固定的开奖周期（7-30天）。开奖时间到达后，系统会自动计算Token分配比例，在24小时内完成奖励发放到您的钱包地址。",
+      question: "When are rewards distributed?",
+      answer: "Each project has a fixed lottery cycle (7-30 days). When lottery time arrives, the system automatically calculates token distribution ratios and completes reward distribution to your wallet address within 24 hours.",
       category: "rewards"
     }
   ]
@@ -94,70 +94,70 @@ export default function DocsPage() {
   const guideData: GuideSection[] = [
     {
       id: "getting-started",
-      title: "新手入门",
+      title: "Getting Started",
       icon: Star,
-      description: "了解CoinReal基本功能和使用流程",
+      description: "Learn CoinReal basic functions and usage flow",
       steps: [
-        "连接Web3钱包（MetaMask、WalletConnect等）",
-        "浏览项目列表，选择感兴趣的加密货币项目",
-        "确保钱包中持有对应项目的代币",
-        "发表评论获得5个评论Token",
-        "为优质评论点赞获得点赞Token",
-        "等待开奖周期结束，获得奖励分配"
+        "Connect Web3 wallet (MetaMask, WalletConnect, etc.)",
+        "Browse project list, select cryptocurrency projects of interest",
+        "Ensure wallet holds corresponding project tokens",
+        "Post comments to earn 5 comment tokens",
+        "Like quality comments to earn like tokens",
+        "Wait for lottery cycle to end and receive reward distribution"
       ]
     },
     {
       id: "earning-rewards",
-      title: "获得奖励",
+      title: "Earning Rewards",
       icon: Coins,
-      description: "掌握各种获得Token和奖励的方法",
+      description: "Master various methods to earn tokens and rewards",
       steps: [
-        "评论奖励：每条评论自动获得5个评论Token",
-        "点赞奖励：为评论点赞获得点赞Token",
-        "质量奖励：高质量评论获得更多点赞，增加Token数量",
-        "精英奖励：优质评论有机会获得15%的精英奖池",
-        "早期奖励：早期参与者享有时间加权优势",
-        "活跃奖励：持续参与提升声誉，获得更多机会"
+        "Comment rewards: Each comment automatically earns 5 comment tokens",
+        "Like rewards: Liking comments earns like tokens",
+        "Quality rewards: High-quality comments get more likes, increasing token count",
+        "Elite rewards: Quality comments have chance to earn 15% of elite pool",
+        "Early rewards: Early participants enjoy time-weighted advantages",
+        "Activity rewards: Continuous participation improves reputation, more opportunities"
       ]
     },
     {
       id: "security-tips",
-      title: "安全须知",
+      title: "Security Tips",
       icon: Shield,
-      description: "保护您的资产和账户安全",
+      description: "Protect your assets and account security",
       steps: [
-        "只在官方网站连接钱包，警惕钓鱼网站",
-        "定期检查钱包授权，撤销不必要的合约权限",
-        "不要分享私钥或助记词给任何人",
-        "使用硬件钱包存储大额资产",
-        "开启钱包的交易确认功能",
-        "关注官方公告，了解最新安全信息"
+        "Only connect wallet on official website, beware of phishing sites",
+        "Regularly check wallet authorizations, revoke unnecessary contract permissions",
+        "Never share private keys or seed phrases with anyone",
+        "Use hardware wallets to store large amounts",
+        "Enable wallet transaction confirmation features",
+        "Follow official announcements for latest security information"
       ]
     },
     {
       id: "project-management",
-      title: "项目管理",
+      title: "Project Management",
       icon: Users,
-      description: "项目方如何管理自己的社区",
+      description: "How project teams manage their communities",
       steps: [
-        "创建项目：提交项目信息和合约地址",
-        "设置奖池：添加初始奖池资金激励用户",
-        "管理周期：设置合适的开奖周期（7-30天）",
-        "监控数据：查看参与用户、评论数据、奖池使用情况",
-        "社区互动：关注用户反馈，维护项目声誉",
-        "持续运营：定期添加奖池资金保持活跃度"
+        "Create project: Submit project information and contract address",
+        "Set up pool: Add initial pool funds to incentivize users",
+        "Manage cycles: Set appropriate lottery cycles (7-30 days)",
+        "Monitor data: View participating users, comment data, pool usage",
+        "Community interaction: Pay attention to user feedback, maintain project reputation",
+        "Continuous operation: Regularly add pool funds to maintain activity"
       ]
     }
   ]
 
   const categories = [
-    { id: "all", name: "全部", count: faqData.length },
-    { id: "getting-started", name: "入门指南", count: faqData.filter(item => item.category === "getting-started").length },
-    { id: "participation", name: "参与规则", count: faqData.filter(item => item.category === "participation").length },
-    { id: "rewards", name: "奖励机制", count: faqData.filter(item => item.category === "rewards").length },
-    { id: "technical", name: "技术问题", count: faqData.filter(item => item.category === "technical").length },
-    { id: "security", name: "安全相关", count: faqData.filter(item => item.category === "security").length },
-    { id: "project-creation", name: "项目创建", count: faqData.filter(item => item.category === "project-creation").length }
+    { id: "all", name: "All", count: faqData.length },
+    { id: "getting-started", name: "Getting Started", count: faqData.filter(item => item.category === "getting-started").length },
+    { id: "participation", name: "Participation Rules", count: faqData.filter(item => item.category === "participation").length },
+    { id: "rewards", name: "Reward System", count: faqData.filter(item => item.category === "rewards").length },
+    { id: "technical", name: "Technical Issues", count: faqData.filter(item => item.category === "technical").length },
+    { id: "security", name: "Security", count: faqData.filter(item => item.category === "security").length },
+    { id: "project-creation", name: "Project Creation", count: faqData.filter(item => item.category === "project-creation").length }
   ]
 
   const filteredFAQ = faqData.filter(item => {
@@ -177,9 +177,9 @@ export default function DocsPage() {
       <div className="space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-4">
-            帮助中心
+            Help Center
           </h1>
-          <p className="text-gray-400 text-lg">了解CoinReal的使用方法、规则说明和常见问题</p>
+          <p className="text-gray-400 text-lg">Learn about CoinReal usage, rules and frequently asked questions</p>
         </div>
 
         {/* 搜索框 */}
@@ -189,7 +189,7 @@ export default function DocsPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="text"
-                placeholder="搜索帮助内容..."
+                placeholder="Search help content..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-slate-700/50 border-slate-600 text-white"
@@ -292,7 +292,7 @@ export default function DocsPage() {
               <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
                 <CardContent className="p-8 text-center">
                   <HelpCircle className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">没有找到相关问题，请尝试其他关键词</p>
+                  <p className="text-gray-400">No relevant questions found, please try other keywords</p>
                 </CardContent>
               </Card>
             )}
@@ -301,14 +301,14 @@ export default function DocsPage() {
 
         {/* 功能特色 */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-6">平台特色</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">Platform Features</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
               <CardContent className="p-6 text-center">
                 <Zap className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
-                <h3 className="text-white font-bold text-lg mb-2">AI智能标签</h3>
+                <h3 className="text-white font-bold text-lg mb-2">AI Smart Tags</h3>
                 <p className="text-gray-400 text-sm">
-                  利用人工智能技术自动分析评论内容，进行主题分类和情感分析，提高信息检索准确度
+                  Utilize artificial intelligence to automatically analyze comment content, perform topic classification and sentiment analysis, improving information retrieval accuracy
                 </p>
               </CardContent>
             </Card>
@@ -316,9 +316,9 @@ export default function DocsPage() {
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
               <CardContent className="p-6 text-center">
                 <Shield className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                <h3 className="text-white font-bold text-lg mb-2">Chainlink预言机</h3>
+                <h3 className="text-white font-bold text-lg mb-2">Chainlink Oracle</h3>
                 <p className="text-gray-400 text-sm">
-                  实时获取链上数据并验证用户资产，保证奖金分发的透明性和公正性
+                  Real-time on-chain data retrieval and user asset verification, ensuring transparency and fairness in reward distribution
                 </p>
               </CardContent>
             </Card>
@@ -326,9 +326,9 @@ export default function DocsPage() {
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
               <CardContent className="p-6 text-center">
                 <Globe className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                <h3 className="text-white font-bold text-lg mb-2">开源透明</h3>
+                <h3 className="text-white font-bold text-lg mb-2">Open Source Transparency</h3>
                 <p className="text-gray-400 text-sm">
-                  所有智能合约代码完全开源，奖池资金和分发逻辑公开可查，确保用户信任
+                  All smart contract code is completely open source, pool funds and distribution logic are publicly verifiable, ensuring user trust
                 </p>
               </CardContent>
             </Card>
