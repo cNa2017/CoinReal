@@ -1,205 +1,205 @@
-# CoinReal 平台接口文档
+# CoinReal platform interface documentation
 
-## 概述
+## Overview
 
-CoinReal 是一个创新的去中心化内容社区平台，通过区块链技术和Campaign奖励机制实现"评论即收益、点赞即赚币"的商业模式。本文档详细描述了平台所有智能合约接口的设计和实现。
+CoinReal is an innovative decentralized content community platform that uses blockchain technology and Campaign reward mechanism to achieve the business model of "comments equal income, likes equal coins". This document describes in detail the design and implementation of all smart contract interfaces of the platform.
 
-## 核心设计理念
+## Core design concept
 
-### Campaign奖励机制
-- **Project-Campaign分离**：项目专注评论点赞系统，Campaign管理奖励分配
-- **独立CRT代币**：每个Campaign发行独立的CRT代币（"项目名-Campaign编号"）
-- **评论奖励**：发表评论在所有活跃Campaign中获得5个CRT
-- **点赞奖励**：点赞获得1个CRT，被点赞者获得1个CRT
-- **奖池分配**：60%评论奖励 + 25%点赞奖励 + 15%精英奖励（开发中）
-- **Soulbound特性**：CRT代币不可转移，代表真实贡献度
+### Campaign Reward Mechanism
+- **Project-Campaign separation**: The project focuses on the comment and like system, while the campaign manages the reward distribution
+- **Independent CRT Token**: Each Campaign issues independent CRT tokens ("Project Name-Campaign Number")
+- **Comment Reward**: Post a comment to get 5 CRTs in all active campaigns
+- **Like Reward**: Get 1 CRT for liking, and the person being liked gets 1 CRT
+- **Reward pool distribution**: 60% comment reward + 25% like reward + 15% elite reward (under development)
+- **Soulbound Features**: CRT tokens are not transferable and represent real contribution
 
-### 技术架构
-- **最小代理模式**：节省95%项目和Campaign创建成本
-- **模块化设计**：职责分离，便于升级维护
-- **价格预言机**：支持多种代币的USD价值计算
-- **批量操作**：优化Gas消耗和用户体验
-- **时间控制**：Campaign有明确的活动时间窗口
+### Technical Architecture
+- **Minimum Agency Mode**: Save 95% of project and campaign creation costs
+- **Modular design**: separation of responsibilities, easy to upgrade and maintain
+- **Price Oracle**: Supports USD value calculation of multiple tokens
+- **Batch Operation**: Optimize Gas consumption and user experience
+- **Time control**: Campaign has a clear activity time window
 
 ---
 
-## 1. ICoinRealPlatform - 平台主合约接口
+## 1. ICoinRealPlatform - Platform main contract interface
 
-### 职责范围
-平台主合约负责整体项目管理、Campaign管理、用户统计、排行榜功能等核心业务。
+### Scope of Responsibilities
+The platform's main contract is responsible for core businesses such as overall project management, campaign management, user statistics, and ranking functions.
 
-### 核心功能
+### Core Features
 
-#### 1.1 项目创建
-```solidity
+#### 1.1 Project creation
+```Solidity
 function createProject(
-    string calldata name,        // 项目名称 (1-100字符)
-    string calldata symbol,      // 项目符号 (1-20字符)
-    string calldata description, // 项目描述 (最大1000字符)
-    string calldata category,    // 项目分类 (Layer1/DeFi/NFT等)
-    uint16 drawPeriod           // 兼容性参数（保留）
+string calldata name, // Project name (1-100 characters)
+string calldata symbol, // bullet symbol (1-20 characters)
+string calldata description, // Project description (maximum 1000 characters)
+string calldata category, // Project category (Layer1/DeFi/NFT, etc.)
+uint16 drawPeriod // compatibility parameter (reserved)
 ) external returns (address projectAddress);
 ```
 
-**业务流程：**
-1. 验证调用者权限（仅owner）
-2. 通过ProjectFactory创建项目代理合约
-3. 注册项目到平台并分类存储
-4. 触发ProjectCreated事件
+**Business Process:**
+1. Verify the caller's permissions (owner only)
+2. Create a project proxy contract through ProjectFactory
+3. Register projects on the platform and store them by category
+4. Trigger the ProjectCreated event
 
-#### 1.2 Campaign管理
-```solidity
+#### 1.2 Campaign Management
+```Solidity
 function addCampaignToProject(
-    address project,
-    address campaign
+address project,
+address campaign
 ) external;
 ```
 
-**业务流程：**
-1. 验证Campaign合约有效性
-2. 将Campaign添加到Project的活跃列表
-3. 更新平台统计数据
+**Business Process:**
+1. Verify the validity of the Campaign contract
+2. Add the Campaign to the Project's active list
+3. Update platform statistics
 
-#### 1.3 项目查询
-```solidity
-// 分页获取项目列表
+#### 1.3 Project Query
+```Solidity
+// Get the list of items by page
 function getProjects(uint256 offset, uint256 limit) external view returns (
-    ProjectInfo[] memory projects,
-    uint256 total
+ProjectInfo[] memory projects,
+uint256 total
 );
 
-// 按分类获取项目
+// Get items by category
 function getProjectsByCategory(string calldata category) external view returns (address[] memory);
 
-// 获取用户参与的项目
+// Get the projects the user participated in
 function getUserProjects(address user) external view returns (address[] memory);
 ```
 
-#### 1.4 统计和排行榜
-```solidity
-// 平台统计数据
+#### 1.4 Statistics and Rankings
+```Solidity
+// Platform statistics
 function getPlatformStats() external view returns (
-    uint256 totalProjects,    // 总项目数
-    uint256 totalUsers,       // 总用户数
-    uint256 totalComments,    // 总评论数
-    uint256 totalCampaigns    // 总Campaign数
+uint256 totalProjects, // total number of projects
+uint256 totalUsers, //Total number of users
+uint256 totalComments, //Total number of comments
+uint256 totalCampaigns // Total number of Campaigns
 );
 
-// 项目排行榜
+// Project Ranking
 function getProjectLeaderboard(
-    uint8 sortBy,    // 排序方式: 0-参与人数, 1-评论数, 2-Campaign数, 3-最新活动
-    uint256 offset,  // 起始位置
-    uint256 limit    // 返回数量
+uint8 sortBy, // Sorting method: 0-number of participants, 1-number of comments, 2-number of campaigns, 3-latest activities
+uint256 offset, // starting position
+uint256 limit // Return quantity
 ) external view returns (
-    address[] memory projects,
-    uint256[] memory stats
+address[] memory projects,
+uint256[] memory stats
 );
 ```
 
 ---
 
-## 2. IProject - 项目合约接口
+## 2. IProject - Project Contract Interface
 
-### 职责范围
-管理单个项目的评论、点赞系统，并与多个Campaign协调奖励分配。
+### Scope of Responsibilities
+Manage the comment and like system for a single project, and coordinate reward distribution with multiple campaigns.
 
-### 核心功能
+### Core Features
 
-#### 2.1 评论系统
-```solidity
+#### 2.1 Comment System
+```Solidity
 function postComment(string calldata content) external returns (uint256 commentId);
 ```
 
-**业务规则：**
-- 内容长度限制：1-1000字符
-- 通知所有活跃Campaign铸造5个CRT奖励
-- 评论ID自增，保证时间顺序
-- 更新用户统计数据
+**Business Rules:**
+- Content length limit: 1-1000 characters
+- Notify all active campaigns to mint 5 CRT rewards
+- Comment IDs are automatically incremented to ensure chronological order
+- Update user statistics
 
-#### 2.2 点赞系统
-```solidity
+#### 2.2 Like System
+```Solidity
 function likeComment(uint256 commentId) external;
 ```
 
-**业务规则：**
-- 每个用户只能对同一评论点赞一次
-- 通知所有活跃Campaign为点赞者和被点赞者各铸造1个CRT奖励
-- 更新评论点赞计数
+**Business Rules:**
+- Each user can only like the same comment once
+- Notify all active campaigns to mint 1 CRT reward for each liker and like recipient
+- Update comment like count
 
-#### 2.3 Campaign管理
-```solidity
-// 添加Campaign到项目
-function addCampaign(address campaign) external; // 仅平台可调用
+#### 2.3 Campaign Management
+```Solidity
+// Add Campaign to the project
+function addCampaign(address campaign) external; // Only available on the platform
 
-// 获取项目的所有Campaign
+// Get all Campaigns of the project
 function getCampaigns() external view returns (address[] memory);
 
-// 获取用户在所有Campaign中的CRT总数
+// Get the total number of CRTs for the user in all Campaigns
 function getUserTotalCRT(address user) external view returns (uint256 totalCRT);
 
-// 获取用户在所有Campaign中的详细CRT信息
+// Get the user's detailed CRT information in all Campaigns
 function getUserCampaignCRTDetails(address user) external view returns (
-    address[] memory campaignAddresses,
-    uint256[] memory commentCRTs,
-    uint256[] memory likeCRTs,
-    uint256[] memory totalCRTs,
-    uint256[] memory pendingRewards
+address[] memory campaignAddresses,
+uint256[] memory commentCRTs,
+uint256[] memory likeCRTs,
+uint256[] memory totalCRTs,
+uint256[] memory pendingRewards
 );
 ```
 
-#### 2.4 数据查询
-```solidity
-// 获取评论详情
+#### 2.4 Data Query
+```Solidity
+// Get comment details
 function getComment(uint256 commentId) external view returns (Comment memory);
 
-// 分页获取评论列表
+// Get the comment list by page
 function getComments(uint256 offset, uint256 limit) external view returns (
-    Comment[] memory comments,
-    uint256 total
+Comment[] memory comments,
+uint256 total
 );
 
-// 获取项目统计
+// Get project statistics
 function getProjectStats() external view returns (
-    uint256 totalParticipants,
-    uint256 totalLikes,
-    uint256 lastActivityTime,
-    uint256 currentPoolUSD // 兼容性保留，返回0
+uint256 totalParticipants,
+uint256 totalLikes,
+uint256 lastActivityTime,
+uint256 currentPoolUSD // Reserved for compatibility, returns 0
 );
 
-// 获取用户活动
+// Get user activity
 function getUserActivity(address user, uint256 offset, uint256 limit) external view returns (
-    uint256[] memory commentIds,
-    uint256[] memory likedCommentIds
+uint256[] memory commentIds,
+uint256[] memory likedCommentIds
 );
 ```
 
-### 数据结构
+Data Structure
 
-#### Comment 结构
-```solidity
+#### Comment structure
+```Solidity
 struct Comment {
-    uint256 id;          // 评论唯一ID（自增）
-    address author;      // 评论作者地址
-    string content;      // 评论内容
-    uint256 likes;       // 点赞数量
-    uint256 crtReward;   // 兼容性保留（不使用）
-    bool isElite;        // 精英状态由Campaign决定
-    uint32 timestamp;    // 发布时间戳
+uint256 id; //Comment unique ID (auto-increment)
+address author; // Comment author address
+string content; // Comment content
+uint256 likes; // Number of likes
+uint256 crtReward; // Reserved for compatibility (not used)
+bool isElite; // Elite status is determined by Campaign
+uint32 timestamp; // Release timestamp
 }
 ```
 
 ---
 
-## 3. ICampaign - Campaign合约接口
+## 3. ICampaign - Campaign contract interface
 
-### 职责范围
-管理单个Campaign的CRT代币铸造、奖池管理和奖励分配。每个Campaign是一个独立的ERC20代币合约。
+### Scope of Responsibilities
+Manages CRT token minting, prize pool management, and reward distribution for a single Campaign. Each Campaign is an independent ERC20 token contract.
 
-### 核心功能
+### Core Features
 
-#### 3.1 Campaign信息
-```solidity
-// 基本信息
+#### 3.1 Campaign Information
+```Solidity
+// Basic information
 function projectAddress() external view returns (address);
 function sponsor() external view returns (address);
 function sponsorName() external view returns (string memory);
@@ -208,302 +208,302 @@ function endTime() external view returns (uint256);
 function rewardToken() external view returns (address);
 function totalRewardPool() external view returns (uint256);
 
-// 状态查询
+// Status query
 function isCurrentlyActive() external view returns (bool);
 function rewardsDistributed() external view returns (bool);
 ```
 
-#### 3.2 CRT代币功能（继承ERC20）
-```solidity
-// ERC20基础功能
-function name() external view returns (string memory); // "项目名-Campaign编号"
+#### 3.2 CRT token function (inherited from ERC20)
+```Solidity
+// ERC20 basic functions
+function name() external view returns (string memory); // "Project Name-Campaign Number"
 function symbol() external view returns (string memory); // "CRT"
 function balanceOf(address account) external view returns (uint256);
 function totalSupply() external view returns (uint256);
 
-// Soulbound特性 - 以下函数会revert
+// Soulbound feature - The following function will revert
 function transfer(address to, uint256 amount) external returns (bool);
 function transferFrom(address from, address to, uint256 amount) external returns (bool);
 function approve(address spender, uint256 amount) external returns (bool);
 ```
 
-#### 3.3 Project回调函数
-```solidity
-// 当用户发表评论时由Project合约调用
-function onCommentPosted(address user, uint256 commentId) external; // 铸造5 CRT
+#### 3.3 Project callback function
+```Solidity
+// Called by the Project contract when a user leaves a comment
+function onCommentPosted(address user, uint256 commentId) external; // Casting 5 CRT
 
-// 当用户点赞评论时由Project合约调用
-function onCommentLiked(address liker, address author, uint256 commentId) external; // 各铸造1 CRT
+// Called by the Project contract when a user likes a comment
+function onCommentLiked(address liker, address author, uint256 commentId) external; // cast 1 CRT each
 ```
 
-#### 3.4 奖励分配
-```solidity
-// 分配奖励 - 仅平台可调用
+#### 3.4 Reward Distribution
+```Solidity
+// Allocate rewards - only available on the platform
 function distributeRewards() external;
 
-// 用户领取奖励
+// User receives reward
 function claimRewards() external;
 
-// 延长Campaign时间 - 仅平台可调用
+// Extend the Campaign time - only available on the platform
 function extendEndTime(uint256 additionalDays) external;
 ```
 
-**分配规则：**
-- **60%**：按CRT占比分配给所有参与者
-- **25%**：按点赞获得的CRT占比分配给点赞者
-- **15%**：精英奖励（开发中）
+**Allocation rules:**
+- **60%**: distributed to all participants according to their CRT ratio
+- **25%**: The proportion of CRT obtained by likes is distributed to the liker
+- **15%**: Elite Reward (under development)
 
-**自动延期机制：**
-- 如果Campaign结束时没有参与者，自动延长7天
-- 避免奖励资源浪费
+**Automatic extension mechanism:**
+- If there are no participants at the end of the campaign, it will be automatically extended for 7 days
+- Avoid wasting reward resources
 
-#### 3.5 数据查询
-```solidity
-// 获取用户的CRT详情
+#### 3.5 Data Query
+```Solidity
+// Get the user's CRT details
 function getUserCRTBreakdown(address user) external view returns (
-    uint256 commentTokens,   // 评论获得的CRT
-    uint256 likeTokens,      // 点赞获得的CRT
-    uint256 totalTokens,     // 总CRT数量
-    uint256 pendingReward    // 待领取奖励
+uint256 commentTokens, // CRT obtained from comments
+uint256 likeTokens, // CRT obtained by like
+uint256 totalTokens, //Total number of CRTs
+uint256 pendingReward // Reward to be received
 );
 
-// 获取Campaign统计信息
+// Get Campaign statistics
 function getCampaignStats() external view returns (
-    uint256 totalParticipants,
-    uint256 totalComments,
-    uint256 totalLikes,
-    uint256 totalCRT,
-    uint256 remainingTime
+uint256 totalParticipants,
+uint256 totalComments,
+uint256 totalLikes,
+uint256 totalCRT,
+uint256 remainingTime
 );
 ```
 
 ---
 
-## 4. ICampaignFactory - Campaign工厂接口
+## 4. ICampaignFactory - Campaign factory interface
 
-### 职责范围
-使用最小代理模式创建Campaign合约，管理代币转移和Campaign注册。
+### Scope of Responsibilities
+Create a Campaign contract using the minimal proxy pattern to manage token transfers and Campaign registrations.
 
-### 核心功能
+### Core Features
 
-#### 4.1 Campaign创建
-```solidity
+#### 4.1 Campaign Creation
+```Solidity
 function createCampaign(
-    address project,         // 目标项目地址
-    string calldata sponsorName,  // 赞助者名称
-    uint256 duration,        // 持续时间（天）
-    address rewardToken,     // 奖励代币地址
-    uint256 rewardAmount     // 奖励代币数量
+address project, // target project address
+string calldata sponsorName, // sponsor name
+uint256 duration, // duration (days)
+address rewardToken, // Reward token address
+uint256 rewardAmount // Number of reward tokens
 ) external returns (address campaignAddress);
 ```
 
-**业务流程：**
-1. 验证参数有效性
-2. 从调用者转移奖励代币到Factory
-3. 使用最小代理模式创建Campaign合约
-4. 将代币转移到Campaign合约
-5. 通过平台将Campaign添加到Project
-6. 触发CampaignCreated事件
+**Business Process:**
+1. Verify parameter validity
+2. Transfer reward tokens from the caller to the Factory
+3. Create a Campaign contract using the minimal proxy model
+4. Transfer tokens to the Campaign contract
+5. Add the Campaign to the Project via the platform
+6. Trigger the CampaignCreated event
 
-#### 4.2 Campaign验证
-```solidity
+#### 4.2 Campaign Verification
+```Solidity
 function isValidCampaign(address campaignAddress) external view returns (bool);
 ```
 
-**验证内容：**
-- 检查合约是否存在
-- 验证字节码是否匹配最小代理模式
-- 验证实现合约地址是否正确
+**Verification content:**
+- Check if the contract exists
+- Verify that the bytecode matches the minimal proxy mode
+- Verify that the contract address is correct
 
-### Gas成本对比
+Gas cost comparison
 
-| 部署方式 | Gas消耗 | 成本节省 |
+| Deployment method | Gas consumption | Cost savings |
 |---------|---------|----------|
-| 标准Campaign部署 | ~1,500,000 | - |
-| Clone模式部署 | ~40,000 | 97% |
+| Standard Campaign Deployment | ~1,500,000 | - |
+| Clone mode deployment | ~40,000 | 97% |
 
 ---
 
-## 5. IProjectFactory - 项目工厂接口
+## 5. IProjectFactory - Project factory interface
 
-### 职责范围
-使用最小代理模式（EIP-1167）创建项目合约，节省部署成本。
+### Scope of Responsibilities
+Use the minimal proxy mode (EIP-1167) to create project contracts and save deployment costs.
 
-### 核心功能
+### Core Features
 
-#### 5.1 项目创建
-```solidity
+#### 5.1 Project Creation
+```Solidity
 function createProject(
-    string calldata name,
-    string calldata symbol,
-    string calldata description,
-    string calldata category,
-    uint16 drawPeriod,
-    address creator,
-    address priceOracle,
-    address platform
+string calldata name,
+string calldata symbol,
+string calldata description,
+string calldata category,
+uint16 drawPeriod,
+address creator,
+address priceOracle,
+Address platform
 ) external returns (address projectAddress);
 ```
 
-**技术实现：**
-- 使用标准Clone模式部署
-- 最小代理模式节省95% Gas成本
-- 自动调用initialize函数初始化
+**Technical implementation:**
+- Deploy using standard Clone mode
+- Minimum proxy mode saves 95% of gas costs
+- Automatically call the initialize function to initialize
 
-#### 5.2 合约验证
-```solidity
+#### 5.2 Contract Verification
+```Solidity
 function isValidProject(address projectAddress) external view returns (bool isValid);
 ```
 
 ---
 
-## 6. IPriceOracle - 价格预言机接口
+## 6. IPriceOracle - Price Oracle Interface
 
-### 职责范围
-提供代币USD价值查询服务，支持多代币批量查询。
+### Scope of Responsibilities
+Provides token USD value query service and supports batch query of multiple tokens.
 
-### 核心功能
+### Core Features
 
-#### 6.1 价值计算
-```solidity
+#### 6.1 Value Calculation
+```Solidity
 function getUSDValue(address token, uint256 amount) external view returns (uint256 usdValue);
 ```
 
-**计算公式：**
+**Calculation formula:**
 ```
 USD Value = (token_amount * token_price) / (10^token_decimals)
 ```
 
-#### 6.2 批量查询
-```solidity
+#### 6.2 Batch Query
+```Solidity
 function getBatchUSDValue(
-    address[] calldata tokens,
-    uint256[] calldata amounts
+address[] calldata tokens,
+uint256[] calldata amounts
 ) external view returns (uint256 totalUSDValue);
 ```
 
-### 价格精度标准
+### Price accuracy standard
 
-所有价格采用8位小数精度（类似Chainlink标准）：
+All prices are in 8 decimal places (similar to Chainlink standard):
 - $1.00 = 100,000,000 (1 * 10^8)
 - $2000.50 = 200,050,000,000 (2000.5 * 10^8)
 
 ---
 
-## 7. 完整的用户交互流程
+## 7. Complete user interaction process
 
-### 7.1 Campaign创建流程
-1. **选择项目** → 浏览现有项目列表
-2. **设置Campaign** → 选择奖励代币、金额、持续时间
-3. **批准代币** → 授权CampaignFactory转移代币
-4. **创建Campaign** → 调用createCampaign函数
-5. **Campaign激活** → 自动开始接收用户活动并铸造CRT
+### 7.1 Campaign creation process
+1. **Select Project** → Browse the list of existing projects
+2. **Set up your campaign** → Select reward tokens, amount, duration
+3. **Approve Token** → Authorize CampaignFactory to transfer tokens
+4. **Create Campaign** → Call createCampaign function
+5. **Campaign Activation** → Automatically start receiving user activities and minting CRT
 
-### 7.2 用户参与流程
-1. **连接钱包** → 检测资产情况
-2. **选择项目** → 浏览项目列表，查看活跃Campaign
-3. **发表评论** → 在所有活跃Campaign中获得5个CRT奖励
-4. **点赞互动** → 点赞他人评论，双方都获得奖励
-5. **查看收益** → 实时查看在各Campaign中的CRT余额
+### 7.2 User Participation Process
+1. **Connect to wallet** → Check asset status
+2. **Select a project** → Browse the project list and view active campaigns
+3. **Post a comment** → Get 5 CRT rewards in all active campaigns
+4. **Like Interaction** → Like other people’s comments and both parties will get rewards
+5. **View Revenue** → View the CRT balance in each Campaign in real time
 
-### 7.3 奖励领取流程
-1. **Campaign结束** → 到达设定的结束时间
-2. **平台分配** → 平台按规则计算并分配奖池奖励
-3. **查看待领取** → 用户查看各Campaign中的待领取奖励
-4. **领取奖励** → 调用claimRewards领取具体代币奖励
-
----
-
-## 8. 安全机制
-
-### 8.1 智能合约安全
-- **重入攻击防护**：使用ReentrancyGuard
-- **权限控制**：关键函数仅平台可调用
-- **数值溢出检查**：Solidity 0.8+内置检查
-- **安全代币转移**：使用SafeERC20
-
-### 8.2 Campaign安全
-- **时间控制**：严格的活动时间窗口验证
-- **代币锁定**：CRT代币不可转移（Soulbound）
-- **权限分离**：Campaign管理权限归平台所有
-- **防重复奖励**：确保同一活动不会重复获得奖励
-
-### 8.3 经济模型安全
-- **最低赞助限制**：通过预言机验证USD价值
-- **奖励分配透明**：固定的60%-25%-15%分配比例
-- **自动延期机制**：避免无效Campaign浪费资源
+### 7.3 Reward Collection Process
+1. **Campaign ends** → reaches the set end time
+2. **Platform Allocation** → The platform calculates and distributes the prize pool rewards according to the rules
+3. **View pending rewards** → Users can view pending rewards in each Campaign
+4. **Get rewards** → Call claimRewards to get specific token rewards
 
 ---
 
-## 9. Gas优化策略
+## 8. Security Mechanism
 
-### 9.1 合约层面优化
-- **最小代理模式**：节省95%+部署成本
-- **批量操作**：支持批量查询和批量领取
-- **事件存储**：评论内容通过事件存储
-- **紧凑数据结构**：合理安排struct字段顺序
+### 8.1 Smart Contract Security
+- **Reentrancy attack protection**: Use ReentrancyGuard
+- **Permission control**: Key functions can only be called by the platform
+- **Numerical overflow check**: Built-in check in Solidity 0.8+
+- **Secure Token Transfer**: Using SafeERC20
 
-### 9.2 前端优化建议
-- **批量RPC调用**：使用multicall合并查询
-- **Campaign数据缓存**：缓存Campaign基础信息
-- **分页加载**：避免一次加载大量数据
-- **智能预加载**：根据用户行为优化数据获取
+### 8.2 Campaign Security
+- **Time control**: Strict activity time window verification
+- **Token Lock**: CRT tokens are not transferable (Soulbound)
+- **Separation of permissions**: Campaign management permissions belong to the platform
+- **Anti-duplicate rewards**: Ensure that rewards are not received repeatedly for the same activity
 
----
-
-## 10. 扩展性设计
-
-### 10.1 模块化架构
-- **职责分离**：Project专注内容，Campaign专注奖励
-- **接口抽象**：核心功能抽象为接口
-- **代理模式**：支持逻辑升级
-- **事件驱动**：完整的事件系统
-
-### 10.2 未来扩展方向
-- **精英奖励算法**：基于机器学习的内容质量评估
-- **跨链Campaign**：多链部署和资产跨链
-- **NFT奖励**：引入NFT奖励机制
-- **DAO治理**：社区治理Campaign参数
+### 8.3 Economic Model Security
+- **Minimum Sponsorship Limit**: Verify USD value through Oracle
+- **Transparent reward distribution**: Fixed 60%-25%-15% distribution ratio
+- **Automatic extension mechanism**: Avoid wasting resources on invalid campaigns
 
 ---
 
-## 11. 开发指南
+## 9. Gas Optimization Strategy
 
-### 11.1 本地开发环境
+### 9.1 Contract-level optimization
+- **Minimum Proxy Mode**: Save 95%+ of deployment costs
+- **Batch operation**: support batch query and batch collection
+- **Event storage**: Comment content is stored through events
+- **Compact data structure**: Arrange the order of struct fields reasonably
+
+### 9.2 Front-end optimization suggestions
+- **Batch RPC calls**: Use multicall to merge queries
+- **Campaign data cache**: cache basic Campaign information
+- **Paged loading**: Avoid loading large amounts of data at once
+- **Smart preloading**: optimize data acquisition based on user behavior
+
+---
+
+## 10. Scalability design
+
+### 10.1 Modular Architecture
+- **Separation of responsibilities**: Project focuses on content, Campaign focuses on rewards
+- **Interface abstraction**: core functions are abstracted into interfaces
+- **Proxy mode**: supports logical upgrades
+- **Event-driven**: Complete event system
+
+### 10.2 Future expansion direction
+- **Elite Reward Algorithm**: Content quality assessment based on machine learning
+- **Cross-chain Campaign**: Multi-chain deployment and cross-chain assets
+- **NFT Rewards**: Introducing NFT Rewards Mechanism
+- **DAO Governance**: Community Governance Campaign Parameters
+
+---
+
+## 11. Development Guide
+
+### 11.1 Local Development Environment
 ```bash
-# 安装依赖
+# Install dependencies
 forge install
 
-# 编译合约
+# Compile the contract
 forge build
 
-# 运行测试
+# Run the tests
 forge test --match-contract CampaignSystemTest
 
-# 部署到本地网络
+# Deploy to local network
 forge script script/Deploy.s.sol --fork-url http://localhost:8545 --broadcast
 ```
 
-### 11.2 测试覆盖率
+### 11.2 Test Coverage
 ```bash
-# 生成测试覆盖率报告
+# Generate test coverage report
 forge coverage
 
-# 查看详细报告
+# View detailed report
 forge coverage --report lcov
 ```
 
 ---
 
-## 12. 总结
+## 12. Conclusion
 
-CoinReal平台通过创新的Campaign系统架构，实现了：
+Through the innovative Campaign system architecture, the CoinReal platform achieves:
 
-✅ **灵活的奖励机制** - 任何人可创建Campaign，自定义奖励  
-✅ **多Campaign并行** - 用户同时在多个Campaign中获得奖励  
-✅ **高效的Gas优化** - 最小代理模式节省97%成本  
-✅ **强大的安全机制** - 多层次安全防护和权限控制  
-✅ **优秀的扩展性** - 模块化设计便于功能扩展  
-✅ **流畅的用户体验** - 批量操作和智能查询优化  
+✅ **Flexible reward mechanism** - Anyone can create a campaign and customize rewards
+✅ **Multiple Campaigns in Parallel** - Users can receive rewards in multiple Campaigns at the same time
+✅ **Efficient Gas Optimization** - Minimum Proxy Mode saves 97% of costs
+✅ **Powerful security mechanism** - Multi-level security protection and permission control
+✅ **Excellent scalability** - Modular design facilitates functional expansion
+✅ **Smooth user experience** - batch operations and smart query optimization
 
-Campaign系统为Web3内容社区提供了一个更加灵活、可持续的技术基础，真正实现了"评论即收益、点赞即赚币"的愿景，并为未来的功能扩展预留了充足的空间。 
+The Campaign system provides a more flexible and sustainable technical foundation for the Web3 content community, truly realizing the vision of "comments equal income, likes equal coins", and leaving ample room for future functional expansion.

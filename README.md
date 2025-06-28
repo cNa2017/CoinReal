@@ -1,458 +1,454 @@
-# CoinReal - 币圈大众点评
+# CoinReal 
 
-> 首个通过创新Campaign奖励机制实现"评论即收益、点赞即赚币"的去中心化内容社区
 
-## 🎯 项目概述
+> The first decentralized content community that realizes "comments equal income, likes equal coins" through an innovative Campaign reward mechanism
 
-CoinReal是一个创新的Web3内容社区平台，通过智能合约和Campaign奖励系统，让用户在参与加密项目讨论的同时获得真实代币奖励。项目采用Project-Campaign分离架构，实现了灵活的奖励机制和可持续的社区激励模式。
+## 🎯 Project Overview
 
-### 核心特性
+CoinReal is an innovative Web3 content community platform that allows users to participate in crypto project discussions and receive real token rewards through smart contracts and campaign reward systems. The project adopts a project-campaign separation architecture to achieve a flexible reward mechanism and a sustainable community incentive model.
 
-- **🎁 Campaign奖励机制**：任何人可创建Campaign，自定义奖励代币和金额
-- **💰 即时奖励**：评论获得5个CRT，点赞获得1个CRT（在所有活跃Campaign中）
-- **🔒 Soulbound代币**：CRT代币不可转移，代表真实贡献度
-- **⚖️ 公平分配**：60%评论奖励 + 25%点赞奖励 + 15%精英奖励
-- **🔄 多Campaign并行**：用户可同时在多个Campaign中获得奖励
-- **⏰ 智能延期**：无参与者时自动延长7天，避免资源浪费
+### Core Features
+- **🎁 Campaign Reward Mechanism**: Anyone can create a campaign and customize reward tokens and amounts
+- **💰 Instant Rewards**: 5 CRT for comments and 1 CRT for likes (in all active campaigns)
+- **🔒 Soulbound Token**: CRT tokens are non-transferable and represent real contribution
+- **⚖️ Fair distribution**: 60% comment reward + 25% like reward + 15% elite reward
+- **🔄Multiple Campaigns in Parallel**: Users can receive rewards in multiple campaigns at the same time
 
-## 🏗️ 项目架构
+- **⏰ Smart extension**: Automatically extend the period by 7 days when there are no participants to avoid wasting resources
 
-### 技术栈
+## 🏗️ Project Architecture
 
-#### 后端（智能合约）
+### Technology Stack
+#### Backend (smart contracts)
 ```
 Solidity ^0.8.19
-├── 合约框架: OpenZeppelin
-├── 开发工具: Foundry
-├── 测试网络: Anvil (本地) / Sepolia (测试)
-└── 部署工具: Forge Script
-```
+├── Contract framework: OpenZeppelin
+├── Development Tools: Foundry
+├── Test Network: Anvil (local) / Sepolia (test)
+└── Deployment tool: Forge Script
 
-#### 前端（Web应用）
+```
+#### Front-end (Web Application)
 ```
 Next.js 15.2.4 + React 19.0.0
-├── Web3集成: Wagmi 2.15.6 + Viem 2.x
-├── 状态管理: TanStack Query 5.81.2
-├── UI框架: Tailwind CSS 4.0 + shadcn/ui
-├── 类型支持: TypeScript 5
-└── 包管理: pnpm
+├── Web3 integration: Wagmi 2.15.6 + Viem 2.x
+├── State Management: TanStack Query 5.81.2
+├── UI framework: Tailwind CSS 4.0 + shadcn/ui
+├── Type support: TypeScript 5
+└── Package management: pnpm
+
 ```
 
-### Campaign系统架构
-
+### Campaign system architecture
 ```mermaid
 graph TB
-    A[CoinRealPlatform] --> B[ProjectFactory]
-    A --> C[CampaignFactory]
-    B --> D[Project 1]
-    B --> E[Project 2]
-    C --> F[Campaign 1]
-    C --> G[Campaign 2]
-    C --> H[Campaign 3]
-    D --> F
-    D --> G
-    E --> H
-    I[PriceOracle] --> C
-    J[User] --> D
-    J --> E
-    J --> F
-    J --> G
-    J --> H
+A[CoinRealPlatform] --> B[ProjectFactory]
+A --> C[CampaignFactory]
+B --> D[Project 1]
+B --> E[Project 2]
+C --> F[Campaign 1]
+C --> G[Campaign 2]
+C --> H[Campaign 3]
+D --> F
+D --> G
+E --> H
+I[PriceOracle] --> C
+J[User] --> D
+J --> E
+J --> F
+J --> G
+J --> H
+
 ```
 
-## 🎮 Campaign工作流程
+## 🎮 Campaign workflow
+### 1. Project creation
+```
+User → CoinRealPlatform.createProject() → ProjectFactory → Project contract deployment
 
-### 1. 项目创建
 ```
-用户 → CoinRealPlatform.createProject() → ProjectFactory → Project合约部署
+### 2. Campaign creation
+```
+Sponsor → Token authorization → CampaignFactory.createCampaign() → Campaign contract deployment → Add to Project
+
+```
+### 3. User Engagement
+```
+User comments/likes → Project contract → Notify all active campaigns → Mint CRT rewards
+
+```
+### 4. Reward Distribution
+```
+Campaign ends → Platform distributes rewards → Users receive real tokens
+
 ```
 
-### 2. Campaign创建
-```
-赞助者 → 代币授权 → CampaignFactory.createCampaign() → Campaign合约部署 → 添加到Project
-```
-
-### 3. 用户参与
-```
-用户评论/点赞 → Project合约 → 通知所有活跃Campaign → 铸造CRT奖励
-```
-
-### 4. 奖励分配
-```
-Campaign结束 → 平台分配奖励 → 用户领取真实代币
-```
-
-## 📁 项目结构
-
+## 📁 Project Structure
 ```
 CoinReal/
-├── background/                 # 智能合约后端
-│   ├── src/                   # 合约源码
-│   │   ├── CoinRealPlatform.sol    # 平台主合约
-│   │   ├── Project.sol             # 项目合约
-│   │   ├── Campaign.sol            # Campaign合约 (ERC20)
-│   │   ├── ProjectFactory.sol      # 项目工厂
-│   │   ├── CampaignFactory.sol     # Campaign工厂
-│   │   └── MockPriceOracle.sol     # 价格预言机
-│   ├── script/                # 部署脚本
-│   ├── test/                  # 合约测试
-│   ├── abi-json/              # ABI文件
-│   └── deployments.json       # 部署信息
-├── frontend/                  # Web前端应用
-│   ├── app/                   # Next.js页面
-│   ├── components/            # React组件
-│   ├── hooks/                 # 自定义Hooks
-│   ├── lib/                   # 工具库
-│   ├── types/                 # 类型定义
-│   └── public/                # 静态资源
-└── README.md                  # 项目文档
+├── background/ # Smart contract backend
+│ ├── src/ # Contract source code
+│ │ ├── CoinRealPlatform.sol # Platform main contract
+│ │ ├── Project.sol # Project contract
+│ │ ├── Campaign.sol # Campaign contract (ERC20)
+│ │ ├── ProjectFactory.sol # Project Factory
+│ │ ├── CampaignFactory.sol
+│ │ └── MockPriceOracle.sol # Price Oracle
+│ ├── script/ # Deployment script
+│ ├── test/ # Contract test
+│ ├── abi-json/ # ABI file
+│ └── deployments.json # Deployment information
+├── frontend/ # Web front-end application
+│ ├── app/ # Next.js page
+│ ├── components/ # React components
+│ ├── hooks/ # Custom Hooks
+│ ├── lib/ # Tool library
+│ ├── types/ # Type definition
+│ └── public/ # Static resources
+└── README.md # Project documentation
+
 ```
 
-## 🚀 快速开始
-
-### 环境要求
+## 🚀 Quick Start
+### Environmental Requirements
 - Node.js 18+
 - pnpm 8+
 - Foundry (for contracts)
+
 - Git
-
-### 1. 克隆项目
+### 1. Clone the project
 ```bash
-git clone <repository-url>
+git clone<repository-url>
 cd CoinReal
+
 ```
-
-### 2. 安装依赖
+### 2. Install dependencies
 ```bash
-# 安装前端依赖
+# Install front-end dependencies
 cd frontend
-pnpm install
 
-# 安装合约依赖
+pnpm install
+# Install contract dependencies
 cd ../background
 forge install
-```
 
-### 3. 启动本地区块链
+```
+### 3. Start the local blockchain
 ```bash
 cd background
 anvil
+
 ```
-
-### 4. 部署合约
+### 4. Deploy the contract
 ```bash
-# 在新终端中部署合约
+# Deploy the contract in a new terminal
 forge script script/Deploy.s.sol \
-  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
-  --rpc-url http://localhost:8545 \
-  --broadcast
+--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+--rpc-url http://localhost:8545 \
 
-# 复制ABI和部署信息到前端
+--broadcast
+# Copy ABI and deployment information to the front end
 cp abi-json/*.json ../frontend/public/abi-json/
 cp deployments.json ../frontend/public/deployments.json
-```
 
-### 5. 启动前端
+```
+### 5. Start the front end
 ```bash
 cd ../frontend
-pnpm dev
+pnpm-dev
+
 ```
 
-访问 http://localhost:3000 开始使用！
+Visit http://localhost:3000 to get started!
 
-## 💰 奖励机制详解
+## 💰 Detailed explanation of reward mechanism
+### CRT Token System
+- **Naming convention**: `Project name-Campaign number` (eg: Bitcoin-Campaign1)
+- **Token symbol**: CRT (fixed)
+- **Precision**: 18 decimal places, displayed as integers at the front end
 
-### CRT代币系统
-- **命名规则**：`项目名-Campaign编号` (如: Bitcoin-Campaign1)
-- **代币符号**：CRT (固定)
-- **精度**：18位小数，前端显示为整数
-- **特性**：Soulbound（不可转移），代表真实贡献度
-
-### 奖励规则
-| 行为 | CRT奖励 | 说明 |
+- **Feature**: Soulbound (non-transferable), represents real contribution
+### Reward Rules
+| Behavior | CRT Rewards | Description |
 |------|---------|------|
-| 发表评论 | 5 CRT | 在所有活跃Campaign中获得 |
-| 点赞评论 | 1 CRT | 点赞者获得 |
-| 被点赞 | 1 CRT | 被点赞者获得 |
+| Post a comment | 5 CRT | Earn in all active campaigns |
+| Like Comment | 1 CRT | Likers get |
 
-### 分配机制
-Campaign结束时按以下比例分配奖池：
-- **60%** - 按CRT占比分配给所有参与者
-- **25%** - 按点赞CRT占比分配给点赞活跃用户  
-- **15%** - 平分给获得CRT最多的评论者（精英奖励）
+| Liked | 1 CRT | Liked person gets |
+### Allocation mechanism
+At the end of the campaign, the prize pool will be distributed in the following proportions:
+- **60%** - distributed to all participants based on their CRT percentage
+- **25%** - distributed to active users who like according to the percentage of CRT of likes
 
-### 自动延期
-如果Campaign结束时没有参与者，自动延长7天，避免奖励资源浪费。
+- **15%** - equally divided among the reviewers who received the most CRTs (elite reward)
+### Automatic extension
 
-## 🔧 智能合约接口
+If there are no participants at the end of the campaign, it will be automatically extended for 7 days to avoid wasting reward resources.
 
-### 核心合约
+## 🔧 Smart Contract Interface
 
-#### CoinRealPlatform（平台主合约）
-```solidity
-// 创建项目
+### Core Contract
+#### CoinRealPlatform (Platform Main Contract)
+```Solidity
+// Create a project
 function createProject(
-    string calldata name,
-    string calldata symbol,
-    string calldata description,
-    string calldata category,
-    uint16 drawPeriod
+string calldata name,
+string calldata symbol,
+string calldata description,
+string calldata category,
+uint16 drawPeriod
+
 ) external returns (address projectAddress);
+// Get the project list
+function getProjects(uint256 offset, uint256 limit)
 
-// 获取项目列表
-function getProjects(uint256 offset, uint256 limit) 
-    external view returns (ProjectInfo[] memory, uint256 total);
-
-// 获取平台统计
+external view returns (ProjectInfo[] memory, uint256 total);
+// Get platform statistics
 function getPlatformStats() external view returns (
-    uint256 totalProjects,
-    uint256 totalUsers,
-    uint256 totalComments,
-    uint256 totalCampaigns
+uint256 totalProjects,
+uint256 totalUsers,
+uint256 totalComments,
+uint256 totalCampaigns
 );
+
 ```
+#### Project (Project Contract)
+```Solidity
+// Post a comment
+function postComment(string calldata content)
 
-#### Project（项目合约）
-```solidity
-// 发表评论
-function postComment(string calldata content) 
-    external returns (uint256 commentId);
+external returns (uint256 commentId);
+// Like the comment
 
-// 点赞评论
 function likeComment(uint256 commentId) external;
-
-// 获取用户CRT详情
+// Get user CRT details
 function getUserCampaignCRTDetails(address user) external view returns (
-    address[] memory campaignAddresses,
-    uint256[] memory commentCRTs,
-    uint256[] memory likeCRTs,
-    uint256[] memory totalCRTs,
-    uint256[] memory pendingRewards
+address[] memory campaignAddresses,
+uint256[] memory commentCRTs,
+uint256[] memory likeCRTs,
+uint256[] memory totalCRTs,
+uint256[] memory pendingRewards
 );
-```
 
-#### Campaign（Campaign合约，继承ERC20）
-```solidity
-// ERC20基础功能（Soulbound）
+```
+#### Campaign (Campaign contract, inherited from ERC20)
+```Solidity
+// ERC20 basic functions (Soulbound)
 function balanceOf(address account) external view returns (uint256);
+
 function totalSupply() external view returns (uint256);
-
-// 获取用户CRT详情
+// Get user CRT details
 function getUserCRTBreakdown(address user) external view returns (
-    uint256 commentTokens,
-    uint256 likeTokens,
-    uint256 totalTokens,
-    uint256 pendingReward
+uint256 commentTokens,
+uint256 likeTokens,
+uint256 totalTokens,
+uint256 pendingReward
+
 );
-
-// 领取奖励
+// Receive rewards
 function claimRewards() external;
-```
 
-#### CampaignFactory（Campaign工厂）
-```solidity
-// 创建Campaign
+```
+#### CampaignFactory
+```Solidity
+// Create a Campaign
 function createCampaign(
-    address project,
-    string calldata sponsorName,
-    uint256 duration,
-    address rewardToken,
-    uint256 rewardAmount
+address project,
+string calldata sponsorName,
+uint256 duration,
+address rewardToken,
+uint256 rewardAmount
 ) external returns (address campaignAddress);
+
 ```
 
-## 🌐 前端API接口
+## 🌐 Front-end API interface
+### Project related
+```TypeScript
+// Get the project list
 
-### 项目相关
-```typescript
-// 获取项目列表
 const projects = await api.getProjects(offset?, limit?)
+// Get project details
 
-// 获取项目详情
 const project = await api.getProject(projectAddress)
-
-// 创建项目
+// Create a project
 const projectAddress = await api.createProject(projectData)
-```
 
-### Campaign相关
-```typescript
-// 获取项目Campaign列表
+```
+### Campaign related
+```TypeScript
+// Get the project Campaign list
+
 const campaigns = await api.getProjectCampaigns(projectAddress)
-
-// 创建Campaign
+// Create a Campaign
 const campaignAddress = await api.createCampaign({
-  projectAddress,
-  sponsorName,
-  duration,
-  rewardToken,
-  rewardAmount
+projectAddress,
+sponsorName,
+duration,
+rewardToken,
+rewardAmount
+
 })
+// Get user CRT details
 
-// 获取用户CRT详情
 const userCRT = await api.getUserCampaignCRTDetails(projectAddress, userAddress)
-
-// 领取奖励
+// Receive rewards
 await api.claimCampaignReward(campaignAddress)
-```
 
-### 评论相关
-```typescript
-// 获取评论列表
+```
+### Comments
+```TypeScript
+// Get the comment list
+
 const comments = await api.getProjectComments(projectAddress)
+// Post a comment (get 5 CRTs)
 
-// 发表评论（获得5个CRT）
 const comment = await api.postComment(projectAddress, content)
-
-// 点赞评论（双方各获得1个CRT）
+// Like the comment (both parties get 1 CRT)
 await api.likeComment(projectAddress, commentId)
+
 ```
 
-## 📊 数据转换
+## 📊 Data conversion
+### CRT precision conversion
+```TypeScript
+// 18 decimal places → integer display
 
-### CRT精度转换
-```typescript
-// 18位小数 → 整数显示
 const displayCRT = parseInt(formatUnits(crtAmount, 18))
-
-// 整数 → 18位小数
+// integer → 18 decimal places
 const weiCRT = parseUnits(amount.toString(), 18)
-```
 
-### 时间处理
-```typescript
-// 计算剩余时间
+```
+### Time processing
+```TypeScript
+// Calculate the remaining time
+
 const remainingTime = Math.max(0, endTime - Math.floor(Date.now() / 1000))
-
-// 友好显示
+// Friendly display
 const formatTime = (seconds) => {
-  const days = Math.floor(seconds / 86400)
-  const hours = Math.floor((seconds % 86400) / 3600)
-  return days > 0 ? `${days}天${hours}小时` : `${hours}小时`
+const days = Math.floor(seconds / 86400)
+const hours = Math.floor((seconds % 86400) / 3600)
+return days > 0 ? `${days} days ${hours} hours` : `${hours} hours`
 }
+
 ```
 
-## 🛡️ 安全特性
+## 🛡️ Security Features
+### Contract Security
+- **Permission Control**: Role-based access control
+- **Reentrancy protection**: Use OpenZeppelin's ReentrancyGuard
+- **Integer overflow**: Solidity 0.8+ built-in protection
 
-### 合约安全
-- **权限控制**：基于角色的访问控制
-- **重入保护**：使用OpenZeppelin的ReentrancyGuard
-- **整数溢出**：Solidity 0.8+内置保护
-- **最小代理模式**：节省95%部署成本，降低攻击面
+- **Minimum proxy mode**: save 95% of deployment costs and reduce attack surface
+### Front-end security
+- **Input Validation**: All user input is strictly validated
+- **XSS Protection**: Safe content rendering
 
-### 前端安全
-- **输入验证**：所有用户输入严格验证
-- **XSS防护**：内容渲染安全处理
-- **网络验证**：确保连接到正确的区块链网络
+- **Network Verification**: Ensures connection to the correct blockchain network
 
-## 🔍 技术亮点
+## 🔍 Technical Highlights
+### 1. Project-Campaign separation architecture
+- **Separation of responsibilities**: Projects focus on content management, Campaigns focus on reward distribution
+- **Flexible expansion**: Anyone can create a campaign for a project
 
-### 1. Project-Campaign分离架构
-- **职责分离**：项目专注内容管理，Campaign专注奖励分配
-- **灵活扩展**：任何人可为项目创建Campaign
-- **独立治理**：每个Campaign有独立的奖励规则
+- **Independent governance**: Each Campaign has independent reward rules
+### 2. Soulbound CRT Token
+- **Real Contribution**: Tokens are non-transferable and represent real participation
+- **Anti-brushing mechanism**: Prevent robots from brushing rewards
 
-### 2. Soulbound CRT代币
-- **真实贡献**：代币不可转移，代表真实参与度
-- **防刷机制**：避免机器人刷取奖励
-- **公平竞争**：基于贡献度的公平分配
+- **Fair competition**: fair distribution based on contribution
+### 3. Minimal Proxy Mode
+- **Cost optimization**: Save 95%+ of deployment gas fees
+- **Standardization**: All campaigns use the same implementation logic
 
-### 3. 最小代理模式
-- **成本优化**：节省95%+的部署Gas费用
-- **标准化**：所有Campaign使用相同的实现逻辑
-- **安全性**：降低合约复杂度和攻击面
+- **Security**: Reduce contract complexity and attack surface
+### 4. Automatic extension mechanism
+- **Resource optimization**: Avoid wasting rewards on invalid campaigns
+- **User-friendly**: Give more time for participation
 
-### 4. 自动延期机制
-- **资源优化**：避免无效Campaign浪费奖励
-- **用户友好**：给予更多参与时间
-- **平台管理**：自动化的Campaign生命周期管理
+- **Platform Management**: Automated Campaign Lifecycle Management
 
-## 📈 使用场景
+## 📈 Usage scenarios
+### 1. Project promotion
+- Create a campaign to promote a new project
+- Attract user attention through token rewards
 
-### 1. 项目方推广
-- 创建Campaign推广新项目
-- 通过代币奖励吸引用户关注
-- 获得真实用户反馈和讨论
+- Get real user feedback and discussions
+### 2. Community Building
+- Reward active community members
+- Promote the creation of high-quality content
 
-### 2. 社区建设
-- 奖励活跃的社区成员
-- 促进高质量内容创作
-- 建立可持续的激励机制
+- Establish a sustainable incentive mechanism
+### 3. Investor Research
+- Get rewards for participating in project discussions
+- Demonstrate professionalism through CRT balance
 
-### 3. 投资者研究
-- 参与项目讨论获得奖励
-- 通过CRT余额展示专业度
-- 获得第一手项目信息
+- Get first-hand project information
+### 4. KOL influence
+- Earn elite rewards through high-quality reviews
+- Build professional reputation and influence
 
-### 4. KOL影响力
-- 通过高质量评论获得精英奖励
-- 建立专业声誉和影响力
-- 获得额外的代币收益
+- Get extra token benefits
 
-## 🚀 未来规划
+## 🚀 Future plans
+### Short-term goals (3 months)
+- [ ] Deploy to Sepolia test network
+- [ ] Improve the elite review algorithm
+- [ ] Add more tokens support
 
-### 短期目标（3个月）
-- [ ] 部署到Sepolia测试网
-- [ ] 完善精英评论算法
-- [ ] 增加更多代币支持
-- [ ] 移动端适配
+- [ ] Mobile terminal adaptation
+### Medium-term goals (6 months)
+- [ ] Mainnet deployment
+- [ ] Layer 2 integration (Polygon/Arbitrum)
+- [ ] NFT Reward System
 
-### 中期目标（6个月）
-- [ ] 主网部署
-- [ ] Layer 2集成（Polygon/Arbitrum）
-- [ ] NFT奖励系统
-- [ ] 社交功能增强
+- [ ] Enhanced social functions
+### Long-term goals (1 year)
+- [ ] Multi-chain expansion
+- [ ] DAO governance system
+- [ ] AI content recommendation
 
-### 长期目标（1年）
-- [ ] 多链扩展
-- [ ] DAO治理系统
-- [ ] AI内容推荐
-- [ ] 企业级功能
+- [ ] Enterprise-level features
 
-## 🤝 贡献指南
+## 🤝 Contribution Guidelines
+Development Process
+1. Fork the project to your personal repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit the changes: `git commit -m 'Add amazing feature'`
+4. Push the branch: `git push origin feature/amazing-feature`
 
-### 开发流程
-1. Fork项目到个人仓库
-2. 创建功能分支：`git checkout -b feature/amazing-feature`
-3. 提交更改：`git commit -m 'Add amazing feature'`
-4. 推送分支：`git push origin feature/amazing-feature`
-5. 创建Pull Request
+5. Create a Pull Request
+### Coding Standards
+- **Solidity**: Follows the OpenZeppelin style guide
+- **TypeScript**: Use strict mode, complete type definition
+- **Test**: Maintain 90%+ code coverage
 
-### 代码规范
-- **Solidity**：遵循OpenZeppelin风格指南
-- **TypeScript**：使用严格模式，完整类型定义
-- **React**：函数式组件，Hooks优先
-- **测试**：保持90%+代码覆盖率
+### Problem Feedback
+- Report bugs using GitHub Issues
+- Describe in detail the steps to reproduce the problem
+- Provide relevant logs and screenshots
 
-### 问题反馈
-- 使用GitHub Issues报告Bug
-- 详细描述问题复现步骤
-- 提供相关的日志和截图
+## 📄 License
 
-## 📄 许可证
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+## 📞 Contact Us
 
-## 📞 联系我们
-
-- **GitHub**: [项目仓库](https://github.com/your-org/coinreal)
-- **Discord**: [社区频道](https://discord.gg/coinreal)
+- **GitHub**: [Project repository](https://github.com/your-org/coinreal)
+- **Discord**: [Community Channel](https://discord.gg/coinreal)
 - **Twitter**: [@CoinReal](https://twitter.com/coinreal)
 - **Email**: contact@coinreal.io
 
 ---
 
-## 📊 项目统计
+## 📊 Project Statistics
 
 ![GitHub stars](https://img.shields.io/github/stars/your-org/coinreal?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/your-org/coinreal?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/your-org/coinreal)
 ![GitHub license](https://img.shields.io/github/license/your-org/coinreal)
 
-**构建日期**: 2024年1月  
-**版本**: v1.0.0  
-**维护者**: CoinReal 开发团队
 
 ---
 
-*CoinReal - 让每一个观点都有价值，让每一次参与都有收益* 🚀
+*CoinReal - Make every opinion valuable and every participation profitable* 🚀

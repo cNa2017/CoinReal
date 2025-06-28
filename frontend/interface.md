@@ -1,711 +1,709 @@
-# CoinReal Web 项目接口文档
+# CoinReal Web Project API Documentation
 
-币圈大众点评 Web 应用的 Campaign 奖励系统 API 接口规范说明
+Campaign Rewards System API Interface Specification for the Cryptocurrency Dianping Web Application
 
-## 🔧 技术栈
+🔧 Technology Stack
 
-- **数据管理**: TanStack Query (React Query)
-- **Web3 集成**: Wagmi + Viem ✨
-- **智能合约**: Campaign 奖励系统 (Solidity) ✨
-- **类型定义**: TypeScript (严格模式)
-- **状态管理**: React Hooks + Campaign 状态同步 ✨
-- **数据转换**: Campaign 数据 ↔ 前端数据格式转换 ✨
+- **Data Management**: TanStack Query (React Query)
+- **Web3 Integration**: Wagmi + Viem ✨
+- **Smart Contract**: Campaign Reward System (Solidity) ✨
+- **Type definitions**: TypeScript (strict mode)
+- **State Management**: React Hooks + Campaign state synchronization ✨
+- **Data conversion**: Campaign data ↔ front-end data format conversion ✨
 
-## 📋 接口概览
+## 📋 API Overview
 
-本项目已与真实 Campaign 智能合约完全集成，实现了创新的"评论即收益、点赞即赚币"奖励机制。
+This project has been fully integrated with the real Campaign smart contract, realizing the innovative "commenting means earning, liking means earning coins" reward mechanism.
 
-### 🎯 Campaign 系统核心概念
+### 🎯 Campaign system core concepts
 
-#### Campaign 奖励机制 ✨
+#### Campaign Reward Mechanism✨
 
-```typescript
+```TypeScript
 const CampaignSystem = {
-  // 📍 Project-Campaign分离架构
-  architecture: {
-    project: "专注评论点赞系统，管理内容交互",
-    campaign: "管理奖励分配，发行独立CRT代币",
-    separation: "职责分离，便于扩展和维护",
-  },
+// 📍 Project-Campaign separation architecture
+architecture:
+project: "Focus on comment and like system, manage content interaction",
+campaign: "Manage reward distribution and issue independent CRT tokens",
+separation: "Separation of responsibilities, easy to expand and maintain",
+},
 
-  // 🎁 独立CRT代币
-  crtTokens: {
-    naming: "项目名-Campaign编号 (如: Bitcoin-Campaign1)",
-    symbol: "CRT (固定)",
-    feature: "Soulbound - 不可转移，代表真实贡献",
-    precision: "18位小数，前端显示为整数",
-  },
+// 🎁 Independent CRT Token
+crtTokens: {
+naming: "Project name-Campaign number (eg: Bitcoin-Campaign1)",
+symbol: "CRT (fixed)",
+feature: "Soulbound - cannot be transferred, represents real contribution",
+precision: "18 decimal places, displayed as integers at the front end",
+},
 
-  // 💰 奖励机制
-  rewards: {
-    comment: "5 CRT (在所有活跃Campaign中获得)",
-    like: "点赞者和被点赞者各获得1 CRT",
-    distribution: {
-      comment: "60% - 按CRT占比分配给所有参与者",
-      like: "25% - 按点赞CRT占比分配",
-      elite: "15% - 平分给获得CRT最多的评论者",
-    },
-  },
+// 💰 Rewards
+rewards:
+comment: "5 CRT (earned in all active campaigns)",
+like: "The person who likes the post and the person who is liked will each receive 1 CRT",
+distribution: {
+comment: "60% - distributed to all participants according to CRT proportion",
+like: "25% - distributed according to the percentage of likes CRT",
+elite: "15% - equally shared among the reviewers who get the most CRTs",
+},
+},
 
-  // ⏰ Campaign生命周期
-  lifecycle: {
-    creation: "任何人可创建，自定义奖励代币和金额",
-    active: "用户评论点赞，实时铸造CRT奖励",
-    ended: "Campaign结束，分配真实代币奖励",
-    extension: "无参与者时自动延长7天",
-  },
+// ⏰ Campaign life cycle
+lifecycle:
+creation: "Anyone can create and customize reward tokens and amounts",
+active: "Users comment and like, and receive CRT rewards in real time",
+ended: "Campaign ended, real token rewards distributed",
+extension: "Automatically extend for 7 days if there are no participants",
+},
 };
 ```
 
-### 🔄 双模式支持
+### 🔄 Dual mode support
 
-- **合约模式**: 真实 Campaign 系统交互 (`wagmi-contract-api.ts`)
-- **Mock 模式**: 模拟数据开发 (`mock-data.ts`)
+- **Contract mode**: Real Campaign system interaction (`wagmi-contract-api.ts`)
+- **Mock mode**: mock data development (`mock-data.ts`)
 
-### 🎯 统一接口设计
+### 🎯 Unified interface design
 
-两种模式提供完全相同的 API 接口，支持无缝切换：
+The two modes provide exactly the same API interface and support seamless switching:
 
-```typescript
-// 合约API模式
+```TypeScript
+// Contract API mode
 import { api } from "@/lib/wagmi-contract-api";
 
-// Mock API模式
+//Mock API mode
 import { api } from "@/lib/mock-data";
 
-// 使用方式完全相同
+// Used in exactly the same way
 const campaigns = await api.getProjectCampaigns(projectAddress);
 ```
 
-## 🔗 Web3 身份认证
+## 🔗 Web3 Identity Authentication
 
-### 钱包连接状态 ✨
+### Wallet connection status ✨
 
-```typescript
+```TypeScript
 interface WalletState {
-  isConnected: boolean; // 钱包是否已连接
-  isConnecting: boolean; // 是否连接中
-  address?: string; // 钱包地址
-  chainId: number; // 当前链ID
-  isOnContractNetwork: boolean; // 是否在合约网络
-  canWrite: boolean; // 是否可执行写操作
-  canRead: boolean; // 是否可执行读操作
+isConnected: boolean; // Is the wallet connected?
+isConnecting: boolean; // Is it connecting?
+address?: string; // wallet address
+chainId: number; // Current chain ID
+isOnContractNetwork: boolean; // Is it on the contract network?
+canWrite: boolean; // Whether the write operation can be performed
+canRead: boolean; // Whether the read operation can be performed
 }
 
-// Hook 使用
+// Hook usage
 const { isConnected, address, canWrite } = useContractApi();
 ```
 
-### 网络架构管理 ✨
+### Network Architecture Management ✨
 
-```typescript
-// 合约网络配置 (开发者控制，固定配置)
-const CONTRACT_NETWORK = anvil; // 当前: 本地开发
-// const CONTRACT_NETWORK = sepolia // 可部署到: 测试网
+```TypeScript
+// Contract network configuration (developer controlled, fixed configuration)
+const CONTRACT_NETWORK = anvil; // Current: Local development
+// const CONTRACT_NETWORK = sepolia // Deployable to: testnet
 
-// 钱包支持的网络 (用户可切换)
+// Networks supported by the wallet (users can switch)
 const SUPPORTED_WALLET_NETWORKS = {
-  anvil: { id: 31337, name: "Anvil 本地网络" },
-  sepolia: { id: 11155111, name: "Sepolia 测试网" },
-  mainnet: { id: 1, name: "以太坊主网" },
+anvil: { id: 31337, name: "Anvil Local Network" },
+sepolia: { id: 11155111, name: "Sepolia Testnet" },
+mainnet: { id: 1, name: "Ethereum Mainnet" },
 };
 
-// 网络状态检测
+// Network status detection
 const {
-  isOnContractNetwork, // 钱包网络是否匹配合约网络
-  switchNetwork, // 切换钱包网络
-  contractNetwork, // 合约网络信息 (只读)
-  walletNetwork, // 钱包网络信息
+isOnContractNetwork, // Whether the wallet network matches the contract network
+switchNetwork, // Switch wallet network
+contractNetwork, //Contract network information (read-only)
+walletNetwork, // Wallet network information
 } = useContractApi();
 ```
 
-## ⚡ 操作类型区分 ✨
+## ⚡ Operation type distinction ✨
 
-### 合约相关操作 (固定合约网络)
+### Contract related operations (fixed contract network)
 
-- **读取操作**: `getProjects`, `getProjectCampaigns`, `getCampaignDetails` 等
-  - 总是从配置的合约网络读取数据
-  - 无需钱包网络匹配
-  - 即使钱包未连接也可执行
-- **写入操作**: `postComment`, `likeComment`, `createCampaign` 等
-  - 写入到配置的合约网络
-  - **必须要求**: 钱包网络 = 合约网络
-  - 需要用户钱包签名确认
+- **Read operation**: `getProjects`, `getProjectCampaigns`, `getCampaignDetails`, etc.
+- Always read data from the configured contract network
+- No wallet network matching required
+- Can be executed even if the wallet is not connected
+- **Write operations**: `postComment`, `likeComment`, `createCampaign`, etc.
+- Write to the configured contract network
+- **Required**: Wallet Network = Contract Network
+- User wallet signature confirmation is required
 
-### 钱包相关操作 (用户钱包网络)
+### Wallet related operations (user wallet network)
 
-- **余额查询**: ETH 余额、Token 余额、CRT 余额等
-- **资产信息**: 用户在当前钱包网络的所有资产
-- **网络切换**: 帮助用户切换钱包网络以匹配合约网络
+- **Balance query**: ETH balance, Token balance, CRT balance, etc.
+- **Asset information**: All assets of the user in the current wallet network
+- **Network Switch**: Help users switch wallet networks to match contract networks
 
-## 🚀 项目相关接口
+## 🚀 Project related interfaces
 
-### 1. 获取项目列表 ✨
+### 1. Get the project list ✨
 
-**接口名称**: `getProjects`  
-**用途**: 从智能合约获取所有加密货币项目的列表信息  
-**合约调用**: `CoinRealPlatform.getProjects(offset, limit)`
+**Interface name**: `getProjects`
+**Purpose**: Get the list information of all cryptocurrency projects from the smart contract
+**Contract call**: `CoinRealPlatform.getProjects(offset, limit)`
 
-**请求参数**:
+**Request Parameters**:
 
-- `offset` (number, 可选): 分页偏移量，默认 0
-- `limit` (number, 可选): 每页数量，默认 50
+- `offset` (number, optional): paging offset, default 0
+- `limit` (number, optional): number of pages per page, default is 50
 
-**返回数据类型**: `Promise<Project[]>`
+**Return data type**: `Promise<Project[]> `
 
-**合约数据转换** ✨:
+**Contract data conversion** ✨:
 
-```typescript
-// 合约返回的原始数据
+```TypeScript
+// The original data returned by the contract
 interface ContractProjectData {
-  projectAddress: string; // 合约地址
-  name: string; // 项目名称
-  symbol: string; // 代币符号
-  totalParticipants: bigint; // 参与人数
-  totalComments: bigint; // 评论总数
-  totalLikes: bigint; // 点赞总数
-  lastActivityTime: bigint; // 最后活动时间
-  isActive: boolean; // 是否活跃
-  // ... 其他字段
+projectAddress: string; // Contract address
+name: string; // Project name
+symbol: string; // Token symbol
+totalParticipants: bigint; // Number of participants
+totalComments: bigint; // Total number of comments
+totalLikes: bigint; // Total number of likes
+lastActivityTime: bigint; // Last activity time
+isActive: boolean; // Is it active?
+// ... other fields
 }
 
-// 转换为前端数据格式
+//Convert to front-end data format
 const frontendProject = convertContractProjectToFrontend(contractData);
 ```
 
-**返回数据结构**:
+**Return data structure**:
 
-```typescript
+```TypeScript
 interface Project {
-  projectAddress: string; // 合约地址作为唯一标识 ✨
-  name: string; // 项目名称
-  symbol: string; // 代币符号
-  description: string; // 项目描述
-  category: string; // 项目分类
-  totalParticipants: number; // 总参与人数
-  totalComments: number; // 评论数量
-  totalLikes: number; // 点赞总数
-  lastActivityTime: number; // 最后活动时间戳 ✨
-  isActive: boolean; // 是否活跃 ✨
-  creator: string; // 创建者地址 ✨
-  status: "Active" | "New" | "Paused" | "Ended"; // 项目状态
-  colorIndex?: number; // UI颜色索引 (0-9)
+projectAddress: string; // Contract address as unique identifier✨
+name: string; // Project name
+symbol: string; // Token symbol
+description: string; // Project description
+category: string; //Project category
+totalParticipants: number; // Total number of participants
+totalComments: number; // Number of comments
+totalLikes: number; // Total number of likes
+lastActivityTime: number; // Last activity timestamp✨
+isActive: boolean; // Is it active?
+creator: string; // creator address✨
+status: "Active" | "New" | "Paused" | "Ended"; // Project status
+colorIndex?: number; // UI color index (0-9)
 }
 ```
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const {
-  data: projects,
-  isLoading,
-  error,
+data: projects,
+isLoading,
+error,
 } = useQuery({
-  queryKey: ["projects"],
-  queryFn: () => api.getProjects(),
+queryKey: ["projects"],
+queryFn: () => api.getProjects(),
 });
 ```
 
 ---
 
-### 2. 获取单个项目详情 ✨
+### 2. Get details of a single project ✨
 
-**接口名称**: `getProject`  
-**用途**: 获取指定项目的详细信息  
-**合约调用**: `Project.getProjectStats()` + 基本信息查询
+**Interface name**: `getProject`
+**Purpose**: Get detailed information of the specified project
+**Contract call**: `Project.getProjectStats()` + basic information query
 
-**请求参数**:
+**Request Parameters**:
 
-- `projectAddress` (string): 项目合约地址
+- `projectAddress` (string): project contract address
 
-**返回数据类型**: `Promise<Project | null>`
+**Return data type**: `Promise<Project | null> `
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const { data: project, isLoading } = useQuery({
-  queryKey: ["project", projectAddress],
-  queryFn: () => api.getProject(projectAddress),
-  enabled: !!projectAddress,
+queryKey: ["project", projectAddress],
+queryFn: () => api.getProject(projectAddress),
+enabled: !!projectAddress,
 });
 ```
 
-## 🎯 Campaign 相关接口 ✨
+## 🎯 Campaign related interfaces✨
 
-### 3. 获取项目 Campaign 列表
+### 3. Get the project campaign list
 
-**接口名称**: `getProjectCampaigns`  
-**用途**: 获取指定项目的所有 Campaign 列表  
-**合约调用**: `Project.getCampaigns()` + Campaign 详情批量查询
+**Interface name**: `getProjectCampaigns`
+**Purpose**: Get a list of all Campaigns for a specified project
+**Contract call**: `Project.getCampaigns()` + batch query of Campaign details
 
-**请求参数**:
+**Request Parameters**:
 
-- `projectAddress` (string): 项目合约地址
+- `projectAddress` (string): project contract address
 
-**返回数据结构**:
+**Return data structure**:
 
-```typescript
+```TypeScript
 interface Campaign {
-  address: string; // Campaign合约地址
-  projectAddress: string; // 关联的项目地址
-  sponsor: string; // 赞助者地址
-  sponsorName: string; // 赞助者名称
-  startTime: number; // 开始时间戳
-  endTime: number; // 结束时间戳
-  isActive: boolean; // 是否活跃
-  rewardsDistributed: boolean; // 奖励是否已分配
-  rewardToken: string; // 奖励代币地址
-  totalRewardPool: number; // 总奖池金额（wei格式）
-  totalComments: number; // 活动期间评论数
-  totalLikes: number; // 活动期间点赞数
-  totalParticipants: number; // 参与者数量
+address: string; // Campaign contract address
+projectAddress: string; // Associated project address
+sponsor: string; // sponsor address
+sponsorName: string; // sponsor name
+startTime: number; // start timestamp
+endTime: number; // end timestamp
+isActive: boolean; // Is it active?
+rewardsDistributed: boolean; // Whether the reward has been distributed
+rewardToken: string; // Reward token address
+totalRewardPool: number; //Total reward pool amount (wei format)
+totalComments: number; // Number of comments during the event
+totalLikes: number; // Number of likes during the event
+totalParticipants: number; // Number of participants
 
-  // ERC20代币信息
-  name: string; // CRT代币名称，如"Bitcoin-Campaign1"
-  symbol: string; // CRT代币符号，固定为"CRT"
-  totalSupply: number; // 总CRT发行量
+// ERC20 token information
+name: string; // CRT token name, such as "Bitcoin-Campaign1"
+symbol: string; // CRT token symbol, fixed as "CRT"
+totalSupply: number; // Total CRT supply
 
-  // 前端展示字段
-  remainingTime?: number; // 剩余时间（秒）
-  poolValueUSD?: number; // 奖池USD价值
-  tokenIcon?: string; // 奖励代币图标
+// Front-end display fields
+remainingTime?: number; // Remaining time (seconds)
+poolValueUSD?: number; // USD value of the prize pool
+tokenIcon?: string; // Reward token icon
 }
 ```
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const { data: campaigns, isLoading } = useQuery({
-  queryKey: ["campaigns", projectAddress],
-  queryFn: () => api.getProjectCampaigns(projectAddress),
-  enabled: !!projectAddress,
+queryKey: ["campaigns", projectAddress],
+queryFn: () => api.getProjectCampaigns(projectAddress),
+enabled: !!projectAddress,
 });
 ```
 
 ---
 
-### 4. 创建新 Campaign
+### 4. Create a new campaign
 
-**接口名称**: `createCampaign`  
-**用途**: 为指定项目创建新的 Campaign  
-**合约调用**: `CampaignFactory.createCampaign()`
+**Interface name**: `createCampaign`
+**Purpose**: Create a new Campaign for a specified project
+**Contract call**: `CampaignFactory.createCampaign()`
 
-**请求参数**:
+**Request Parameters**:
 
-```typescript
+```TypeScript
 interface CreateCampaignParams {
-  projectAddress: string; // 目标项目地址
-  sponsorName: string; // 赞助者名称
-  duration: number; // 持续时间（分钟数）
-  rewardToken: string; // 奖励代币地址
-  rewardAmount: string; // 奖励代币数量（wei格式字符串）
+projectAddress: string; // target project address
+sponsorName: string; // sponsor name
+duration: number; // duration (minutes)
+rewardToken: string; // Reward token address
+rewardAmount: string; // Reward token amount (string in wei format)
 }
 ```
 
-**业务流程**:
+**Business Process**:
 
-1. 用户授权 CampaignFactory 转移代币
-2. 调用 createCampaign 创建 Campaign 合约
-3. 代币自动转移到 Campaign 合约
-4. Campaign 自动添加到项目的活跃列表
+1. User authorizes CampaignFactory to transfer tokens
+2. Call createCampaign to create a Campaign contract
+3. Tokens are automatically transferred to the Campaign contract
+4. Campaign is automatically added to the active list of the project
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const createCampaignMutation = useMutation({
-  mutationFn: (params: CreateCampaignParams) => api.createCampaign(params),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-    toast.success("Campaign创建成功！");
-  },
+mutationFn: (params: CreateCampaignParams) => api.createCampaign(params),
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+toast.success("Campaign created successfully!");
+},
 });
 ```
 
 ---
 
-### 5. 获取用户 Campaign CRT 详情
+### 5. Get user Campaign CRT details
 
-**接口名称**: `getUserCampaignCRTDetails`  
-**用途**: 获取用户在项目所有 Campaign 中的 CRT 代币详情  
-**合约调用**: `Project.getUserCampaignCRTDetails()`
+**Interface name**: `getUserCampaignCRTDetails`
+**Purpose**: Get the CRT token details of the user in all Campaigns of the project
+**Contract call**: `Project.getUserCampaignCRTDetails()`
 
-**请求参数**:
+**Request Parameters**:
 
-- `projectAddress` (string): 项目合约地址
-- `userAddress` (string, 可选): 用户地址，默认当前连接地址
+- `projectAddress` (string): project contract address
+- `userAddress` (string, optional): User address, default current connection address
 
-**返回数据结构**:
+**Return data structure**:
 
-```typescript
+```TypeScript
 interface UserCampaignCRT {
-  campaignAddress: string; // Campaign地址
-  commentCRT: number; // 评论获得的CRT
-  likeCRT: number; // 点赞获得的CRT
-  totalCRT: number; // 总CRT
-  pendingReward: number; // 待领取奖励（wei格式）
-  crtBalance: number; // CRT代币余额
+campaignAddress: string; // Campaign address
+commentCRT: number; // CRT obtained by comment
+likeCRT: number; // CRT obtained by liking
+totalCRT: number; // Total CRT
+pendingReward: number; // Reward to be collected (wei format)
+crtBalance: number; // CRT token balance
 }
 ```
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const { data: userCRTDetails, isLoading } = useQuery({
-  queryKey: ["userCRTDetails", projectAddress, userAddress],
-  queryFn: () => api.getUserCampaignCRTDetails(projectAddress, userAddress),
-  enabled: !!projectAddress && !!userAddress,
+queryKey: ["userCRTDetails", projectAddress, userAddress],
+queryFn: () => api.getUserCampaignCRTDetails(projectAddress, userAddress),
+enabled: !!projectAddress && !!userAddress,
 });
 ```
 
 ---
 
-### 6. 领取 Campaign 奖励
+### 6. Receive Campaign Rewards
 
-**接口名称**: `claimCampaignReward`  
-**用途**: 领取指定 Campaign 的奖励  
-**合约调用**: `Campaign.claimRewards()`
+**Interface name**: `claimCampaignReward`
+**Purpose**: Receive rewards from designated campaigns
+**Contract call**: `Campaign.claimRewards()`
 
-**请求参数**:
+**Request Parameters**:
 
-- `campaignAddress` (string): Campaign 合约地址
+- `campaignAddress` (string): Campaign contract address
 
-**前置条件**:
+**Prerequisites**:
 
-- Campaign 必须已结束且奖励已分配
-- 用户必须有待领取奖励
+- The campaign must have ended and the rewards distributed
+- User must be waiting to claim the reward
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const claimRewardMutation = useMutation({
-  mutationFn: (campaignAddress: string) =>
-    api.claimCampaignReward(campaignAddress),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["userCRTDetails"] });
-    toast.success("奖励领取成功！");
-  },
+mutationFn: (campaignAddress: string) =>
+api.claimCampaignReward(campaignAddress),
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["userCRTDetails"] });
+toast.success("Reward received successfully!");
+},
 });
 ```
 
-## 💬 评论相关接口
+## 💬 Comment related interface
 
-### 7. 获取项目评论列表
+### 7. Get project comment list
 
-**接口名称**: `getProjectComments`  
-**用途**: 获取指定项目的评论列表  
-**合约调用**: `Project.getComments(offset, limit)`
+**Interface name**: `getProjectComments`
+**Purpose**: Get the comment list of the specified project
+**Contract call**: `Project.getComments(offset, limit)`
 
-**请求参数**:
+**Request Parameters**:
 
-- `projectAddress` (string): 项目合约地址
-- `offset` (number, 可选): 分页偏移量，默认 0
-- `limit` (number, 可选): 每页数量，默认 20
+- `projectAddress` (string): project contract address
+- `offset` (number, optional): paging offset, default 0
+- `limit` (number, optional): number of pages per page, default is 20
 
-**返回数据结构**:
+**Return data structure**:
 
-```typescript
+```TypeScript
 interface Comment {
-  id: number; // 评论ID
-  author: string; // 作者地址
-  content: string; // 评论内容
-  likes: number; // 点赞数
-  timestamp: number; // 发布时间戳
-  crtReward: number; // CRT奖励（已转换为整数）
-  isElite: boolean; // 是否为精英评论
+id: number; // Comment ID
+author: string; // author address
+content: string; // Comment content
+likes: number; // number of likes
+timestamp: number; // Release timestamp
+crtReward: number; // CRT reward (converted to integer)
+isElite: boolean; // Is it an elite comment?
 
-  // 前端展示字段
-  avatar?: string; // 头像URL
-  verified?: boolean; // 是否认证
-  dislikes?: number; // 踩数（暂不实现）
+// Front-end display fields
+avatar?: string; // avatar URL
+verified?: boolean; // Is it authenticated?
+dislikes?: number; // dislike number (not implemented yet)
 }
 ```
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const { data: comments, isLoading } = useQuery({
-  queryKey: ["comments", projectAddress],
-  queryFn: () => api.getProjectComments(projectAddress),
-  enabled: !!projectAddress,
+queryKey: ["comments", projectAddress],
+queryFn: () => api.getProjectComments(projectAddress),
+enabled: !!projectAddress,
 });
 ```
 
 ---
 
-### 8. 发表评论
+### 8. Post a comment
 
-**接口名称**: `postComment`  
-**用途**: 在指定项目发表评论  
-**合约调用**: `Project.postComment(content)`
+**Interface name**: `postComment`
+**Purpose**: Post comments on a specific project
+**Contract call**: `Project.postComment(content)`
 
-**请求参数**:
+**Request Parameters**:
 
-- `projectAddress` (string): 项目合约地址
-- `content` (string): 评论内容 (1-1000 字符)
+- `projectAddress` (string): project contract address
+- `content` (string): Comment content (1-1000 characters)
 
-**奖励机制** ✨:
+**Reward Mechanism** ✨:
 
-- 自动在项目的所有活跃 Campaign 中获得 5 个 CRT
-- 评论 ID 自增，保证时间顺序
-- 更新用户统计数据
+- Automatically receive 5 CRTs in all active campaigns of the project
+- Comment IDs are automatically incremented to ensure chronological order
+- Update user statistics
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const postCommentMutation = useMutation({
-  mutationFn: ({
-    projectAddress,
-    content,
-  }: {
-    projectAddress: string;
-    content: string;
-  }) => api.postComment(projectAddress, content),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["comments"] });
-    queryClient.invalidateQueries({ queryKey: ["userCRTDetails"] });
-    toast.success("评论发表成功！获得5个CRT奖励");
-  },
+mutationFn: ({
+projectAddress,
+content,
+}: {
+projectAddress: string;
+content: string;
+}) => api.postComment(projectAddress, content),
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["comments"] });
+queryClient.invalidateQueries({ queryKey: ["userCRTDetails"] });
+toast.success("Comment published successfully! Received 5 CRT rewards");
+},
 });
 ```
 
 ---
 
-### 9. 点赞评论
+### 9. Like and comment
 
-**接口名称**: `likeComment`  
-**用途**: 点赞指定评论  
-**合约调用**: `Project.likeComment(commentId)`
+**Interface name**: `likeComment`
+**Purpose**: Like a specified comment
+**Contract call**: `Project.likeComment(commentId)`
 
-**请求参数**:
+**Request Parameters**:
 
-- `projectAddress` (string): 项目合约地址
-- `commentId` (number): 评论 ID
+- `projectAddress` (string): project contract address
+- `commentId` (number): comment ID
 
-**奖励机制** ✨:
+**Reward Mechanism** ✨:
 
-- 点赞者在所有活跃 Campaign 中获得 1 个 CRT
-- 被点赞者在所有活跃 Campaign 中获得 1 个 CRT
-- 每个用户只能对同一评论点赞一次
+- Likers will receive 1 CRT in all active campaigns
+- The liked user will receive 1 CRT in all active campaigns
+- Each user can only like the same comment once
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const likeCommentMutation = useMutation({
-  mutationFn: ({
-    projectAddress,
-    commentId,
-  }: {
-    projectAddress: string;
-    commentId: number;
-  }) => api.likeComment(projectAddress, commentId),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["comments"] });
-    queryClient.invalidateQueries({ queryKey: ["userCRTDetails"] });
-    toast.success("点赞成功！你和作者各获得1个CRT");
-  },
+mutationFn: ({
+projectAddress,
+commentId,
+}: {
+projectAddress: string;
+commentId: number;
+}) => api.likeComment(projectAddress, commentId),
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["comments"] });
+queryClient.invalidateQueries({ queryKey: ["userCRTDetails"] });
+toast.success("Like successful! You and the author each get 1 CRT");
+},
 });
 ```
 
-## 👤 用户相关接口
+## 👤 User related interfaces
 
-### 10. 获取用户信息
+### 10. Get user information
 
-**接口名称**: `getUser`  
-**用途**: 获取用户的统计信息和资产详情  
-**合约调用**: 聚合多个合约的用户数据
+**Interface name**: `getUser`
+**Purpose**: Get user statistics and asset details
+**Contract call**: Aggregate user data of multiple contracts
 
-**请求参数**:
+**Request Parameters**:
 
-- `userAddress` (string, 可选): 用户地址，默认当前连接地址
+- `userAddress` (string, optional): User address, default current connection address
 
-**返回数据结构**:
+**Return data structure**:
 
-```typescript
+```TypeScript
 interface User {
-  address: string; // 钱包地址
-  username?: string; // 显示名称（地址缩写）
-  avatar?: string; // 头像URL
-  totalRewards: string; // 已领取奖励总额
-  commentTokens: number; // 评论获得的CRT总数
-  likeTokens: number; // 点赞获得的CRT总数
-  totalComments: number; // 总评论数
-  totalLikes: number; // 总点赞数
-  totalCRT: number; // 总CRT数量
-  joinDate: string; // 加入日期
-  status: "Active" | "Verified" | "Elite"; // 用户状态
-  badge?: string; // 用户徽章
+address: string; // wallet address
+username?: string; // Display name (address abbreviation)
+avatar?: string; // avatar URL
+totalRewards: string; // Total amount of rewards received
+commentTokens: number; // Total number of CRTs obtained by comment
+likeTokens: number; // Total number of CRTs obtained by likes
+totalComments: number; // Total number of comments
+totalLikes: number; // Total number of likes
+totalCRT: number; //Total number of CRTs
+joinDate: string; // Join date
+status: "Active" | "Verified" | "Elite"; // User status
+badge?: string; // User badge
 }
 ```
 
-**React Hook 调用**:
+**React Hook call**:
 
-```typescript
+```TypeScript
 const { data: user, isLoading } = useQuery({
-  queryKey: ["user", userAddress],
-  queryFn: () => api.getUser(userAddress),
-  enabled: !!userAddress,
+queryKey: ["user", userAddress],
+queryFn: () => api.getUser(userAddress),
+enabled: !!userAddress,
 });
 ```
 
 ---
 
-### 11. 获取用户活动记录
+### 11. Get user activity records
 
-**接口名称**: `getUserActivity`  
-**用途**: 获取用户的活动历史记录  
-**合约调用**: 聚合用户在各项目的活动数据
+**Interface name**: `getUserActivity`
+**Purpose**: Get the user's activity history
+**Contract call**: Aggregate user activity data in various projects
 
-**请求参数**:
+**Request Parameters**:
 
-- `userAddress` (string, 可选): 用户地址
-- `offset` (number, 可选): 分页偏移量
-- `limit` (number, 可选): 每页数量
+- `userAddress` (string, optional): user address
+- `offset` (number, optional): paging offset
+- `limit` (number, optional): number of pages per page
 
-**返回数据结构**:
+**Return data structure**:
 
-```typescript
+```TypeScript
 interface UserActivity {
-  id: string; // 活动ID
-  type: "comment" | "like" | "sponsor" | "reward" | "achievement"; // 活动类型
-  action: string; // 活动描述
-  target: string; // 目标对象
-  reward: string; // 获得奖励
-  timestamp: string; // 时间戳
-  description: string; // 详细描述
+id: string; // Activity ID
+type: "comment" | "like" | "sponsor" | "reward" | "achievement"; // activity type
+action: string; //activity description
+target: string; // target object
+reward: string; //Get reward
+timestamp: string; // timestamp
+description: string; //Detailed description
 }
 ```
 
-## 🔧 数据转换工具
+## 🔧 Data conversion tools
 
-### CRT 精度转换 ✨
+### CRT precision conversion ✨
 
-```typescript
-// 18位小数 → 整数显示
+```TypeScript
+// 18 decimal places → integer display
 const convertCRTReward = (reward: bigint): number => {
-  return parseInt(formatUnits(reward, 18));
+return parseInt(formatUnits(reward, 18));
 };
 
-// 整数 → 18位小数
+// integer → 18 decimal places
 const convertToCRTWei = (amount: number): bigint => {
-  return parseUnits(amount.toString(), 18);
+return parseUnits(amount.toString(), 18);
 };
 ```
 
-### 时间处理 ✨
+### Time Processing ✨
 
-```typescript
-// Unix时间戳 → 剩余时间
+```TypeScript
+//Unix timestamp → remaining time
 const calculateRemainingTime = (endTime: number): number => {
-  return Math.max(0, endTime - Math.floor(Date.now() / 1000));
+return Math.max(0, endTime - Math.floor(Date.now() / 1000));
 };
 
-// 剩余时间 → 友好显示
+// Remaining time → Friendly display
 const formatRemainingTime = (seconds: number): string => {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  if (days > 0) return `${days}天${hours}小时`;
-  if (hours > 0) return `${hours}小时`;
-  return `${Math.floor(seconds / 60)}分钟`;
+const days = Math.floor(seconds / 86400);
+const hours = Math.floor((seconds % 86400) / 3600);
+if (days > 0) return `${days} days ${hours} hours`;
+if (hours > 0) return `${hours} hours`;
+return `${Math.floor(seconds / 60)}minutes`;
 };
 ```
 
-### 奖池价值计算 ✨
+### Prize Pool Value Calculation ✨
 
-```typescript
-// 通过价格预言机计算USD价值
+```TypeScript
+// Calculate USD value through price oracle
 const calculatePoolValueUSD = async (
-  token: string,
-  amount: bigint
+token: string,
+amount: bigint
 ): Promise<number> => {
-  const usdValue = await priceOracle.getUSDValue(token, amount);
-  return Number(usdValue) / 1e8; // 8位小数 → 美元
+const usdValue = await priceOracle.getUSDValue(token, amount);
+return Number(usdValue) / 1e8; // 8 decimal places → USD
 };
 ```
 
-## 🚨 错误处理
+## 🚨 Error handling
 
-### 合约错误类型 ✨
+### Contract Error Types ✨
 
-```typescript
+```TypeScript
 interface ContractError {
-  code: string; // 错误代码
-  message: string; // 错误信息
-  data?: any; // 额外数据
+code: string; // error code
+message: string; // error message
+data?: any; // Additional data
 }
 
-// 常见错误处理
+// Common error handling
 const handleContractError = (error: any) => {
-  if (error.code === "USER_REJECTED_REQUEST") {
-    toast.error("用户取消了交易");
-  } else if (error.message.includes("insufficient funds")) {
-    toast.error("余额不足");
-  } else if (error.message.includes("Campaign not active")) {
-    toast.error("Campaign未激活");
-  } else {
-    toast.error("交易失败，请重试");
-  }
+if (error.code === "USER_REJECTED_REQUEST") {
+toast.error("The user canceled the transaction");
+} else if (error.message.includes("insufficient funds")) {
+toast.error("Insufficient balance");
+} else if (error.message.includes("Campaign not active")) {
+toast.error("Campaign is not activated");
+} else {
+toast.error("Transaction failed, please try again");
+}
 };
 ```
 
-### 网络错误处理 ✨
+### Network Error Handling ✨
 
-```typescript
+```TypeScript
 const { isOnContractNetwork, switchNetwork } = useContractApi();
 
 if (!isOnContractNetwork) {
-  return (
-    <div className="text-center p-4">
-      <p>请切换到正确的网络</p>
-      <button onClick={() => switchNetwork()}>切换网络</button>
-    </div>
-  );
+return (
+<div className="text-center p-4">
+<p>Please switch to the correct network</p>
+<button onClick={() =>switchNetwork()}>Switch network</button>
+</div>
+);
 }
 ```
 
-## 🎨 React Hook 集成
+## 🎨 React Hooks Integration
 
-### 完整组件示例 ✨
+### Complete component example ✨
 
-```typescript
+```TypeScript
 function ProjectCampaigns({ projectAddress }: { projectAddress: string }) {
-  const { data: campaigns, isLoading } = useQuery({
-    queryKey: ["campaigns", projectAddress],
-    queryFn: () => api.getProjectCampaigns(projectAddress),
-  });
+const { data: campaigns, isLoading } = useQuery({
+queryKey: ["campaigns", projectAddress],
+queryFn: () => api.getProjectCampaigns(projectAddress),
+});
 
-  const { data: userCRTDetails } = useQuery({
-    queryKey: ["userCRTDetails", projectAddress],
-    queryFn: () => api.getUserCampaignCRTDetails(projectAddress),
-  });
+const { data: userCRTDetails } = useQuery({
+queryKey: ["userCRTDetails", projectAddress],
+queryFn: () => api.getUserCampaignCRTDetails(projectAddress),
+});
 
-  const createCampaignMutation = useMutation({
-    mutationFn: api.createCampaign,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-    },
-  });
+const createCampaignMutation = useMutation({
+mutationFn: api.createCampaign,
+onSuccess: () => {
+queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+},
+});
 
-  if (isLoading) return <div>加载中...</div>;
+if (isLoading) return<div> loading...</div> ;
 
-  return (
-    <div>
-      <h2>活跃Campaign</h2>
-      {campaigns?.map((campaign) => (
-        <CampaignCard
-          key={campaign.address}
-          campaign={campaign}
-          userCRT={userCRTDetails?.find(
-            (c) => c.campaignAddress === campaign.address
-          )}
-        />
-      ))}
-      <CreateCampaignButton onSubmit={createCampaignMutation.mutate} />
-    </div>
-  );
+return (
+<div>
+<h2>Active Campaign</h2>
+{campaigns?.map((campaign) => (
+<CampaignCard
+key={campaign.address}
+campaign={campaign}
+userCRT={userCRTDetails?.find(
+(c) => c.campaignAddress === campaign.address
+)}
+/>
+))}
+<CreateCampaignButton onSubmit={createCampaignMutation.mutate} />
+</div>
+);
 }
 ```
 
 ---
 
-**更新日期**: 2024 年 1 月  
-**维护者**: CoinReal 开发团队

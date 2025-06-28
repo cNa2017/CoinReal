@@ -1,452 +1,450 @@
 # CoinReal Web Application
 
-币圈大众点评 - 首个通过创新Campaign奖励机制实现"评论即收益、点赞即赚币"的去中心化内容社区
+Coin Circle Dianping - The first decentralized content community that realizes "comments equal income, likes equal coins" through an innovative Campaign reward mechanism
 
-## 🎯 核心特性
+## 🎯 Core Features
 
-### 💰 Campaign奖励机制
-- **Project-Campaign分离**：项目专注评论点赞系统，Campaign管理奖励分配
-- **独立CRT代币**：每个Campaign发行独立的CRT代币（"项目名-Campaign编号"）
-- **评论奖励**：发表评论在所有活跃Campaign中获得5个CRT
-- **点赞奖励**：点赞者和被点赞者各获得1个CRT
-- **奖池分配**：60%评论奖励 + 25%点赞奖励 + 15%精英奖励
-- **Soulbound特性**：CRT代币不可转移，代表真实贡献度
+### 💰 Campaign Reward Mechanism
+- **Project-Campaign separation**: The project focuses on the comment and like system, while the campaign manages the reward distribution
+- **Independent CRT Token**: Each Campaign issues independent CRT tokens ("Project Name-Campaign Number")
+- **Comment Reward**: Post a comment to get 5 CRTs in all active campaigns
+- **Like Reward**: The person who clicks the like button and the person who is liked will each receive 1 CRT
+- **Reward pool distribution**: 60% comment reward + 25% like reward + 15% elite reward
+- **Soulbound Features**: CRT tokens are not transferable and represent real contribution
 
-### 🚀 Campaign系统优势
-- **灵活奖励**：任何人可创建Campaign，自定义奖励代币和金额
-- **多Campaign并行**：一个项目可有多个活跃Campaign，用户同时获得奖励
-- **时间控制**：Campaign有明确的开始和结束时间
-- **智能延期**：无参与者时自动延长7天，避免资源浪费
-- **最小代理模式**：节省95%+部署成本
+### 🚀 Campaign system advantages
+- **Flexible rewards**: Anyone can create a campaign and customize reward tokens and amounts
+- **Multiple Campaigns in Parallel**: A project can have multiple active Campaigns, and users can receive rewards at the same time
+- **Time control**: Campaign has a clear start and end time
+- **Smart extension**: Automatically extend for 7 days when there are no participants to avoid wasting resources
+- **Minimum Proxy Mode**: Save 95%+ of deployment costs
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 frontend/
-├── app/                    # Next.js App Router 页面
-│   ├── create-project/     # 创建项目页面
-│   ├── docs/              # 帮助文档页面
-│   ├── leaderboard/       # 排行榜页面
-│   ├── pools/             # Campaign奖池页面 ✨
-│   ├── projects/          # 项目列表和详情页面
-│   │   └── [id]/          # 动态项目详情页
-│   ├── project-admin/     # 项目管理页面
-│   ├── user/              # 用户中心页面
-│   ├── globals.css        # 全局样式
-│   ├── layout.tsx         # 根布局
-│   └── page.tsx           # 首页
-├── components/             # 可复用组件
-│   ├── ui/                # UI 组件库 (shadcn/ui)
-│   ├── campaign-list.tsx  # Campaign列表组件 ✨
-│   ├── comment-section.tsx # 评论区组件
-│   ├── navigation.tsx     # 导航组件
-│   ├── network-status.tsx # 网络状态组件 ✨
-│   ├── project-info.tsx   # 项目信息组件
-│   ├── project-layout.tsx # 项目布局组件
-│   ├── providers.tsx      # 应用级 Providers
-│   ├── sponsor-dialog.tsx # Campaign创建对话框 ✨
-│   ├── table.tsx          # 表格组件
-│   ├── wagmi-sync-provider.tsx # Wagmi同步Provider ✨
-│   └── wallet-status.tsx  # 钱包状态组件 ✨
-├── hooks/                  # 自定义 React Hooks
-│   ├── use-contract-api.ts # 合约API Hook ✨
-│   ├── use-project.ts     # 项目相关操作
-│   ├── use-wagmi-sync.ts  # Wagmi同步Hook ✨
-│   └── use-wallet.ts      # 钱包相关操作 ✨
-├── lib/                   # 工具库和配置
-│   ├── contract-api.ts    # 基础合约API实现 ✨
-│   ├── wagmi-contract-api.ts # Wagmi合约API实现 ✨
-│   ├── wagmi-provider.tsx # Wagmi Provider ✨
-│   ├── wagmi.ts           # Wagmi 配置 ✨
-│   └── utils.ts           # 通用工具函数
-├── config/                # 配置文件 ✨
-│   └── networks.ts        # 网络配置
-├── constants/             # 常量定义
-│   └── chains.ts          # 区块链配置 ✨
-├── types/                 # TypeScript 类型定义
-│   └── index.ts           # 全局类型 (已增强)
-├── utils/                 # 业务工具函数
-│   ├── contract-helpers.ts # 合约数据转换工具 ✨
-│   └── format.ts          # 格式化函数
-├── public/                # 静态资源
-│   ├── abi-json/          # 合约ABI文件 ✨
-│   │   ├── CoinRealPlatform.json
-│   │   ├── Project.json
-│   │   ├── Campaign.json ✨
-│   │   ├── CampaignFactory.json ✨
-│   │   ├── ProjectFactory.json ✨
-│   │   ├── MockPriceOracle.json
-│   │   └── MockERC20.json
-│   ├── deployments.json   # 合约部署信息 ✨
-│   └── ...
-└── package.json           # 项目依赖
+├── app/ # Next.js App Router page
+│ ├── create-project/ # Create a project page
+│ ├── docs/ # Help documentation page
+│ ├── leaderboard/ # Leaderboard page
+│ ├── pools/ # Campaign prize pool page ✨
+│ ├── projects/ # Project list and details page
+│ │ └── [id]/ # Dynamic project details page
+│ ├── project-admin/ # Project management page
+│ ├── user/ # User center page
+│ ├── globals.css # Global styles
+│ ├── layout.tsx # Root layout
+│ └── page.tsx # Home page
+├── components/ # Reusable components
+│ ├── ui/ # UI component library (shadcn/ui)
+│ ├── campaign-list.tsx # Campaign list component ✨
+│ ├── comment-section.tsx # Comment section component
+│ ├── navigation.tsx # Navigation component
+│ ├── network-status.tsx # Network status component ✨
+│ ├── project-info.tsx # Project information component
+│ ├── project-layout.tsx # Project layout component
+│ ├── providers.tsx # Application-level Providers
+│ ├── sponsor-dialog.tsx # Create a campaign dialog ✨
+│ ├── table.tsx # Table component
+│ ├── wagmi-sync-provider.tsx # Wagmi Sync Provider ✨
+│ └── wallet-status.tsx # Wallet status component ✨
+├── hooks/ # Custom React Hooks
+│ ├── use-contract-api.ts # Contract API Hook ✨
+│ ├── use-project.ts # Project related operations
+│ ├── use-wagmi-sync.ts # Wagmi Sync Hook ✨
+│ └── use-wallet.ts # Wallet related operations ✨
+├── lib/ # Tool library and configuration
+│ ├── contract-api.ts # Basic contract API implementation ✨
+│ ├── wagmi-contract-api.ts # Wagmi contract API implementation ✨
+│ ├── wagmi-provider.tsx # Wagmi Provider ✨
+│ ├── wagmi.ts # Wagmi configuration ✨
+│ └── utils.ts # General utility functions
+├── config/ # Configuration files ✨
+│ └── networks.ts # Network configuration
+├── constants/ # Constant definition
+│ └── chains.ts # Blockchain configuration ✨
+├── types/ # TypeScript type definitions
+│ └── index.ts # Global types (enhanced)
+├── utils/ # Business tool functions
+│ ├── contract-helpers.ts # Contract data conversion tool ✨
+│ └── format.ts #Formatting function
+├── public/ # Static resources
+│ ├── abi-json/ # Contract ABI file ✨
+│ │ ├── CoinRealPlatform.json
+│ │ ├── Project.json
+│ │ ├── Campaign.json ✨
+│ │ ├── CampaignFactory.json ✨
+│ │ ├── ProjectFactory.json ✨
+│ │ ├── MockPriceOracle.json
+│ │ └── MockERC20.json
+│ ├── deployments.json # Contract deployment information ✨
+│ └── ...
+└── package.json # Project dependencies
 
-✨ = Campaign系统集成后新增或重大修改的文件
+✨ = Files that were added or significantly modified after Campaign system integration
 ```
 
-## 🚀 技术栈
+## 🚀 Technology Stack
 
-### 前端框架
-- **Next.js 15.2.4** - React 框架 (App Router)
-- **React 19.0.0** - UI 库
-- **TypeScript 5** - 类型支持
-- **Tailwind CSS 4.0** - 样式框架
+### Front-end framework
+- **Next.js 15.2.4** - React framework (App Router)
+- **React 19.0.0** - UI library
+- **TypeScript 5** - Type support
+- **Tailwind CSS 4.0** - Style framework
 
-### Web3 技术栈 ✨
+### Web3 Technology Stack ✨
 - **Wagmi 2.15.6** - React Hooks for Ethereum
-- **Viem 2.x** - 低级 Ethereum 库
-- **@tanstack/react-query 5.81.2** - 异步状态管理
+- **Viem 2.x** - Low-level Ethereum library
+- **@tanstack/react-query 5.81.2** - Asynchronous state management
 
-### UI 组件库
-- **@radix-ui/*** - 无障碍组件原语
-- **shadcn/ui** - 组件系统
-- **lucide-react** - 图标库
-- **class-variance-authority** - 样式变体管理
+### UI Component Library
+- **@radix-ui/*** - Accessibility component primitives
+- **shadcn/ui** - Component system
+- **lucide-react** - Icon library
+- **class-variance-authority** - Style variant management
 
-### 开发工具
-- **ESLint 9** - 代码检查
-- **pnpm** - 包管理器
+Development Tools
+- **ESLint 9** - Code linting
+- **pnpm** - Package Manager
 
-## 🔗 智能合约集成
+## 🔗 Smart Contract Integration
 
-### Campaign系统架构 ✨
-项目集成了完整的Campaign奖励系统：
+### Campaign system architecture ✨
+The project integrates a complete Campaign reward system:
 
-- **CoinRealPlatform** - 平台主合约，管理项目和Campaign
-- **Project** - 项目合约（评论和点赞系统）
-- **ProjectFactory** - 项目工厂合约（最小代理模式）
-- **Campaign** - Campaign合约（独立CRT代币 + 奖励分配）
-- **CampaignFactory** - Campaign工厂合约（最小代理模式）
-- **MockPriceOracle** - 价格预言机合约
-- **MockERC20** - 测试代币合约
+- **CoinRealPlatform** - Platform main contract, managing projects and campaigns
+- **Project** - Project Contract (Comment and Like System)
+- **ProjectFactory** - Project factory contract (minimal proxy mode)
+- **Campaign** - Campaign contract (independent CRT token + reward distribution)
+- **CampaignFactory** - Campaign factory contract (minimal proxy mode)
+- **MockPriceOracle** - Price Oracle Contract
+- **MockERC20** - Test token contract
 
-### Campaign工作流程 ✨
+### Campaign workflow ✨
 ```
-1. 项目创建 → Project合约部署 → 开始接收评论和点赞
-2. Campaign创建 → Campaign合约部署 → 开始铸造CRT奖励
-3. 用户参与 → 评论/点赞 → 在所有活跃Campaign中获得CRT
-4. Campaign结束 → 奖励分配 → 用户领取真实代币奖励
+1. Project creation → Project contract deployment → Start receiving comments and likes
+2. Create a Campaign → Deploy the Campaign Contract → Start Minting CRT Rewards
+3. User participation → Comment/Like → Earn CRT in all active campaigns
+4. Campaign ends → Rewards are distributed → Users receive real token rewards
 ```
 
-### 奖励机制 ✨
-- **评论奖励**：5 CRT（在所有活跃Campaign中）
-- **点赞奖励**：点赞者和被点赞者各获得1 CRT
-- **奖池分配**：
-  - 60% 按CRT占比分配给所有参与者
-  - 25% 按点赞CRT占比分配给点赞活跃用户
-  - 15% 精英奖励（平分给获得CRT最多的评论者）
+### Rewards ✨
+- **Comment Reward**: 5 CRT (in all active campaigns)
+- **Like Reward**: The person who likes and the person who is liked will each receive 1 CRT
+- **Prize Pool Distribution**:
+- 60% distributed to all participants according to their CRT ratio
+- 25% is distributed to active users who like according to the CRT ratio of likes
+- 15% elite reward (split equally among the reviewers who receive the most CRT)
 
-### 技术优势 ✨
-- **最小代理模式**：节省95%+部署成本
-- **Soulbound CRT**：代币不可转移，代表真实贡献
-- **多Campaign并行**：用户可同时在多个Campaign中获得奖励
-- **自动延期机制**：避免无效Campaign浪费资源
+### Technical Advantages✨
+- **Minimum Proxy Mode**: Save 95%+ of deployment costs
+- **Soulbound CRT**: Tokens are not transferable and represent real contributions
+- **Multiple Campaigns in Parallel**: Users can receive rewards in multiple Campaigns at the same time
+- **Automatic extension mechanism**: Avoid wasting resources on invalid campaigns
 
-## 📦 依赖管理
+## 📦 Dependency Management
 
-项目使用 pnpm 进行依赖管理，主要依赖包括：
+The project uses pnpm for dependency management. The main dependencies include:
 
-### 核心依赖
+### Core Dependencies
 ```json
 {
-  "next": "15.2.4",
-  "react": "^19.0.0",
-  "typescript": "^5",
-  "wagmi": "^2.15.6",
-  "viem": "2.x",
-  "@tanstack/react-query": "^5.81.2"
+"next": "15.2.4",
+"react": "^19.0.0",
+"typescript": "^5",
+"wagmi": "^2.15.6",
+"viem": "2.x",
+"@tanstack/react-query": "^5.81.2"
 }
 ```
 
-### UI 组件依赖
+### UI component dependencies
 ```json
 {
-  "@radix-ui/react-*": "^1.x",
-  "lucide-react": "^0.513.0",
-  "tailwindcss": "^4",
-  "class-variance-authority": "^0.7.1"
+"@radix-ui/react-*": "^1.x",
+"lucide-react": "^0.513.0",
+"tailwindcss": "^4",
+"class-variance-authority": "^0.7.1"
 }
 ```
 
-## 🛠️ 开发规范
+## 🛠️ Development Guidelines
 
-### 文件命名
-- 组件文件：`kebab-case.tsx` (如 `wallet-status.tsx`)
-- Hook 文件：`use-*.ts` (如 `use-contract-api.ts`)
-- 配置文件：`kebab-case.ts` (如 `networks.ts`)
-- 类型文件：`index.ts`
+### File naming
+- Component file: `kebab-case.tsx` (such as `wallet-status.tsx`)
+- Hook files: `use-*.ts` (e.g. `use-contract-api.ts`)
+- Configuration file: `kebab-case.ts` (such as `networks.ts`)
+- File type: `index.ts`
 
-### 代码组织
-- **合约集成层** (`lib/wagmi-contract-api.ts`)
-- **状态管理层** (`hooks/use-*.ts`)
-- **组件表现层** (`components/*.tsx`)
-- **类型定义层** (`types/index.ts`)
-- **配置管理层** (`config/*.ts`)
+### Code Organization
+- **Contract integration layer** (`lib/wagmi-contract-api.ts`)
+- **State management layer** (`hooks/use-*.ts`)
+- **Component presentation layer** (`components/*.tsx`)
+- **Type definition layer** (`types/index.ts`)
+- **Configuration management layer** (`config/*.ts`)
 
-### 组件设计原则
-- TypeScript 严格模式
-- 合约状态与 UI 状态分离
-- 错误边界和加载状态处理
-- 响应式设计优先
+### Component design principles
+- TypeScript strict mode
+- Separation of contract status and UI status
+- Error boundary and loading state handling
+- Responsive design first
 
-### Campaign系统集成 ✨
-- **Campaign列表**：展示项目的所有活跃Campaign
-- **CRT余额显示**：用户在各Campaign中的CRT代币余额
-- **奖励领取**：Campaign结束后的奖励领取功能
-- **Campaign创建**：任何人可为项目创建新Campaign
+### Campaign system integration ✨
+- **Campaign list**: Displays all active campaigns of the project
+- **CRT balance display**: the user's CRT token balance in each campaign
+- **Reward Collection**: Reward collection function after the campaign ends
+- **Campaign creation**: Anyone can create a new campaign for a project
 
-### 数据转换层 ✨
-- **CRT精度转换**：18位小数 → 整数显示
-- **奖池价值计算**：通过价格预言机计算USD价值
-- **时间处理**：Unix时间戳 → 剩余时间显示
-- **地址格式化**：完整地址 → 缩短显示
+### Data conversion layer ✨
+- **CRT precision conversion**: 18 decimal places → integer display
+- **Prize pool value calculation**: Calculate USD value through price oracle
+- **Time processing**: Unix timestamp → remaining time display
+- **Address formatting**: Full address → Shortened display
 
-## 🎯 部署指南
+## 🎯 Deployment Guide
 
-### 本地开发环境
+### Local Development Environment
 ```bash
-# 安装依赖
+# Install dependencies
 pnpm install
 
-# 启动开发服务器
-pnpm dev
+# Start the development server
+pnpm-dev
 
-# 构建生产版本
+# Build production version
 pnpm build
 ```
 
-### 合约网络配置
-```typescript
+### Contract network configuration
+```TypeScript
 // config/networks.ts
-export const CONTRACT_NETWORK = anvil // 当前：本地开发网络
-// export const CONTRACT_NETWORK = sepolia // 可切换到：测试网
+export const CONTRACT_NETWORK = anvil // Current: local development network
+// export const CONTRACT_NETWORK = sepolia // Can switch to: test network
 ```
 
-### 环境变量
+### Environment variables
 ```env
 # .env.local
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
 NEXT_PUBLIC_CONTRACT_NETWORK=anvil
 ```
 
-## 🔄 数据流架构
+## 🔄 Data Flow Architecture
 
-### 读取操作流程
+### Read operation flow
 ```
-用户请求 → useContractApi Hook → Wagmi readContract → 合约调用 → 数据转换 → 前端显示
-```
-
-### 写入操作流程
-```
-用户操作 → 权限检查 → Wagmi writeContract → 钱包确认 → 交易发送 → 状态更新 → UI刷新
+User request → useContractApi Hook → Wagmi readContract → Contract call → Data conversion → Front-end display
 ```
 
-### Campaign状态同步
+### Write operation process
 ```
-Campaign事件 → Wagmi事件监听 → React Query缓存更新 → 组件状态刷新
+User operation → Permission check → Wagmi writeContract → Wallet confirmation → Transaction send → Status update → UI refresh
 ```
 
-## 🌐 网络架构与维护
+### Campaign Status Synchronization
+```
+Campaign event → Wagmi event listener → React Query cache update → component state refresh
+```
 
-### 双配置系统架构 ✨
-项目采用双Wagmi配置架构，实现职责分离：
+## 🌐 Network architecture and maintenance
 
-```typescript
+### Dual configuration system architecture ✨
+The project adopts a dual Wagmi configuration architecture to achieve separation of responsibilities:
+
+```TypeScript
 // lib/wagmi.ts
 export const contractConfig = createConfig({
-  chains: [CONTRACT_NETWORK],           // 固定单一网络
-  connectors: [injected()],
-  transports: { [CONTRACT_NETWORK.id]: http() }
+chains: [CONTRACT_NETWORK], // Fixed single network
+connectors: [injected()],
+transports: { [CONTRACT_NETWORK.id]: http() }
 })
 
 export const userConfig = createConfig({
-  chains: [mainnet, sepolia, anvil],    // 支持多网络
-  connectors: [injected()],
-  transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-    [anvil.id]: http()
-  }
+chains: [mainnet, sepolia, anvil], // Support multiple networks
+connectors: [injected()],
+transports:
+[mainnet.id]: http(),
+[sepolia.id]: http(),
+[anvil.id]: http()
+}
 })
 ```
 
-### 配置使用场景
-| 操作类型 | 使用配置 | 说明 |
+### Configure usage scenarios
+| Operation Type | Usage Configuration | Description |
 |----------|----------|------|
-| **合约读写操作** | `contractConfig` | 固定使用`CONTRACT_NETWORK`，确保合约交互稳定 |
-| **钱包连接** | `userConfig` | 支持多网络，跟随用户钱包网络 |
-| **余额查询** | `userConfig` | 获取用户在各网络的代币余额 |
-| **网络切换** | `userConfig` | 用户可以在支持的网络间切换 |
+| **Contract read and write operations** | `contractConfig` | Fixed use of `CONTRACT_NETWORK` to ensure stable contract interaction |
+| **Wallet connection** | `userConfig` | Support multiple networks, follow the user wallet network |
+| **Balance query** | `userConfig` | Get the user's token balance in each network |
+| **Network switching** | `userConfig` | Users can switch between supported networks |
 
-### 网络配置维护
+### Network Configuration Maintenance
 
-#### 1. 修改合约部署网络
-```typescript
+#### 1. Modify the contract deployment network
+```TypeScript
 // config/networks.ts
-export const CONTRACT_NETWORK = sepolia // 从 anvil 切换到 sepolia
+export const CONTRACT_NETWORK = sepolia // Switch from anvil to sepolia
 ```
-**影响范围：**
-- 所有合约读写操作自动切换到新网络
-- 需要更新部署配置文件和重新部署合约
+**Area of ​​impact:**
+- All contract read and write operations automatically switch to the new network
+- Need to update deployment configuration files and redeploy contracts
 
-#### 2. 添加新的支持网络
-```typescript
-// constants/chains.ts - 添加新网络到支持列表
+#### 2. Add new supported networks
+```TypeScript
+// constants/chains.ts - Add new networks to the supported list
 export const SUPPORTED_CHAINS: SupportedChain[] = [
-  // ... 现有网络
-  {
-    id: newChain.id,
-    name: "新网络名称",
-    symbol: "TOKEN",
-    color: "bg-green-500",
-    chain: newChain,
-  },
+// ... existing network
+{
+id: newChain.id,
+name: "New network name",
+symbol: "TOKEN",
+color: "bg-green-500",
+chain: newChain,
+},
 ]
 
-// lib/wagmi.ts - 更新userConfig
+// lib/wagmi.ts - Update userConfig
 export const userConfig = createConfig({
-  chains: [mainnet, sepolia, anvil, newChain], // 添加新链
-  transports: {
-    // ... 现有传输配置
-    [newChain.id]: http(), // 添加新链的RPC配置
-  },
+chains: [mainnet, sepolia, anvil, newChain], // Add a new chain
+transports:
+// ... existing transport configuration
+[newChain.id]: http(), // Add RPC configuration of new chain
+},
 })
 ```
 
-### 新接口开发指南
+### New Interface Development Guide
 
-#### 接口类型判断决策树
+#### Interface type judgment decision tree
 ```
-新接口需求
-├── 是否需要合约交互？
-│   ├── 是 → 合约读写操作都使用 contractConfig
-│   └── 否 → 使用 userConfig 获取用户信息
+New interface requirements
+├── Is contract interaction required?
+│ ├── Yes → Contract read and write operations all use contractConfig
+│ └── No→ Use userConfig to obtain user information
 ```
 
-#### 接口开发模板
-```typescript
-// 合约交互接口（读写操作都使用contractConfig）
+#### Interface development template
+```TypeScript
+// Contract interaction interface (both read and write operations use contractConfig)
 async function newContractMethod(params: any) {
-  await ensureInitialized()
+await ensureInitialized()
   
-  // 读操作
-  const result = await readContract(contractConfig, {
-    address: deploymentsInfo.platform,
-    abi: CoinRealPlatformABI,
-    functionName: 'yourFunction',
-    args: [params]
-  })
+// Read operation
+const result = await readContract(contractConfig, {
+address: deploymentsInfo.platform,
+abi: CoinRealPlatformABI,
+functionName: 'yourFunction',
+args: [params]
+})
   
-  // 写操作（使用重试机制）
-  const hash = await writeContractWithRetry({
-    address: deploymentsInfo.platform,
-    abi: CoinRealPlatformABI,
-    functionName: 'yourFunction',
-    args: [params]
-  })
+// Write operation (using retry mechanism)
+const hash = await writeContractWithRetry({
+address: deploymentsInfo.platform,
+abi: CoinRealPlatformABI,
+functionName: 'yourFunction',
+args: [params]
+})
   
-  return result
+return result
 }
 
-// 用户信息接口（使用userConfig）
+// User information interface (using userConfig)
 function useUserBalance() {
-  const { address } = useAccount() // 自动使用userConfig
-  const chainId = useChainId()     // 获取用户当前网络
+const { address } = useAccount() // Automatically use userConfig
+const chainId = useChainId() // Get the user's current network
   
-  const { data: balance } = useBalance({
-    address,
-    chainId
-  })
+const { data: balance } = useBalance({
+address,
+chainId
+})
   
-  return balance
+return balance
 }
 ```
 
-### 状态同步机制 ✨
-项目实现了完整的状态同步机制，解决了页面刷新后的连接器错误：
+### State synchronization mechanism ✨
+The project implements a complete state synchronization mechanism to solve the connector error after page refresh:
 
-#### 核心组件
-- **`useWagmiSync`** - 连接状态同步Hook，确保连接完全就绪
-- **`WagmiSyncProvider`** - 应用级同步Provider
-- **`writeContractWithRetry`** - 带重试机制的写合约函数
+#### Core Components
+- **`useWagmiSync`** - Connection status synchronization Hook to ensure the connection is fully ready
+- **`WagmiSyncProvider`** - Application-level synchronization provider
+- **`writeContractWithRetry`** - write contract function with retry mechanism
 
-#### 解决的问题
-- 页面刷新后连接器状态不一致
-- `getChainId is not a function`错误
-- React SSR水合问题
-- 双配置架构同步问题
+#### Issues Resolved
+- Connector status is inconsistent after page refresh
+- `getChainId is not a function` error
+- React SSR hydration issue
+- Dual configuration architecture synchronization issue
 
-### 环境部署配置
+### Environment deployment configuration
 
-#### 本地开发环境
+#### Local Development Environment
 ```bash
-# 启动本地区块链
+# Start the local blockchain
 anvil
 
-# 部署合约
+# Deploy the contract
 cd ../background && forge script script/Deploy.s.sol --broadcast
 
-# 启动前端
-pnpm dev
+# Start the frontend
+pnpm-dev
 ```
 
-#### 测试网部署
-```typescript
-// 1. 修改网络配置
+#### Testnet deployment
+```TypeScript
+// 1. Modify network configuration
 export const CONTRACT_NETWORK = sepolia
 
-// 2. 更新环境变量
+// 2. Update environment variables
 NEXT_PUBLIC_CONTRACT_NETWORK=sepolia
 
-// 3. 重新部署合约到测试网
+// 3. Redeploy the contract to the test network
 forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast
 ```
 
-### 常见问题排查
+### Common Problems Troubleshooting
 
-#### 钱包连接问题
-- **页面刷新后报错**：已通过状态同步机制解决
-- **网络切换失败**：检查是否在`SUPPORTED_CHAINS`列表中
-- **合约调用失败**：确认用户在正确的合约网络
+#### Wallet connection issue
+- **Error after page refresh**: Solved by state synchronization mechanism
+- **Network switch failed**: Check if it is in the `SUPPORTED_CHAINS` list
+- **Contract call failed**: Confirm that the user is in the correct contract network
 
-#### 开发调试步骤
-1. 检查浏览器控制台日志
-2. 验证合约部署状态和地址
-3. 确认网络配置是否正确
-4. 检查钱包连接状态和网络
+#### Development and debugging steps
+1. Check the browser console log
+2. Verify contract deployment status and address
+3. Confirm that the network configuration is correct
+4. Check wallet connection status and network
 
-## 📊 监控和分析
+## 📊 Monitoring and analytics
 
-### 合约事件监听
-- `ProjectCreated` - 项目创建事件
-- `CampaignCreated` - Campaign创建事件
-- `CommentPosted` - 评论发布事件
-- `CommentLiked` - 评论点赞事件
-- `CRTMinted` - CRT代币铸造事件
-- `RewardsDistributed` - 奖励分配事件
+### Contract event monitoring
+- `ProjectCreated` - Project creation event
+- `CampaignCreated` - Campaign created event
+- `CommentPosted` - comment posted event
+- `CommentLiked` - Comment like event
+- `CRTMinted` - CRT token minting event
+- `RewardsDistributed` - Rewards distribution event
 
-### 性能优化
-- React Query缓存策略
-- 合约调用批量处理
-- 组件懒加载
-- 图片优化
+### Performance Optimization
+- React Query caching strategy
+- Batch processing of contract calls
+- Component lazy loading
+- Image optimization
 
-## 🚀 未来规划
+## 🚀 Future plans
 
-### 待实现功能
-- **精英评论系统**：自动识别高质量评论
-- **平台认证机制**：验证用户身份
-- **踩评论功能**：负面反馈机制
-- **多语言支持**：国际化扩展
-- **移动端适配**：响应式优化
+### Functions to be implemented
+- **Elite Review System**: Automatically identify high-quality reviews
+- **Platform authentication mechanism**: Verify user identity
+- **Downvote function**: Negative feedback mechanism
+- **Multi-language support**: international expansion
+- **Mobile adaptation**: Responsive optimization
 
-### 技术升级
-- **Layer 2集成**：降低Gas费用
-- **IPFS存储**：去中心化内容存储
-- **GraphQL API**：更高效的数据查询
-- **PWA支持**：离线功能
+### Technology Upgrade
+- **Layer 2 Integration**: Reduce Gas Fees
+- **IPFS storage**: decentralized content storage
+- **GraphQL API**: More efficient data query
+- **PWA support**: offline functionality
+- **Chainlink CCIP**:Multi-chain payment
 
 ---
-
-**更新日期**：2024年1月  
-**维护者**：CoinReal 开发团队

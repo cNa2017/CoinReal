@@ -1,173 +1,173 @@
-# CoinReal Background - 智能合约后端
+# CoinReal Background - Smart Contract Backend
 
-## 📋 概述
+## 📋 Overview
 
-CoinReal 后端是基于 Solidity 构建的去中心化内容社区平台智能合约系统。通过区块链技术和创新的Campaign奖励机制，实现"评论即收益、点赞即赚币"的商业模式。
+CoinReal's backend is a decentralized content community platform smart contract system built on Solidity. Through blockchain technology and innovative Campaign reward mechanism, it realizes the business model of "comments equal income, likes equal coins".
 
-## 🏗️ 项目结构
+## 🏗️ Project Structure
 
 ```
 background/
-├── src/                          # 智能合约源码
-│   ├── CoinRealPlatform.sol     # 平台主合约
-│   ├── Project.sol               # 项目合约（评论和点赞系统）
-│   ├── ProjectFactory.sol        # 项目工厂合约
-│   ├── Campaign.sol              # Campaign合约（奖励系统）
-│   ├── CampaignFactory.sol       # Campaign工厂合约
-│   ├── interfaces/              # 接口定义
-│   │   ├── ICoinRealPlatform.sol
-│   │   ├── IProject.sol
-│   │   ├── IProjectFactory.sol
-│   │   ├── ICampaign.sol
-│   │   ├── ICampaignFactory.sol
-│   │   └── IPriceOracle.sol
-│   └── mocks/                   # 测试模拟合约
-├── test/                        # 合约测试文件
-├── script/                      # 部署脚本
-├── INTERFACE_DOCUMENTATION.md   # 📚 详细接口文档
-└── README.md                    # 项目说明
+├── src/ # Smart contract source code
+│ ├── CoinRealPlatform.sol # Platform main contract
+│ ├── Project.sol # Project contract (comment and like system)
+│ ├── ProjectFactory.sol # Project factory contract
+│ ├── Campaign.sol # Campaign contract (reward system)
+│ ├── CampaignFactory.sol # Campaign factory contract
+│ ├── interfaces/ # Interface definition
+│ │ ├── ICoinRealPlatform.sol
+│ │ ├── IProject.sol
+│ │ ├── IProjectFactory.sol
+│ │ ├── ICampaign.sol
+│ │ ├── ICampaignFactory.sol
+│ │ └── IPriceOracle.sol
+│ └── mocks/ #Test mock contract
+├── test/ # Contract test file
+├── script/ # Deployment script
+├── INTERFACE_DOCUMENTATION.md # 📚 Detailed interface documentation
+└── README.md # Project description
 ```
 
-## 🚀 核心特性
+## 🚀 Core Features
 
-### 💰 Campaign奖励机制
-- **Project-Campaign分离**：项目专注评论点赞，Campaign管理奖励分配
-- **独立CRT代币**：每个Campaign发行独立的CRT代币（"项目名-Campaign编号"）
-- **评论奖励**：发表评论获得 5 CRT
-- **点赞奖励**：点赞获得 1 CRT，被点赞者获得 1 CRT
-- **奖池分配**：60% 评论奖励 + 25% 点赞奖励 + 15% 精英奖励
-- **Soulbound特性**：CRT代币不可转移，代表真实贡献度
+### 💰 Campaign Reward Mechanism
+- **Project-Campaign separation**: Project focuses on comments and likes, while Campaign manages reward distribution
+- **Independent CRT Token**: Each Campaign issues independent CRT tokens ("Project Name-Campaign Number")
+- **Comment Reward**: Get 5 CRT for commenting
+- **Like Reward**: 1 CRT is awarded for liking, and the person being liked gets 1 CRT
+- **Reward pool distribution**: 60% comment reward + 25% like reward + 15% elite reward
+- **Soulbound Features**: CRT tokens are not transferable and represent real contribution
 
-### 🎯 Campaign系统优势
-- **灵活奖励**：任何人可创建Campaign，自定义奖励代币和金额
-- **多Campaign并行**：一个项目可有多个活跃Campaign，用户同时获得奖励
-- **时间控制**：Campaign有明确的开始和结束时间
-- **智能延期**：无参与者时自动延长7天，避免资源浪费
-- **平台管理**：奖励分配和时间延长由平台统一管理
+### 🎯 Campaign system advantages
+- **Flexible rewards**: Anyone can create a campaign and customize reward tokens and amounts
+- **Multiple Campaigns in Parallel**: A project can have multiple active Campaigns, and users can receive rewards at the same time
+- **Time control**: Campaign has a clear start and end time
+- **Smart extension**: Automatically extend for 7 days when there are no participants to avoid wasting resources
+- **Platform management**: Reward allocation and time extension are managed by the platform
 
-### ⚡ 技术优势
-- **最小代理模式**：节省 95% 项目和Campaign创建成本
-- **批量操作**：优化 Gas 消耗和用户体验
-- **模块化设计**：职责分离，便于升级维护
-- **多代币支持**：价格预言机支持任意 ERC20 代币
+### ⚡ Technical Advantages
+- **Minimum Agency Mode**: Save 95% of project and campaign creation costs
+- **Batch Operation**: Optimize Gas consumption and user experience
+- **Modular design**: separation of responsibilities, easy to upgrade and maintain
+- **Multi-token support**: Price oracle supports any ERC20 token
 
-## 📚 详细文档
+## 📚 Detailed documentation
 
-### 🔗 快速导航
-- **[完整接口文档](./INTERFACE_DOCUMENTATION.md)** - 详细的接口说明和使用指南
-- **[测试文档](./test/README.md)** - 测试用例和测试指南
-- **[部署指南](#部署指南)** - 合约部署和配置说明
+### 🔗 Quick Navigation
+- **[Complete interface documentation](./INTERFACE_DOCUMENTATION.md)** - Detailed interface description and usage guide
+- **[Test documentation](./test/README.md)** - Test cases and test guide
+- **[Deployment Guide](#DeploymentGuide)** - Contract deployment and configuration instructions
 
-### 🎯 核心接口概览
+### 🎯 Core API Overview
 
-| 合约 | 职责 | 核心功能 |
+| Contract | Responsibilities | Core Functions |
 |------|------|----------|
-| **ICoinRealPlatform** | 平台管理 | 项目创建、Campaign管理、统计数据 |
-| **IProject** | 项目管理 | 评论系统、点赞机制、Campaign关联 |
-| **IProjectFactory** | 项目工厂 | 最小代理创建、地址预测 |
-| **ICampaign** | 奖励管理 | CRT铸造、奖池分配、奖励领取 |
-| **ICampaignFactory** | Campaign工厂 | Campaign创建、代币管理 |
-| **IPriceOracle** | 价格服务 | USD价值计算、多代币支持 |
+| **ICoinRealPlatform** | Platform management | Project creation, Campaign management, statistics |
+| **IProject** | Project management | Comment system, like mechanism, Campaign association |
+| **IProjectFactory** | Project factory | Minimal proxy creation, address prediction |
+| **ICampaign** | Reward management | CRT casting, prize pool allocation, reward collection |
+| **ICampaignFactory** | Campaign factory | Campaign creation, token management |
+| **IPriceOracle** | Price service | USD value calculation, multi-token support |
 
-> 📖 详细的接口说明、参数定义、业务逻辑请查看 **[INTERFACE_DOCUMENTATION.md](./INTERFACE_DOCUMENTATION.md)**
+> 📖 For detailed interface description, parameter definition, and business logic, please refer to **[INTERFACE_DOCUMENTATION.md](./INTERFACE_DOCUMENTATION.md)**
 
-## 🛠️ 快速开始
+## 🛠️ Quick Start
 
-### 环境要求
-- [Foundry](https://getfoundry.sh/) - Solidity 开发工具链
-- Node.js 18+ - 用于脚本执行
-- Git - 版本控制
+### Environmental Requirements
+- [Foundry](https://getfoundry.sh/) - Solidity development toolchain
+- Node.js 18+ - for script execution
+- Git - Version Control
 
-### 安装依赖
+### Installation dependencies
 ```bash
-# 克隆项目
-git clone <repository-url>
+# Clone the project
+git clone<repository-url>
 cd background
 
-# 安装 Foundry 依赖
+# Install Foundry dependencies
 forge install
 
-# 验证安装
+# Verify installation
 forge --version
 ```
 
-### 编译合约
+### Compile the contract
 ```bash
-# 编译所有合约
+# Compile all contracts
 forge build
 
-# 查看合约大小
+# Check the contract size
 forge build --sizes
 ```
 
-### 运行测试
+### Running the tests
 ```bash
-# 运行所有测试
+# Run all tests
 forge test
 
-# 运行Campaign系统测试
+# Run Campaign system tests
 forge test --match-contract CampaignSystemTest
 
-# 详细输出
+# Verbose output
 forge test -vvv
 
-# 生成覆盖率报告
+# Generate coverage report
 forge coverage
 ```
 
-## 🚀 部署指南
+## 🚀 Deployment Guide
 
-### 本地部署
+### Local deployment
 ```bash
-# 启动本地节点（新终端）
+# Start a local node (new terminal)
 anvil
 
-# 部署到本地网络
+# Deploy to local network
 forge script script/Deploy.s.sol --fork-url http://localhost:8545 --broadcast
 
-# 查看部署结果
+# View the deployment results
 cat deployments.json
 ```
 
-### 测试网部署
+### Testnet deployment
 ```bash
-# 设置环境变量
+# Setting environment variables
 export PRIVATE_KEY="your_private_key"
 export RPC_URL="https://sepolia.infura.io/v3/your_key"
 
-# 部署到 Sepolia
+# Deploy to Sepolia
 forge script script/Deploy.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
 ```
 
-### 部署验证
-部署成功后会生成 `deployments.json` 文件，包含所有合约地址：
+### Deployment Verification
+After successful deployment, a `deployments.json` file will be generated, containing all contract addresses:
 
 ```json
 {
-  "platform": "0x...",
-  "priceOracle": "0x...",
-  "projectFactory": "0x...",
-  "campaignFactory": "0x...",
-  "tokens": {
-    "usdc": "0x...",
-    "weth": "0x...",
-    "dai": "0x..."
-  },
-  "projects": {
-    "bitcoin": "0x...",
-    "ethereum": "0x...",
-    "solana": "0x..."
-  },
-  "campaigns": {
-    "btc_campaign_1": "0x...",
-    "btc_campaign_2": "0x...",
-    "eth_campaign_1": "0x..."
-  }
+"platform": "0x...",
+"priceOracle": "0x...",
+"projectFactory": "0x...",
+"campaignFactory": "0x...",
+"tokens": {
+"usdc": "0x...",
+"weth": "0x...",
+"dai": "0x..."
+},
+"projects": {
+"bitcoin": "0x...",
+"ethereum": "0x...",
+"solana": "0x..."
+},
+"campaigns": {
+"btc_campaign_1": "0x...",
+"btc_campaign_2": "0x...",
+"eth_campaign_1": "0x..."
+}
 }
 ```
 
-### 合约ABI生成
-在 `background/abi-json` 文件夹下生成ABI文件：
+### Contract ABI generation
+Generate the ABI file in the `background/abi-json` folder:
 ```bash
 forge inspect src/CoinRealPlatform.sol:CoinRealPlatform abi --json > abi-json/CoinRealPlatform.json
 forge inspect src/Project.sol:Project abi --json > abi-json/Project.json
@@ -178,94 +178,94 @@ forge inspect src/mocks/MockPriceOracle.sol:MockPriceOracle abi --json > abi-jso
 forge inspect src/mocks/MockERC20.sol:MockERC20 abi --json > abi-json/MockERC20.json
 ```
 
-## 📊 Gas 成本优化
+## 📊 Gas cost optimization
 
-### 合约创建成本对比
-| 方案 | Gas 消耗 | 成本节省 |
+### Contract creation cost comparison
+| Solution | Gas consumption | Cost savings |
 |------|----------|----------|
-| 标准项目部署 | ~2,000,000 | - |
-| Clone项目部署 | ~50,000 | **95%** |
-| 标准Campaign部署 | ~1,500,000 | - |
-| Clone Campaign部署 | ~40,000 | **97%** |
+| Standard Project Deployment | ~2,000,000 | - |
+| Clone project deployment | ~50,000 | **95%** |
+| Standard Campaign Deployment | ~1,500,000 | - |
+| Clone Campaign Deployment | ~40,000 | **97%** |
 
-### 关键操作成本
-| 操作 | 预估 Gas | 优化措施 |
+### Key Operation Costs
+| Operation | Estimated Gas | Optimization Measures |
 |------|-----------|----------|
-| 发表评论 | ~120,000 | 多Campaign并行铸造CRT |
-| 点赞评论 | ~80,000 | 简单状态更新 |
-| 创建Campaign | ~150,000 | 最小代理+代币转移 |
-| 领取奖励 | ~50,000/token | 批量操作 |
+| Post a comment | ~120,000 | Multiple campaigns casting CRT in parallel |
+| Likes and Comments | ~80,000 | Simple Status Update |
+| Create Campaign | ~150,000 | Minimum Agent + Token Transfer |
+| Get Rewards | ~50,000/token | Batch Operations |
 
-## 🔒 安全机制
+## 🔒 Safety Mechanism
 
-### 智能合约安全
-- ✅ **重入攻击防护** - ReentrancyGuard
-- ✅ **权限控制** - 关键函数权限验证
-- ✅ **溢出检查** - Solidity 0.8+ 内置
-- ✅ **安全转账** - SafeERC20 库
+### Smart Contract Security
+- ✅ **Reentrancy Attack Protection** - ReentrancyGuard
+- ✅ **Permission control** - Key function permission verification
+- ✅ **Overflow checks** - built-in in Solidity 0.8+
+- ✅ **Secure transfer** - SafeERC20 library
 
-### 业务逻辑安全
-- ✅ **防重复点赞** - mapping 记录
-- ✅ **最低赞助限制** - 预言机价值验证
-- ✅ **CRT 锁定** - Soulbound Token
-- ✅ **Campaign权限** - 平台统一管理
-- ✅ **时间控制** - 严格的活动时间验证
+### Business Logic Security
+- ✅ **Anti-duplicate likes** - mapping records
+- ✅ **Minimum Sponsorship Limit** - Oracle Value Verification
+- ✅ **CRT LOCK** - Soulbound Token
+- ✅ **Campaign permissions** - unified management on the platform
+- ✅ **Time control** - Strict activity time verification
 
-## 📈 项目状态
+## 📈 Project Status
 
-### 开发进度
-- ✅ 核心合约开发完成
-- ✅ Campaign系统重构完成
-- ✅ 接口文档完整
-- ✅ 测试覆盖充分
-- ✅ 部署脚本就绪
-- ⏳ 精英奖励算法开发中
-- ⏳ 安全审计进行中
-- ⏳ 主网部署准备中
+Development Progress
+- ✅ Core contract development completed
+- ✅ Campaign system reconstruction completed
+- ✅ Complete interface documentation
+- ✅ Adequate test coverage
+- ✅ Deployment scripts ready
+- ⏳ Elite reward algorithm is under development
+- ⏳ Security audit in progress
+- ⏳ Mainnet deployment is in preparation
 
-### 技术栈
-- **Solidity** ^0.8.19 - 智能合约语言
-- **Foundry** - 开发和测试框架
-- **OpenZeppelin** - 安全合约库
-- **Chainlink** - 价格预言机（可选）
+### Technology Stack
+- **Solidity** ^0.8.19 - Smart contract language
+- **Foundry** - Development and testing framework
+- **OpenZeppelin** - secure contract library
+- **Chainlink** - Price Oracle (optional)
 
-## 🎯 Campaign系统工作流程
+## 🎯 Campaign system workflow
 
-### 1. 项目创建流程
-1. **平台创建项目** → Project合约部署
-2. **设置项目信息** → 名称、描述、分类等
-3. **项目激活** → 开始接收评论和点赞
+### 1. Project creation process
+1. **Platform creation project** → Project contract deployment
+2. **Set project information** → name, description, category, etc.
+3. **Project activation** → Start receiving comments and likes
 
-### 2. Campaign创建流程
-1. **任何人创建Campaign** → 选择项目、设置奖励
-2. **代币转移** → 奖励代币转入Campaign合约
-3. **Campaign激活** → 开始铸造CRT奖励
-4. **自动关联** → Campaign添加到Project的活跃列表
+### 2. Campaign creation process
+1. **Anyone can create a Campaign** → Select a project and set rewards
+2. **Token transfer** → Reward tokens are transferred to the Campaign contract
+3. **Campaign Activation** → Start minting CRT rewards
+4. **Automatically associate** → Campaign is added to the active list of the Project
 
-### 3. 用户参与流程
-1. **发表评论** → 在所有活跃Campaign中获得5 CRT
-2. **点赞互动** → 点赞者和被点赞者各获得1 CRT
-3. **多Campaign累积** → 同时在多个Campaign中获得奖励
-4. **等待分配** → Campaign结束时分配奖池奖励
+### 3. User participation process
+1. **Post a comment** → Earn 5 CRT in all active campaigns
+2. **Like Interaction** → The liker and the liked person each receive 1 CRT
+3. **Multi-Campaign Accumulation** → Get rewards from multiple campaigns at the same time
+4. **Wait for distribution** → Distribute the bonus pool rewards at the end of the campaign
 
-### 4. 奖励分配流程
-1. **Campaign结束** → 到达结束时间
-2. **平台分配** → 按60%-25%-15%规则分配奖池
-3. **用户领取** → 调用claimRewards领取奖励
-4. **空Campaign延期** → 无参与者时自动延长7天
+### 4. Reward Distribution Process
+1. **Campaign ends** → reaches the end time
+2. **Platform allocation** → The bonus pool will be allocated according to the 60%-25%-15% rule
+3. **User receives** → Call claimRewards to receive the reward
+4. **Extension of empty campaign** → Automatically extended for 7 days when there are no participants
 
-## 🤝 贡献指南
+## 🤝 Contribution Guidelines
 
-### 开发流程
-1. Fork 项目并创建功能分支
-2. 编写代码并添加相应测试
-3. 运行完整测试套件确保通过
-4. 提交 Pull Request 并描述变更
+Development Process
+1. Fork the project and create a feature branch
+2. Write code and add corresponding tests
+3. Run the full test suite to ensure it passes
+4. Submit a Pull Request and describe the changes
 
-### 代码规范
-- 遵循 Solidity 风格指南
-- 添加详细的 NatSpec 注释
-- 确保测试覆盖率 > 90%
-- 通过安全检查工具验证
+### Coding Standards
+- Follow the Solidity style guide
+- Added detailed NatSpec annotations
+- Ensure test coverage > 90%
+- Verified via the Security Check tool
 
-**🎯 下一步：查看 [详细接口文档](./INTERFACE_DOCUMENTATION.md) 了解完整的 Campaign 系统设计和使用方法！**
+**🎯 Next step: Check out the [detailed interface documentation](./INTERFACE_DOCUMENTATION.md) to learn about the complete Campaign system design and usage! **

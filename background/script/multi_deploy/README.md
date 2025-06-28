@@ -1,35 +1,36 @@
-# CoinReal 多步部署系统
+# CoinReal multi-step deployment system
 
-## 📋 概述
-
-为解决公链部署时的 Gas 限制、合约大小限制等问题，将原本的单步部署拆分为5个独立步骤，支持多网络自动化部署。
-
-## 🚀 快速开始
-
-### 1. 环境配置
-
-```bash
-# 在 .env 文件中配置环境变量
 ANVIL_URL=http://localhost:8545
-ANVIL_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_KEY
+
+## 📋 Overview
+
+## 🚀 Quick Start
 SEPOLIA_PRIVATE_KEY=YOUR_PRIVATE_KEY
+### 1. Environment Configuration
+```bash
+# Configure environment variables in the .env file
+anvil_url=http://localhost:8545
+anvil_private_key=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+sepolia_url=https://sepolia.infura.io/v3/YOUR_KEY
+sepolia_private_key=YOUR_PRIVATE_KEY
+avalanche_fuji_url=https://avax-fuji.g.alchemy.com/v2/YOUR_KEY
+avalanche_fuji_private_key=YOUR_PRIVATE_KEY
 ```
 
-### 2. 一键部署
+### 2. One-click deployment
 
 ```bash
-# 本地测试网络
+# Local test network
 ./deploy_all.sh anvil
 
-# Sepolia 测试网
+# Sepolia Testnet
 ./deploy_all.sh sepolia
 
-# Avalanche Fuji 测试网
+# Avalanche Fuji Testnet
 ./deploy_all.sh avalanche_fuji
 ```
 
-### 3. 验证部署
+### 3. Verify the deployment
 
 ```bash
 export NETWORK=anvil
@@ -39,56 +40,56 @@ PRIVATE_KEY=${anvil_private_key}
 forge script script/multi_deploy/utils/VerifyDeployment.s.sol --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY"
 ```
 
-## 📁 文件结构
+## 📁 File structure
 
 ```
 script/multi_deploy/
-├── README.md                    # 本文件
-├── Step1_DeployCore.s.sol      # 步骤1: 部署核心合约
-├── Step2_DeployTokens.s.sol    # 步骤2: 部署测试代币
-├── Step3_CreateProjects.s.sol  # 步骤3: 创建示例项目
-├── Step4_CreateCampaigns.s.sol # 步骤4: 创建Campaign
-├── Step5_InitializeData.s.sol  # 步骤5: 初始化测试数据
+├── README.md # This file
+├── Step1_DeployCore.s.sol # Step 1: Deploy the core contract
+├── Step2_DeployTokens.s.sol # Step 2: Deploy test tokens
+├── Step3_CreateProjects.s.sol # Step 3: Create a sample project
+├── Step4_CreateCampaigns.s.sol # Step 4: Create Campaign
+├── Step5_InitializeData.s.sol # Step 5: Initialize test data
 ├── config/
-│   └── projects-data.json      # 项目数据配置
+│ └── projects-data.json # Project data configuration
 └── utils/
-    ├── BaseMultiDeploy.sol     # 基础部署合约
-    └── VerifyDeployment.s.sol  # 部署验证脚本
+├── BaseMultiDeploy.sol # Basic deployment contract
+└── VerifyDeployment.s.sol # Deployment verification script
 ```
 
-## 🔧 部署步骤
+## 🔧 Deployment steps
 
-| 步骤 | 脚本 | 功能 | Gas 估算 |
+| Steps | Script | Function | Gas Estimation |
 |------|------|------|----------|
-| 1 | Step1_DeployCore | 部署6个核心合约 | ~8M |
-| 2 | Step2_DeployTokens | 部署5个测试代币 | ~2M |
-| 3 | Step3_CreateProjects | 创建9个示例项目 | ~1.5M |
-| 4 | Step4_CreateCampaigns | 创建11个Campaign | ~2.5M |
-| 5 | Step5_InitializeData | 初始化测试数据（可选） | ~1M |
+| 1 | Step1_DeployCore | Deploy 6 core contracts | ~8M |
+| 2 | Step2_DeployTokens | Deploy 5 test tokens | ~2M |
+| 3 | Step3_CreateProjects | Create 9 sample projects | ~1.5M |
+| 4 | Step4_CreateCampaigns | Create 11 Campaigns | ~2.5M |
+| 5 | Step5_InitializeData | Initialize test data (optional) | ~1M |
 
-## 🌐 支持网络
+## 🌐 Support Network
 
-- **anvil**: 本地测试网络
-- **sepolia**: Ethereum 测试网
-- **avalanche_fuji**: Avalanche Fuji 测试网
+- **anvil**: local test network
+- **sepolia**: Ethereum testnet
+- **avalanche_fuji**: Avalanche Fuji testnet
 
-## 📄 配置文件
+## 📄 Configuration files
 
-每个网络的部署信息保存在 `deployments-{network}.json`：
+The deployment information of each network is saved in `deployments-{network}.json`:
 
 ```json
 {
-  "network": "anvil",
-  "timestamp": "1750771331",
-  "platform": "0x...",
-  "tokens": { "usdc": "0x...", "weth": "0x..." },
-  "projects": { "btc": { "address": "0x..." } }
+"network": "anvil",
+"timestamp": "1750771331",
+"platform": "0x...",
+"tokens": { "usdc": "0x...", "weth": "0x..." },
+"projects": { "btc": { "address": "0x..." } }
 }
 ```
 
-## 🛠️ 手动部署
+## 🛠️ Manual deployment
 
-如需单独执行某个步骤：
+To perform a step individually:
 
 ```bash
 export NETWORK=sepolia
@@ -96,44 +97,44 @@ source .env
 RPC_URL=${sepolia_url}
 PRIVATE_KEY=${sepolia_private_key}
 
-# 步骤1: 部署核心合约
+# Step 1: Deploy the core contract
 forge script script/multi_deploy/Step1_DeployCore.s.sol --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
 
-# 步骤2: 部署代币
+# Step 2: Deploy the token
 forge script script/multi_deploy/Step2_DeployTokens.s.sol --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --broadcast
 
-# 其他步骤...
+# Other steps...
 ```
 
-## 🔍 故障排除
+## 🔍 Troubleshooting
 
-### 常见问题
+### Frequently Asked Questions
 
-1. **环境变量未设置**: 检查 `.env` 文件
-2. **Gas 不足**: 确保账户有足够 ETH
-3. **合约已部署**: 删除配置文件重新部署
-4. **网络连接失败**: 检查 RPC URL
+1. **Environment variables not set**: Check the `.env` file
+2. **Gas Insufficient**: Make sure your account has enough ETH
+3. **Contract has been deployed**: Delete the configuration file and redeploy
+4. **Network connection failed**: Check the RPC URL
 
-### 重新部署
+### Redeploy
 
 ```bash
-# 删除配置文件
+# Delete the configuration file
 rm deployments-$NETWORK.json
 
-# 或删除特定部分（手动编辑JSON）
+# or remove specific parts (manually edit the JSON)
 ```
 
-## 📚 详细文档
+## 📚 Detailed documentation
 
-- [完整部署指南](../DEPLOYMENT_GUIDE.md)
-- [原始部署脚本](../Deploy.s.sol)
-- [接口文档](../../INTERFACE_DOCUMENTATION.md)
+- [Full Deployment Guide](../DEPLOYMENT_GUIDE.md)
+- [Original deployment script](../Deploy.s.sol)
+- [Interface Documentation](../../INTERFACE_DOCUMENTATION.md)
 
-## 🎯 特性
+## 🎯 Features
 
-- ✅ 支持多网络部署
-- ✅ 自动化配置管理
-- ✅ Gas 成本优化
-- ✅ 错误处理和验证
-- ✅ 生产环境适配
-- ✅ 一键部署脚本
+- ✅ Support multi-network deployment
+- ✅ Automated configuration management
+- ✅ Gas cost optimization
+- ✅ Error handling and validation
+- ✅ Production environment adaptation
+- ✅ One-click deployment script
